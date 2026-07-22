@@ -32,8 +32,6 @@ public class ConfigController {
         configMap.put("minWorkingMinutes", configService.getMinWorkingMinutes());
         configMap.put("overnightSessionAttribution", String.valueOf(configService.getOvernightSessionAttribution()));
 
-        configMap.put("manualCheckinCheckoutEnabled", configService.getManualCheckinCheckoutEnabled());
-
         return Envelope.ok(configMap);
     }
 
@@ -63,10 +61,6 @@ public class ConfigController {
         }
         if (request.getOvernightSessionAttribution() != null) {
             configService.updateConfig("overnight_session_attribution", request.getOvernightSessionAttribution());
-        }
-
-        if (request.getManualCheckinCheckoutEnabled() != null) {
-            configService.updateConfig("manual_checkin_checkout_enabled", request.getManualCheckinCheckoutEnabled().toString());
         }
 
         return getConfig();

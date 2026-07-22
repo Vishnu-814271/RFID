@@ -41,8 +41,7 @@ export function Settings() {
         tapDebounceSeconds: parseInt(config.tapDebounceSeconds),
         sessionTimeoutMinutes: parseInt(config.sessionTimeoutMinutes),
         minWorkingMinutes: parseInt(config.minWorkingMinutes),
-        overnightSessionAttribution: String(config.overnightSessionAttribution),
-        manualCheckinCheckoutEnabled: config.manualCheckinCheckoutEnabled === true || config.manualCheckinCheckoutEnabled === 'true'
+        overnightSessionAttribution: config.overnightSessionAttribution
       });
       alert('Configuration saved successfully');
     } catch (err) {
@@ -109,22 +108,6 @@ export function Settings() {
                   }}
                 >
                   {(config.overnightSessionAttribution || 'false') === 'true' ? 'ON' : 'OFF'}
-                </button>
-              </div>
-            </div>
-            <div className="form-group">
-              <label className="form-label">Manual Check-In / Check-Out Buttons</label>
-              <div style={{ marginTop: '0.5rem' }}>
-                <button
-                  type="button"
-                  className={`btn ${String(config.manualCheckinCheckoutEnabled) === 'true' ? 'btn-primary' : 'btn-secondary'}`}
-                  style={{ minWidth: '120px', padding: '0.6rem 1.2rem', fontWeight: 600 }}
-                  onClick={() => {
-                    const nextVal = String(config.manualCheckinCheckoutEnabled) === 'true' ? false : true;
-                    setConfig({...config, manualCheckinCheckoutEnabled: nextVal});
-                  }}
-                >
-                  {String(config.manualCheckinCheckoutEnabled) === 'true' ? 'ENABLED' : 'DISABLED'}
                 </button>
               </div>
             </div>
