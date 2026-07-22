@@ -15,11 +15,13 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import com.RFID.RFID.service.ConfigService;
 
 @RestController
 @RequestMapping("/api/people")
@@ -32,19 +34,22 @@ public class PersonController {
     private final AttendanceEventRepository eventRepository;
     private final RfidCardRepository cardRepository;
     private final AuditService auditService;
+    private final ConfigService configService;
 
     public PersonController(PersonRepository personRepository,
                             CardMappingRepository mappingRepository,
                             AttendanceSessionRepository sessionRepository,
                             AttendanceEventRepository eventRepository,
                             RfidCardRepository cardRepository,
-                            AuditService auditService) {
+                            AuditService auditService,
+                            ConfigService configService) {
         this.personRepository = personRepository;
         this.mappingRepository = mappingRepository;
         this.sessionRepository = sessionRepository;
         this.eventRepository = eventRepository;
         this.cardRepository = cardRepository;
         this.auditService = auditService;
+        this.configService = configService;
     }
 
     @GetMapping
@@ -233,5 +238,58 @@ public class PersonController {
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public Envelope deletePerson(@PathVariable Long id) {
         throw new RuntimeException("Deactivation only; no hard delete.");
+    }
+    @PostMapping("/{id}/manual-attendance")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'OPERATOR')")
+    @Transactional
+    public Envelope manualAttendance(@PathVariable Long id, @RequestParam String type) {
+        if (!configService.getManualCheckinCheckoutEnabled()) {
+            throw new RuntimeException("Manual check-in/checkout is disabled by administrator.");
+        }
+
+        Person person = personRepository.findById(id).orElseThrow(() -> new RuntimeException("Person not found."));
+        LocalDate workDate = LocalDate.now();
+        LocalTime tapTime = LocalTime.now();
+        LocalDateTime occurredAt = LocalDateTime.now();
+
+        Optional<AttendanceSession> openSessionOpt = sessionRepository.findByPersonAndStatusAndWorkDate(person, SessionStatus.OPEN, workDate);
+        if (openSessionOpt.isEmpty() && configService.getOvernightSessionAttribution()) {
+            openSessionOpt = sessionRepository.findByPersonAndStatusAndWorkDate(person, SessionStatus.OPEN, workDate.minusDays(1));
+        }
+
+        if (type.equalsIgnoreCase("CHECK_IN")) {
+            if (openSessionOpt.isPresent()) {
+                throw new RuntimeException("Already checked in.");
+            }
+            List<AttendanceSession> dailySessions = sessionRepository.findByPersonAndWorkDate(person, workDate);
+            boolean isFirstCheckIn = dailySessions.isEmpty();
+            boolean isLate = false;
+            if (isFirstCheckIn) {
+                isLate = tapTime.isAfter(configService.getExpectedStartTime().plusMinutes(configService.getLateGraceMinutes()));
+            }
+            AttendanceSession session = new AttendanceSession(person, workDate, occurredAt, isLate);
+            sessionRepository.save(session);
+            
+            AttendanceEvent event = new AttendanceEvent("MANUAL", person, Decision.GRANTED, EventType.CHECK_IN, "OK", TapSource.MANUAL, occurredAt);
+            eventRepository.save(event);
+            auditService.log("MANUAL_CHECK_IN", "ATTENDANCE", person.getPersonId().toString());
+            return Envelope.ok("Checked in manually");
+        } else if (type.equalsIgnoreCase("CHECK_OUT")) {
+            if (openSessionOpt.isEmpty()) {
+                throw new RuntimeException("Not checked in.");
+            }
+            AttendanceSession session = openSessionOpt.get();
+            session.setCheckOutAt(occurredAt);
+            session.setStatus(SessionStatus.CLOSED);
+            long durationMin = java.time.Duration.between(session.getCheckInAt(), occurredAt).toMinutes();
+            session.setDurationMinutes((int) Math.max(0, durationMin));
+            sessionRepository.save(session);
+            
+            AttendanceEvent event = new AttendanceEvent("MANUAL", person, Decision.GRANTED, EventType.CHECK_OUT, "OK", TapSource.MANUAL, occurredAt);
+            eventRepository.save(event);
+            auditService.log("MANUAL_CHECK_OUT", "ATTENDANCE", person.getPersonId().toString());
+            return Envelope.ok("Checked out manually");
+        }
+        throw new RuntimeException("Invalid attendance type");
     }
 }

@@ -64,6 +64,11 @@ public class ConfigService {
         return Integer.parseInt(val);
     }
 
+    public boolean getManualCheckinCheckoutEnabled() {
+        String val = getValue("manual_checkin_checkout_enabled", "false");
+        return Boolean.parseBoolean(val);
+    }
+
     public boolean getOvernightSessionAttribution() {
         String val = getValue("overnight_session_attribution", "false");
         return Boolean.parseBoolean(val);

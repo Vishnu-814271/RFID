@@ -158,6 +158,7 @@ public class DTOs {
         private Integer sessionTimeoutMinutes;
         private Integer minWorkingMinutes;
         private String overnightSessionAttribution;
+        private Boolean manualCheckinCheckoutEnabled;
 
         public ConfigRequest() {}
 
@@ -177,6 +178,8 @@ public class DTOs {
         public void setMinWorkingMinutes(Integer minWorkingMinutes) { this.minWorkingMinutes = minWorkingMinutes; }
         public String getOvernightSessionAttribution() { return overnightSessionAttribution; }
         public void setOvernightSessionAttribution(String overnightSessionAttribution) { this.overnightSessionAttribution = overnightSessionAttribution; }
+        public Boolean getManualCheckinCheckoutEnabled() { return manualCheckinCheckoutEnabled; }
+        public void setManualCheckinCheckoutEnabled(Boolean manualCheckinCheckoutEnabled) { this.manualCheckinCheckoutEnabled = manualCheckinCheckoutEnabled; }
     }
 
     public static class StaffUserRequest {

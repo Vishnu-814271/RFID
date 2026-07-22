@@ -10,6 +10,12 @@ export function Dashboard() {
   const [liveData, setLiveData] = useState(null);
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [config, setConfig] = useState(null);
+  const [isManualModalOpen, setIsManualModalOpen] = useState(false);
+  const [manualType, setManualType] = useState('CHECK_IN');
+  const [people, setPeople] = useState([]);
+  const [selectedPersonId, setSelectedPersonId] = useState('');
+  const [manualLoading, setManualLoading] = useState(false);
   const navigate = useNavigate();
 
   const { user } = useAuth();
@@ -19,15 +25,17 @@ export function Dashboard() {
       if (user?.passwordChangeRequired) return;
 
       try {
-        const [analyticsRes, liveRes, eventsRes] = await Promise.all([
+        const [analyticsRes, liveRes, eventsRes, configRes] = await Promise.all([
           api.get('/dashboard/analytics').catch(() => ({})),
           api.get('/attendance/live').catch(() => ({ headcount: 0 })),
-          api.get('/events').catch(() => [])
+          api.get('/events').catch(() => []),
+          api.get('/config').catch(() => ({}))
         ]);
 
         setAnalytics(analyticsRes);
         setLiveData(liveRes);
         setEvents(eventsRes.slice(0, 5)); // Just take 5 recent events
+        setConfig(configRes);
       } catch (error) {
         console.error("Failed to load dashboard data", error);
       } finally {
@@ -42,11 +50,47 @@ export function Dashboard() {
     return <div className="p-4">Loading dashboard...</div>;
   }
 
+  const openManualModal = async (type) => {
+    setManualType(type);
+    setIsManualModalOpen(true);
+    if (people.length === 0) {
+      try {
+        const res = await api.get('/people');
+        setPeople(res);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+  };
+
+  const handleManualSubmit = async () => {
+    if (!selectedPersonId) return;
+    setManualLoading(true);
+    try {
+      await api.post(`/people/${selectedPersonId}/manual-attendance?type=${manualType}`);
+      alert(`Successfully processed manual ${manualType}`);
+      setIsManualModalOpen(false);
+      window.location.reload();
+    } catch (err) {
+      alert(`Error: ${err.message || err.error || JSON.stringify(err)}`);
+    } finally {
+      setManualLoading(false);
+    }
+  };
+
   return (
     <div className="dashboard">
-      <div className="dashboard-header">
-        <h1>Dashboard Overview</h1>
-        <p className="text-muted">Welcome to the RFID Management System</p>
+      <div className="dashboard-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <h1>Dashboard Overview</h1>
+          <p className="text-muted">Welcome to the RFID Management System</p>
+        </div>
+        {String(config?.manualCheckinCheckoutEnabled) === 'true' && (
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button className="btn btn-success" onClick={() => openManualModal('CHECK_IN')}>Manual Check-In</button>
+            <button className="btn btn-danger" onClick={() => openManualModal('CHECK_OUT')}>Manual Check-Out</button>
+          </div>
+        )}
       </div>
 
       <div className="metrics-grid">
@@ -155,6 +199,34 @@ export function Dashboard() {
           </div>
         </div>
       </div>
+
+      {isManualModalOpen && (
+        <div className="modal-overlay" onClick={() => !manualLoading && setIsManualModalOpen(false)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Manual {manualType === 'CHECK_IN' ? 'Check-In' : 'Check-Out'}</h2>
+              <button className="close-btn" onClick={() => setIsManualModalOpen(false)} disabled={manualLoading}>&times;</button>
+            </div>
+            <div className="modal-body">
+              <div className="form-group">
+                <label className="form-label">Select Person</label>
+                <select className="form-control" value={selectedPersonId} onChange={e => setSelectedPersonId(e.target.value)} disabled={manualLoading}>
+                  <option value="">-- Select Person --</option>
+                  {people.map(p => (
+                    <option key={p.personId} value={p.personId}>{p.fullName} ({p.externalRef || 'No ID'})</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-secondary" onClick={() => setIsManualModalOpen(false)} disabled={manualLoading}>Cancel</button>
+              <button className="btn btn-primary" onClick={handleManualSubmit} disabled={manualLoading || !selectedPersonId}>
+                {manualLoading ? 'Processing...' : 'Confirm'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
