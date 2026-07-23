@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Download, Filter, Search, Calendar, FileText, Edit, X } from 'lucide-react';
 import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
-import { formatTime } from '../utils/dateUtils';
+import { formatTime, formatHours } from '../utils/dateUtils';
 
 export function Reports() {
   const { user } = useAuth();
@@ -274,7 +274,7 @@ export function Reports() {
                         0
                       )}
                     </td>
-                    <td>{row.totalHours || 0} hrs</td>
+                    <td>{formatHours(row.totalHours)} <span className="text-muted" style={{ fontSize: '0.8rem' }}>({row.totalHours || 0} hrs)</span></td>
                     <td>
                       <button className="btn btn-secondary" style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem' }} onClick={() => openSessionsModal(row)}>
                         <FileText size={14} style={{ marginRight: '4px' }}/> Sessions

@@ -41,3 +41,16 @@ export function formatDateTime(dateString) {
   if (!d || isNaN(d)) return '-';
   return d.toLocaleString('en-IN');
 }
+
+/**
+ * Convert decimal hours (e.g. 5.88) to a human-readable duration (e.g. "5h 53m").
+ */
+export function formatHours(decimalHours) {
+  if (!decimalHours || isNaN(decimalHours)) return '0h 0m';
+  const totalMins = Math.round(Number(decimalHours) * 60);
+  const hrs = Math.floor(totalMins / 60);
+  const mins = totalMins % 60;
+  if (hrs === 0) return `${mins}m`;
+  if (mins === 0) return `${hrs}h`;
+  return `${hrs}h ${mins}m`;
+}
