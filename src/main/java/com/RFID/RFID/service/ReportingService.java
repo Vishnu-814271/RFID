@@ -35,9 +35,19 @@ public class ReportingService {
 
     public List<Map<String, Object>> generateReportData(LocalDate start, LocalDate end, String groupLabel, MemberType memberType) {
         List<Person> people = personRepository.findAll();
-        List<Map<String, Object>> rows = new ArrayList<>();
 
+        // Cache config values once — avoids per-iteration DB hits
         Set<String> workingDays = configService.getWorkingDays();
+        int minWorkingMinutes = configService.getMinWorkingMinutes();
+
+        // ONE bulk query for all sessions in date range (eliminates N+1 per-person queries)
+        List<AttendanceSession> allSessions = sessionRepository.findAllWithPersonByWorkDateBetween(start, end);
+
+        // Group sessions by personId in memory
+        Map<Long, List<AttendanceSession>> sessionsByPerson = allSessions.stream()
+                .collect(Collectors.groupingBy(s -> s.getPerson().getPersonId()));
+
+        List<Map<String, Object>> rows = new ArrayList<>();
 
         for (Person person : people) {
             // Apply filters
@@ -48,11 +58,11 @@ public class ReportingService {
                 continue;
             }
 
-            List<AttendanceSession> sessions = sessionRepository.findByPersonAndWorkDateBetween(person, start, end);
+            List<AttendanceSession> sessions = sessionsByPerson.getOrDefault(person.getPersonId(), Collections.emptyList());
 
             // 1. Present days
             long presentDays = sessions.stream()
-                    .filter(s -> s.getStatus() == SessionStatus.CLOSED && s.getDurationMinutes() != null && s.getDurationMinutes() >= configService.getMinWorkingMinutes())
+                    .filter(s -> s.getStatus() == SessionStatus.CLOSED && s.getDurationMinutes() != null && s.getDurationMinutes() >= minWorkingMinutes)
                     .map(AttendanceSession::getWorkDate)
                     .distinct()
                     .count();
@@ -75,7 +85,7 @@ public class ReportingService {
                     .count();
 
             // 5. Absent days
-            long absentDays = calculateAbsences(person, start, end, workingDays, sessions);
+            long absentDays = calculateAbsences(person, start, end, workingDays, minWorkingMinutes, sessions);
 
             Map<String, Object> row = new HashMap<>();
             row.put("personId", person.getPersonId());
@@ -96,31 +106,27 @@ public class ReportingService {
         return rows;
     }
 
-    private long calculateAbsences(Person person, LocalDate start, LocalDate end, Set<String> workingDays, List<AttendanceSession> sessions) {
+    private long calculateAbsences(Person person, LocalDate start, LocalDate end, Set<String> workingDays, int minWorkingMinutes, List<AttendanceSession> sessions) {
         if (person.getStatus() == PersonStatus.INACTIVE) {
             return 0; // Inactive members don't accumulate absences
         }
 
-        long absences = 0;
         Set<LocalDate> presentDates = sessions.stream()
-                .filter(s -> (s.getStatus() == SessionStatus.CLOSED && s.getDurationMinutes() != null && s.getDurationMinutes() >= configService.getMinWorkingMinutes())
+                .filter(s -> (s.getStatus() == SessionStatus.CLOSED && s.getDurationMinutes() != null && s.getDurationMinutes() >= minWorkingMinutes)
                         || (s.getStatus() == SessionStatus.OPEN && s.getWorkDate().equals(LocalDate.now())))
                 .map(AttendanceSession::getWorkDate)
                 .collect(Collectors.toSet());
 
         LocalDate registrationDate = person.getCreatedAt().toLocalDate();
+        long absences = 0;
 
         for (LocalDate date = start; !date.isAfter(end); date = date.plusDays(1)) {
-            // Only count absences from registration date onwards
             if (date.isBefore(registrationDate)) {
                 continue;
             }
-
             String dayName = getShortDayName(date.getDayOfWeek());
-            if (workingDays.contains(dayName)) {
-                if (!presentDates.contains(date)) {
-                    absences++;
-                }
+            if (workingDays.contains(dayName) && !presentDates.contains(date)) {
+                absences++;
             }
         }
         return absences;
@@ -142,12 +148,9 @@ public class ReportingService {
         List<Map<String, Object>> data = generateReportData(start, end, groupLabel, memberType);
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         try (PrintWriter writer = new PrintWriter(out)) {
-            // Write Header
             writer.println("Person ID,Full Name,Member Type,Group,Days Present,Total Hours,Late Count,Missed Checkouts,Absent Days");
-
-            // Write Rows
             for (Map<String, Object> row : data) {
-                writer.printf("%s,\"%s\",%s,\"%s\",%s,%s,%s,%s,%s\n",
+                writer.printf("%s,\"%s\",%s,\"%s\",%s,%s,%s,%s,%s%n",
                         row.get("personId"),
                         row.get("fullName").toString().replace("\"", "\"\""),
                         row.get("memberType"),
@@ -165,33 +168,28 @@ public class ReportingService {
     }
 
     public Map<String, Object> getAnalytics(LocalDate date) {
+        // Cache config values once
+        Set<String> workingDays = configService.getWorkingDays();
+        int minWorkingMinutes = configService.getMinWorkingMinutes();
+
         List<Person> activePeople = personRepository.findAll().stream()
                 .filter(p -> p.getStatus() == PersonStatus.ACTIVE)
                 .collect(Collectors.toList());
 
-        // Sessions on the target date
-        List<AttendanceSession> sessions = sessionRepository.findByStatus(SessionStatus.OPEN);
-        sessions.addAll(sessionRepository.findByWorkDateBetween(date, date));
-        // Remove duplicates if any loaded from both
-        Set<Long> loadedIds = new HashSet<>();
-        List<AttendanceSession> dailySessions = new ArrayList<>();
-        for (AttendanceSession s : sessions) {
-            if (s.getWorkDate().equals(date) && loadedIds.add(s.getSessionId())) {
-                dailySessions.add(s);
-            }
-        }
+        // All sessions for the target date (one query, not two)
+        List<AttendanceSession> dailySessions = sessionRepository.findByWorkDateBetween(date, date);
 
-        // 1. Live Headcount (currently present)
-        long liveHeadcount = sessionRepository.findByStatus(SessionStatus.OPEN).size();
+        // 1. Live Headcount — use count query, not findAll()
+        long liveHeadcount = sessionRepository.countByStatus(SessionStatus.OPEN);
 
-        // 2. Daily Attendance Rate (distinct present active persons / total active persons)
+        // 2. Daily Attendance Rate
         long distinctPresent = dailySessions.stream()
                 .map(s -> s.getPerson().getPersonId())
                 .distinct()
                 .count();
         double attendanceRate = activePeople.isEmpty() ? 0.0 : (double) distinctPresent / activePeople.size();
 
-        // 3. Average Hours in Office (average of total hours per present person today)
+        // 3. Average Hours in Office
         Map<Long, Integer> personMinutes = new HashMap<>();
         for (AttendanceSession s : dailySessions) {
             int minutes = 0;
@@ -200,23 +198,22 @@ public class ReportingService {
             } else if (s.getDurationMinutes() != null) {
                 minutes = s.getDurationMinutes();
             }
-            personMinutes.put(s.getPerson().getPersonId(), personMinutes.getOrDefault(s.getPerson().getPersonId(), 0) + minutes);
+            personMinutes.merge(s.getPerson().getPersonId(), minutes, Integer::sum);
         }
         double avgHours = personMinutes.values().isEmpty() ? 0.0 :
                 (personMinutes.values().stream().mapToInt(Integer::intValue).average().orElse(0.0) / 60.0);
 
-        // 4. Late arrivals count today
+        // 4. Late arrivals
         long lateCount = dailySessions.stream()
                 .filter(AttendanceSession::isLate)
                 .map(s -> s.getPerson().getPersonId())
                 .distinct()
                 .count();
 
-        // 5. Absentees count today
+        // 5. Absentees
         Set<Long> presentIds = dailySessions.stream()
                 .map(s -> s.getPerson().getPersonId())
                 .collect(Collectors.toSet());
-        Set<String> workingDays = configService.getWorkingDays();
         String dayName = getShortDayName(date.getDayOfWeek());
         long absenteesCount = 0;
         if (workingDays.contains(dayName)) {
@@ -225,28 +222,25 @@ public class ReportingService {
                     .count();
         }
 
-        // 6. Missed check-outs today
+        // 6. Missed check-outs
         long missedCheckouts = dailySessions.stream()
                 .filter(s -> s.getStatus() == SessionStatus.AUTO_CLOSED)
                 .count();
 
-        // 7. Denied taps today
+        // 7. Denied taps — DB count query, not findAll() + filter in Java
         LocalDateTime startOfDay = date.atStartOfDay();
         LocalDateTime endOfDay = date.plusDays(1).atStartOfDay();
-        long deniedTaps = eventRepository.findAll().stream()
-                .filter(e -> !e.getOccurredAt().isBefore(startOfDay) && e.getOccurredAt().isBefore(endOfDay))
-                .filter(e -> e.getDecision() == Decision.DENIED)
-                .count();
+        long deniedTaps = eventRepository.countByDecisionAndOccurredAtBetween(Decision.DENIED, startOfDay, endOfDay);
 
-        long activeCards = cardRepository.findAll().stream()
-                .filter(c -> c.getStatus() == CardStatus.AVAILABLE || c.getStatus() == CardStatus.ASSIGNED)
-                .count();
+        // 8. Active cards — DB count query, not findAll() + filter
+        long activeCards = cardRepository.countByStatusIn(
+                List.of(CardStatus.AVAILABLE, CardStatus.ASSIGNED));
 
         Map<String, Object> stats = new HashMap<>();
         stats.put("totalPeople", activePeople.size());
         stats.put("activeCards", activeCards);
         stats.put("currentlyPresent", liveHeadcount);
-        stats.put("attendanceRate", Math.round(attendanceRate * 10000.0) / 100.0); // e.g. 85.5%
+        stats.put("attendanceRate", Math.round(attendanceRate * 10000.0) / 100.0);
         stats.put("averageHours", Math.round(avgHours * 100.0) / 100.0);
         stats.put("lateArrivals", lateCount);
         stats.put("absentees", absenteesCount);

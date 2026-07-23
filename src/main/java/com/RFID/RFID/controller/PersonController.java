@@ -223,10 +223,23 @@ public class PersonController {
         Person person = personRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Person not found."));
 
-        List<AttendanceSession> sessions = sessionRepository.findByPersonAndWorkDateBetween(
-                person, LocalDate.now().minusYears(2), LocalDate.now()
-        );
-        return Envelope.ok(sessions);
+        // Ordered newest-first so the UI shows recent sessions at the top
+        List<AttendanceSession> sessions = sessionRepository.findByPersonOrderByWorkDateDesc(person);
+
+        // Return flat maps — avoids serializing the embedded Person on every row (N x Person objects)
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (AttendanceSession s : sessions) {
+            Map<String, Object> row = new HashMap<>();
+            row.put("sessionId", s.getSessionId());
+            row.put("workDate", s.getWorkDate());
+            row.put("checkInAt", s.getCheckInAt());
+            row.put("checkOutAt", s.getCheckOutAt());
+            row.put("durationMinutes", s.getDurationMinutes());
+            row.put("status", s.getStatus());
+            row.put("isLate", s.isLate());
+            result.add(row);
+        }
+        return Envelope.ok(result);
     }
 
     @DeleteMapping("/{id}")

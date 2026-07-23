@@ -1,6 +1,7 @@
 package com.RFID.RFID.repository;
 
 import com.RFID.RFID.model.AttendanceEvent;
+import com.RFID.RFID.model.Decision;
 import com.RFID.RFID.model.Person;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -14,4 +15,6 @@ public interface AttendanceEventRepository extends JpaRepository<AttendanceEvent
     List<AttendanceEvent> findByOccurredAtAfterOrderByOccurredAtDesc(LocalDateTime dateTime);
     List<AttendanceEvent> findAllByOrderByOccurredAtDesc();
     List<AttendanceEvent> findByPerson(Person person);
+    /** Count denied taps in a time window in-DB — avoids full table scan in Java. */
+    long countByDecisionAndOccurredAtBetween(Decision decision, LocalDateTime from, LocalDateTime to);
 }
