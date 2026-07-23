@@ -16,7 +16,7 @@ public class ConfigService {
 
     private final SystemConfigurationRepository configRepository;
     private final AuditService auditService;
-    private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
+    private final java.util.Map<String, String> configCache = new java.util.concurrent.ConcurrentHashMap<>();
 
     public ConfigService(SystemConfigurationRepository configRepository, AuditService auditService) {
         this.configRepository = configRepository;
@@ -24,9 +24,11 @@ public class ConfigService {
     }
 
     public String getValue(String key, String defaultValue) {
-        return configRepository.findByConfigKey(key)
-                .map(SystemConfiguration::getConfigValue)
-                .orElse(defaultValue);
+        return configCache.computeIfAbsent(key, k ->
+                configRepository.findByConfigKey(k)
+                        .map(SystemConfiguration::getConfigValue)
+                        .orElse(defaultValue)
+        );
     }
 
     public LocalTime getExpectedStartTime() {
@@ -80,6 +82,7 @@ public class ConfigService {
             config = new SystemConfiguration(key, value);
         }
         configRepository.save(config);
+        configCache.put(key, value);
         auditService.log("CONFIG_UPDATED", "CONFIG", key);
     }
 }

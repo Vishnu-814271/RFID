@@ -25,12 +25,13 @@ public class UserController {
     private final StaffUserRepository staffUserRepository;
     private final AuditService auditService;
     private final EmailService emailService;
-    private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder(12);
+    private final org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
 
-    public UserController(StaffUserRepository staffUserRepository, AuditService auditService, EmailService emailService) {
+    public UserController(StaffUserRepository staffUserRepository, AuditService auditService, EmailService emailService, org.springframework.security.crypto.password.PasswordEncoder passwordEncoder) {
         this.staffUserRepository = staffUserRepository;
         this.auditService = auditService;
         this.emailService = emailService;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @GetMapping

@@ -16,11 +16,12 @@ public class DatabaseSeeder implements CommandLineRunner {
 
     private final StaffUserRepository staffUserRepository;
     private final SystemConfigurationRepository systemConfigurationRepository;
-    private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder(12);
+    private final org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
 
-    public DatabaseSeeder(StaffUserRepository staffUserRepository, SystemConfigurationRepository systemConfigurationRepository) {
+    public DatabaseSeeder(StaffUserRepository staffUserRepository, SystemConfigurationRepository systemConfigurationRepository, org.springframework.security.crypto.password.PasswordEncoder passwordEncoder) {
         this.staffUserRepository = staffUserRepository;
         this.systemConfigurationRepository = systemConfigurationRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Override
