@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Activity, Search } from 'lucide-react';
 import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
+import { parseIST, formatTime } from '../utils/dateUtils';
 
 export function LiveAttendance() {
   const [liveData, setLiveData] = useState({ headcount: 0, presentMembers: [] });
@@ -79,7 +80,7 @@ export function LiveAttendance() {
               </thead>
               <tbody>
                 {filteredMembers.map((m, i) => {
-                  const checkInDate = new Date(m.checkInAt);
+                  const checkInDate = parseIST(m.checkInAt);
                   const durationMs = new Date() - checkInDate;
                   const hours = Math.floor(durationMs / 3600000);
                   const minutes = Math.floor((durationMs % 3600000) / 60000);
@@ -89,7 +90,7 @@ export function LiveAttendance() {
                       <td className="font-medium">{m.fullName}</td>
                       <td>{m.memberType}</td>
                       <td>{m.groupLabel}</td>
-                      <td>{checkInDate.toLocaleTimeString()}</td>
+                      <td>{formatTime(m.checkInAt)}</td>
                       <td>{hours}h {minutes}m</td>
                     </tr>
                   );

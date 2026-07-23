@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ShieldAlert, RefreshCw, Search } from 'lucide-react';
 import api from '../utils/api';
+import { formatDateTime } from '../utils/dateUtils';
 
 export function AuditLogs() {
   const [logs, setLogs] = useState([]);
@@ -79,7 +80,7 @@ export function AuditLogs() {
                 {filteredLogs.map(log => (
                   <tr key={log.logId}>
                     <td className="font-medium" style={{ whiteSpace: 'nowrap' }}>
-                      {new Date(log.timestamp).toLocaleString()}
+                      {formatDateTime(log.timestamp)}
                     </td>
                     <td>
                       <span className="badge badge-warning">

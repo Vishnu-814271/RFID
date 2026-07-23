@@ -3,6 +3,7 @@ import { LogOut, Bell, Search, Rss, Lock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
+import { formatDateTime } from '../utils/dateUtils';
 import { ChangePasswordModal } from './ChangePasswordModal';
 import './Header.css';
 
@@ -149,7 +150,7 @@ export function Header() {
                     >
                       <div style={{ fontSize: '0.85rem', color: 'var(--color-text-main)' }}>{n.message}</div>
                       <div style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)', marginTop: '0.5rem' }}>
-                        {new Date(n.createdAt).toLocaleString()}
+                        {formatDateTime(n.createdAt)}
                       </div>
                     </div>
                   ))

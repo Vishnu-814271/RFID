@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Download, Filter, Search, Calendar, FileText, Edit, X } from 'lucide-react';
 import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
+import { formatTime } from '../utils/dateUtils';
 
 export function Reports() {
   const { user } = useAuth();
@@ -319,8 +320,8 @@ export function Reports() {
                     {personSessions.map(session => (
                       <tr key={session.sessionId}>
                         <td>{session.workDate}</td>
-                        <td>{new Date(session.checkInAt).toLocaleTimeString()} {session.isLate && <span className="badge badge-warning" style={{fontSize: '0.6rem'}}>LATE</span>}</td>
-                        <td>{session.checkOutAt ? new Date(session.checkOutAt).toLocaleTimeString() : '-'}</td>
+                        <td>{formatTime(session.checkInAt)} {session.isLate && <span className="badge badge-warning" style={{fontSize: '0.6rem'}}>LATE</span>}</td>
+                        <td>{session.checkOutAt ? formatTime(session.checkOutAt) : '-'}</td>
                         <td>{session.durationMinutes ?? '-'}</td>
                         <td>
                           <span className={`badge badge-${session.status === 'CLOSED' ? 'success' : session.status === 'AUTO_CLOSED' ? 'danger' : 'primary'}`}>

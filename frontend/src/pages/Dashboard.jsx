@@ -3,6 +3,7 @@ import { Users, Activity, CreditCard, ShieldAlert, Clock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
+import { formatTime } from '../utils/dateUtils';
 import './Dashboard.css';
 
 export function Dashboard() {
@@ -128,7 +129,7 @@ export function Dashboard() {
                 {events.length > 0 ? (
                   events.map((ev, i) => (
                     <tr key={ev.eventId || i}>
-                      <td>{new Date(ev.occurredAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>
+                      <td>{formatTime(ev.occurredAt, { hour: '2-digit', minute: '2-digit' })}</td>
                       <td>{ev.person ? ev.person.fullName : 'Unknown'}</td>
                       <td>{ev.eventType || 'Denied'}</td>
                       <td>

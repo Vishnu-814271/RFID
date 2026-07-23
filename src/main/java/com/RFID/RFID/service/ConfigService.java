@@ -31,7 +31,7 @@ public class ConfigService {
 
     public LocalTime getExpectedStartTime() {
         String val = getValue("expected_start_time", "09:00");
-        return LocalTime.parse(val, TIME_FORMATTER);
+        return LocalTime.parse(val);
     }
 
     public int getLateGraceMinutes() {
@@ -41,12 +41,12 @@ public class ConfigService {
 
     public LocalTime getAutoCheckoutTime() {
         String val = getValue("auto_checkout_time", "17:00");
-        return LocalTime.parse(val, TIME_FORMATTER);
+        return LocalTime.parse(val);
     }
 
     public Set<String> getWorkingDays() {
         String val = getValue("working_days", "MON,TUE,WED,THU,FRI");
-        return new HashSet<>(Arrays.asList(val.split(",")));
+        return new java.util.LinkedHashSet<>(Arrays.asList(val.split(",")));
     }
 
     public int getTapDebounceSeconds() {
