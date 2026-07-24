@@ -166,7 +166,7 @@ export function Cards() {
                               </button>
                             </>
                           )}
-                          {(c.status === 'DEACTIVATED' || c.status === 'LOST') && user?.role === 'ADMIN' && (
+                          {c.status === 'DEACTIVATED' && user?.role === 'ADMIN' && (
                             <button 
                               className="btn btn-success" 
                               style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}
@@ -175,6 +175,11 @@ export function Cards() {
                             >
                               Reactivate
                             </button>
+                          )}
+                          {c.status === 'LOST' && (
+                            <span className="text-muted" style={{ fontSize: '0.75rem', fontStyle: 'italic' }}>
+                              Permanently Disabled
+                            </span>
                           )}
                         </div>
                       </td>

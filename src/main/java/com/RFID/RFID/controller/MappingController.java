@@ -47,6 +47,10 @@ public class MappingController {
                 .orElseThrow(() -> new RuntimeException("Person not found."));
 
         // 1. Validation Rules
+        if (card.getStatus() == CardStatus.LOST) {
+            throw new RuntimeException("Card " + card.getCardUid() + " is marked as LOST and permanently disabled. It cannot be assigned to any member.");
+        }
+
         if (card.getStatus() != CardStatus.AVAILABLE) {
             throw new RuntimeException("Card is not AVAILABLE for mapping (Current status: " + card.getStatus() + ").");
         }

@@ -54,3 +54,16 @@ export function formatHours(decimalHours) {
   if (mins === 0) return `${hrs}h`;
   return `${hrs}h ${mins}m`;
 }
+
+/**
+ * Convert integer minutes (e.g. 330) to a human-readable duration (e.g. "5h 30m").
+ */
+export function formatMinutesToHours(minutes) {
+  if (minutes === null || minutes === undefined || isNaN(minutes)) return '-';
+  const totalMins = Number(minutes);
+  const hrs = Math.floor(totalMins / 60);
+  const mins = totalMins % 60;
+  if (hrs === 0) return `${mins}m`;
+  if (mins === 0) return `${hrs}h`;
+  return `${hrs}h ${mins}m`;
+}

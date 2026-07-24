@@ -114,7 +114,16 @@ export function Dashboard() {
 
       <div className="dashboard-content">
         <div className="card chart-card">
-          <h3>Recent Access Events</h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
+            <h3 style={{ margin: 0 }}>Recent Access Events</h3>
+            <button 
+              className="btn btn-secondary" 
+              style={{ fontSize: '0.85rem', padding: '0.35rem 0.75rem' }}
+              onClick={() => navigate('/access-logs')}
+            >
+              View All Access Logs →
+            </button>
+          </div>
           <div className="data-table-container mt-4">
             <table className="data-table">
               <thead>

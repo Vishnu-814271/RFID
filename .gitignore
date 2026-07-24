@@ -31,3 +31,11 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Local Data & Build ###
+data/
+*.mv.db
+*.trace.db
+node_modules/
+frontend/node_modules/
+

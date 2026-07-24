@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Download, Filter, Search, Calendar, FileText, Edit, X } from 'lucide-react';
 import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
-import { formatTime, formatHours } from '../utils/dateUtils';
+import { formatTime, formatHours, formatMinutesToHours } from '../utils/dateUtils';
 
 export function Reports() {
   const { user } = useAuth();
@@ -12,6 +12,7 @@ export function Reports() {
   const [selectedMemberType, setSelectedMemberType] = useState('ALL');
   const [selectedGroupLabel, setSelectedGroupLabel] = useState('ALL');
   const [selectedPersonId, setSelectedPersonId] = useState('ALL');
+  const [selectedStatusTab, setSelectedStatusTab] = useState('ACTIVE');
   
   const [startDate, setStartDate] = useState(new Date(new Date().setDate(new Date().getDate() - 30)).toISOString().split('T')[0]);
   const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
@@ -113,6 +114,9 @@ export function Reports() {
   const uniqueGroupLabels = Array.from(new Set(reportData.map(row => row.groupLabel).filter(Boolean))).sort();
   const uniquePeople = reportData.map(row => ({ personId: row.personId, fullName: row.fullName })).sort((a, b) => a.fullName.localeCompare(b.fullName));
 
+  const activeCount = reportData.filter(r => r.status !== 'INACTIVE').length;
+  const inactiveCount = reportData.filter(r => r.status === 'INACTIVE').length;
+
   const filteredData = reportData.filter(row => {
     const matchesSearch = searchTerm === '' || 
       row.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -121,8 +125,9 @@ export function Reports() {
     const matchesMemberType = selectedMemberType === 'ALL' || row.memberType === selectedMemberType;
     const matchesGroupLabel = selectedGroupLabel === 'ALL' || row.groupLabel === selectedGroupLabel;
     const matchesPerson = selectedPersonId === 'ALL' || String(row.personId) === selectedPersonId;
+    const matchesStatus = selectedStatusTab === 'ALL' || (selectedStatusTab === 'INACTIVE' ? row.status === 'INACTIVE' : row.status !== 'INACTIVE');
     
-    return matchesSearch && matchesMemberType && matchesGroupLabel && matchesPerson;
+    return matchesSearch && matchesMemberType && matchesGroupLabel && matchesPerson && matchesStatus;
   });
 
   return (
@@ -139,6 +144,30 @@ export function Reports() {
       </div>
 
       <div className="card">
+        <div style={{ display: 'flex', gap: '0.5rem', borderBottom: '1px solid var(--color-border, #e5e7eb)', paddingBottom: '0.75rem', marginBottom: '1.25rem' }}>
+          <button
+            className={`btn ${selectedStatusTab === 'ACTIVE' ? 'btn-primary' : 'btn-secondary'}`}
+            style={{ fontSize: '0.85rem', padding: '0.35rem 0.85rem' }}
+            onClick={() => setSelectedStatusTab('ACTIVE')}
+          >
+            Active Personnel ({activeCount})
+          </button>
+          <button
+            className={`btn ${selectedStatusTab === 'INACTIVE' ? 'btn-danger' : 'btn-secondary'}`}
+            style={{ fontSize: '0.85rem', padding: '0.35rem 0.85rem' }}
+            onClick={() => setSelectedStatusTab('INACTIVE')}
+          >
+            Deactivated Personnel ({inactiveCount})
+          </button>
+          <button
+            className={`btn ${selectedStatusTab === 'ALL' ? 'btn-primary' : 'btn-secondary'}`}
+            style={{ fontSize: '0.85rem', padding: '0.35rem 0.85rem' }}
+            onClick={() => setSelectedStatusTab('ALL')}
+          >
+            All Members ({reportData.length})
+          </button>
+        </div>
+
         <div className="table-toolbar" style={{ flexWrap: 'wrap', gap: '1rem' }}>
           <div className="search-bar table-search" style={{ flex: '1 1 200px', marginBottom: 0 }}>
             <Search size={18} className="search-icon" />
@@ -245,6 +274,7 @@ export function Reports() {
             <table className="data-table">
               <thead>
                 <tr>
+                  <th>Student ID</th>
                   <th>Name</th>
                   <th>Type</th>
                   <th>Group</th>
@@ -259,7 +289,15 @@ export function Reports() {
               <tbody>
                 {filteredData.map((row, i) => (
                   <tr key={i}>
-                    <td className="font-medium">{row.fullName || 'N/A'}</td>
+                    <td className="font-medium" style={{ color: 'var(--color-primary, #4f46e5)' }}>{row.externalRef || `ID: ${row.personId}`}</td>
+                    <td className="font-medium">
+                      {row.fullName || 'N/A'}
+                      {row.status === 'INACTIVE' && (
+                        <span className="badge badge-danger" style={{ marginLeft: '8px', fontSize: '0.7rem' }}>
+                          INACTIVE
+                        </span>
+                      )}
+                    </td>
                     <td>{row.memberType || 'N/A'}</td>
                     <td>{row.groupLabel || 'N/A'}</td>
                     <td><span className="text-success font-medium">{row.daysPresent || 0}</span></td>
@@ -284,7 +322,7 @@ export function Reports() {
                 ))}
                 {filteredData.length === 0 && (
                   <tr>
-                    <td colSpan="9" style={{textAlign: 'center'}} className="text-muted">No report data found.</td>
+                    <td colSpan="10" style={{textAlign: 'center'}} className="text-muted">No report data found.</td>
                   </tr>
                 )}
               </tbody>
@@ -297,7 +335,9 @@ export function Reports() {
         <div className="modal-overlay">
           <div className="modal" style={{ maxWidth: '800px', width: '90%' }}>
             <div className="modal-header">
-              <h2 className="modal-title">Attendance Sessions: {selectedPerson?.fullName}</h2>
+              <h2 className="modal-title">
+                Attendance Sessions: {selectedPerson?.fullName} {selectedPerson?.externalRef ? `(${selectedPerson.externalRef})` : ''}
+              </h2>
               <button className="modal-close" onClick={() => setShowSessionsModal(false)}><X size={20} /></button>
             </div>
             
@@ -311,7 +351,7 @@ export function Reports() {
                       <th>Date</th>
                       <th>Check-In</th>
                       <th>Check-Out</th>
-                      <th>Duration (m)</th>
+                      <th>Duration (Hours)</th>
                       <th>Status</th>
                       <th>Actions</th>
                     </tr>
@@ -322,7 +362,7 @@ export function Reports() {
                         <td>{session.workDate}</td>
                         <td>{formatTime(session.checkInAt)} {session.isLate && <span className="badge badge-warning" style={{fontSize: '0.6rem'}}>LATE</span>}</td>
                         <td>{session.checkOutAt ? formatTime(session.checkOutAt) : '-'}</td>
-                        <td>{session.durationMinutes ?? '-'}</td>
+                        <td>{formatMinutesToHours(session.durationMinutes)}</td>
                         <td>
                           <span className={`badge badge-${session.status === 'CLOSED' ? 'success' : session.status === 'AUTO_CLOSED' ? 'danger' : 'primary'}`}>
                             {session.status === 'AUTO_CLOSED' ? 'Missed check-out' : session.status}

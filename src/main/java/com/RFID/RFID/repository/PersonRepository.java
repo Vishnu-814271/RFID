@@ -8,4 +8,5 @@ import java.util.Optional;
 @Repository
 public interface PersonRepository extends JpaRepository<Person, Long> {
     Optional<Person> findByExternalRef(String externalRef);
+    Optional<Person> findByExternalRefIgnoreCase(String externalRef);
 }

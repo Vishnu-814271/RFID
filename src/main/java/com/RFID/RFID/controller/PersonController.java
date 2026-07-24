@@ -107,18 +107,23 @@ public class PersonController {
 
     @PostMapping
     public Envelope registerPerson(@RequestBody PersonRequest request) {
-        StaffUser currentUser = (SecurityContextHolder.getContext().getAuthentication() != null) ?
-                (StaffUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal() : null;
+        Object principal = (SecurityContextHolder.getContext().getAuthentication() != null) ?
+                SecurityContextHolder.getContext().getAuthentication().getPrincipal() : null;
+        StaffUser currentUser = (principal instanceof StaffUser) ? (StaffUser) principal : null;
 
-        if (request.getExternalRef() != null && !request.getExternalRef().isEmpty()) {
-            if (!request.getExternalRef().matches("^[a-zA-Z0-9]{7}$")) {
-                throw new RuntimeException("External Reference ID (Student ID) must be exactly 7 alphanumeric characters.");
+        if (request.getExternalRef() != null && !request.getExternalRef().trim().isEmpty()) {
+            String ref = request.getExternalRef().trim();
+            if (!ref.matches("^[a-zA-Z0-9_\\-]{3,20}$")) {
+                throw new RuntimeException("Student / Member ID must be 3-20 characters (letters, numbers, hyphens, underscores).");
             }
-            if (personRepository.findByExternalRef(request.getExternalRef()).isPresent()) {
-                throw new RuntimeException("External reference ID already exists.");
+            Optional<Person> existingOpt = personRepository.findByExternalRefIgnoreCase(ref);
+            if (existingOpt.isPresent()) {
+                Person existingPerson = existingOpt.get();
+                throw new RuntimeException("Student / Member ID '" + ref + "' is already assigned to " + existingPerson.getFullName() + " (" + existingPerson.getMemberType() + "). Please enter a unique Student ID.");
             }
+            request.setExternalRef(ref);
         } else if (request.getMemberType() == MemberType.STUDENT) {
-            throw new RuntimeException("Student ID is required and must be exactly 7 alphanumeric characters.");
+            throw new RuntimeException("Student ID is required.");
         }
 
         Person person = new Person(
@@ -153,18 +158,20 @@ public class PersonController {
         if (updates.containsKey("externalRef")) {
             String ref = (String) updates.get("externalRef");
             
-            if (ref != null && !ref.isEmpty()) {
-                if (!ref.matches("^[a-zA-Z0-9]{7}$")) {
-                    throw new RuntimeException("External Reference ID must be exactly 7 alphanumeric characters.");
+            if (ref != null && !ref.trim().isEmpty()) {
+                ref = ref.trim();
+                if (!ref.matches("^[a-zA-Z0-9_\\-]{3,20}$")) {
+                    throw new RuntimeException("Student / Member ID must be 3-20 characters (letters, numbers, hyphens, underscores).");
                 }
-                if (!ref.equals(person.getExternalRef()) && personRepository.findByExternalRef(ref).isPresent()) {
-                    throw new RuntimeException("External reference ID already exists.");
+                Optional<Person> existingOpt = personRepository.findByExternalRefIgnoreCase(ref);
+                if (existingOpt.isPresent() && !existingOpt.get().getPersonId().equals(person.getPersonId())) {
+                    Person existingPerson = existingOpt.get();
+                    throw new RuntimeException("Student / Member ID '" + ref + "' is already assigned to " + existingPerson.getFullName() + " (" + existingPerson.getMemberType() + "). Please enter a unique Student ID.");
                 }
+                person.setExternalRef(ref);
             } else if (person.getMemberType() == MemberType.STUDENT) {
-                throw new RuntimeException("Student ID is required and must be exactly 7 alphanumeric characters.");
+                throw new RuntimeException("Student ID is required.");
             }
-            
-            person.setExternalRef(ref);
         }
         if (updates.containsKey("groupLabel")) {
             person.setGroupLabel((String) updates.get("groupLabel"));

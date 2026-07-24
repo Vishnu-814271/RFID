@@ -104,10 +104,14 @@ public class CardController {
             String statusStr = (String) updates.get("status");
             CardStatus newStatus = CardStatus.valueOf(statusStr);
 
-            // Re-available restriction: "card SHALL NOT return to AVAILABLE until Admin action"
-            if (newStatus == CardStatus.AVAILABLE && (card.getStatus() == CardStatus.LOST || card.getStatus() == CardStatus.DEACTIVATED)) {
+            // Cards marked as LOST are permanently disabled
+            if (card.getStatus() == CardStatus.LOST && newStatus != CardStatus.LOST) {
+                throw new RuntimeException("Card marked as LOST is permanently disabled and cannot be reactivated or reassigned.");
+            }
+
+            if (newStatus == CardStatus.AVAILABLE && card.getStatus() == CardStatus.DEACTIVATED) {
                 if (currentUser.getRole() != Role.ADMIN) {
-                    throw new RuntimeException("Only Admins can reactivate LOST or DEACTIVATED cards to AVAILABLE.");
+                    throw new RuntimeException("Only Admins can reactivate DEACTIVATED cards to AVAILABLE.");
                 }
             }
 

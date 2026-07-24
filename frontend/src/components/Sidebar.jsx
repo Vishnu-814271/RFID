@@ -16,6 +16,7 @@ export function Sidebar() {
     { name: 'People', path: '/people', icon: <Users size={20} />, roles: ['ADMIN', 'MANAGER', 'OPERATOR'] },
     { name: 'Cards', path: '/cards', icon: <CreditCard size={20} />, roles: ['ADMIN', 'MANAGER', 'OPERATOR'] },
     { name: 'Reports', path: '/reports', icon: <FileText size={20} />, roles: ['ADMIN', 'MANAGER'] },
+    { name: 'Access Logs', path: '/access-logs', icon: <ShieldAlert size={20} />, roles: ['ADMIN', 'MANAGER', 'OPERATOR'] },
     { name: 'Audit Logs', path: '/audit', icon: <ShieldAlert size={20} />, roles: ['ADMIN'] },
     { name: 'Staff Users', path: '/staff-users', icon: <UserCog size={20} />, roles: ['ADMIN', 'MANAGER'] },
     { name: 'Settings', path: '/settings', icon: <Settings size={20} />, roles: ['ADMIN', 'MANAGER'] },

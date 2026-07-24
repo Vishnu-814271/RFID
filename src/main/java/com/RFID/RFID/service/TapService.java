@@ -10,6 +10,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -133,8 +134,64 @@ public class TapService {
                 return new TapResponse("DENIED", null, "ALREADY_CHECKED_IN", null, occurredAt);
             }
 
-            // CHECK_IN Transition
+            // Fetch all sessions on the same work date to enforce sequential rules
             List<AttendanceSession> dailySessions = sessionRepository.findByPersonAndWorkDate(person, workDate);
+            if (!dailySessions.isEmpty()) {
+                // Rule a & b: Cannot check in prior to the first check-in of the current date
+                LocalDateTime firstCheckInAt = dailySessions.stream()
+                        .map(AttendanceSession::getCheckInAt)
+                        .filter(Objects::nonNull)
+                        .min(LocalDateTime::compareTo)
+                        .orElse(null);
+                if (firstCheckInAt != null && occurredAt.isBefore(firstCheckInAt)) {
+                    AttendanceEvent errorEvent = new AttendanceEvent(
+                            cardUid, person, Decision.DENIED, null, "CHECK_IN_BEFORE_FIRST_DAILY_CHECKIN", TapSource.SIMULATED, occurredAt
+                    );
+                    eventRepository.save(errorEvent);
+                    checkRepeatedDenials(cardUid, occurredAt);
+                    return new TapResponse("DENIED", null, "CHECK_IN_BEFORE_FIRST_DAILY_CHECKIN", null, occurredAt);
+                }
+
+                // Rule 4: Next check-in must be strictly after the previous check-out time
+                LocalDateTime maxCheckOutAt = dailySessions.stream()
+                        .map(AttendanceSession::getCheckOutAt)
+                        .filter(Objects::nonNull)
+                        .max(LocalDateTime::compareTo)
+                        .orElse(null);
+                if (maxCheckOutAt != null && !occurredAt.isAfter(maxCheckOutAt)) {
+                    AttendanceEvent errorEvent = new AttendanceEvent(
+                            cardUid, person, Decision.DENIED, null, "CHECK_IN_BEFORE_PREVIOUS_CHECKOUT", TapSource.SIMULATED, occurredAt
+                    );
+                    eventRepository.save(errorEvent);
+                    checkRepeatedDenials(cardUid, occurredAt);
+                    return new TapResponse("DENIED", null, "CHECK_IN_BEFORE_PREVIOUS_CHECKOUT", null, occurredAt);
+                }
+            }
+
+            // Check for overlapping session with existing sessions (closed or active)
+            List<AttendanceSession> existingSessions = sessionRepository.findByPerson(person);
+            boolean isOverlapping = existingSessions.stream().anyMatch(s -> {
+                if (s.getCheckInAt() == null) return false;
+                LocalDateTime start = s.getCheckInAt();
+                LocalDateTime end = s.getCheckOutAt();
+                if (end != null) {
+                    return !occurredAt.isBefore(start) && !occurredAt.isAfter(end);
+                } else if (s.getStatus() == SessionStatus.OPEN) {
+                    return !occurredAt.isBefore(start);
+                }
+                return false;
+            });
+
+            if (isOverlapping) {
+                AttendanceEvent errorEvent = new AttendanceEvent(
+                        cardUid, person, Decision.DENIED, null, "OVERLAPPING_SESSION", TapSource.SIMULATED, occurredAt
+                );
+                eventRepository.save(errorEvent);
+                checkRepeatedDenials(cardUid, occurredAt);
+                return new TapResponse("DENIED", null, "OVERLAPPING_SESSION", null, occurredAt);
+            }
+
+            // CHECK_IN Transition
             boolean isFirstCheckIn = dailySessions.isEmpty();
             boolean isLate = false;
 
@@ -166,13 +223,25 @@ public class TapService {
                 return new TapResponse("DENIED", null, "NOT_CHECKED_IN", null, occurredAt);
             }
 
-            // CHECK_OUT Transition
             AttendanceSession session = openSessionOpt.get();
+
+            // Check-out time must be strictly after check-in time
+            if (!occurredAt.isAfter(session.getCheckInAt())) {
+                AttendanceEvent errorEvent = new AttendanceEvent(
+                        cardUid, person, Decision.DENIED, null, "INVALID_CHECK_OUT_TIME", TapSource.SIMULATED, occurredAt
+                );
+                eventRepository.save(errorEvent);
+                checkRepeatedDenials(cardUid, occurredAt);
+                return new TapResponse("DENIED", null, "INVALID_CHECK_OUT_TIME", null, occurredAt);
+            }
+
+            // CHECK_OUT Transition
             session.setCheckOutAt(occurredAt);
             session.setStatus(SessionStatus.CLOSED);
 
             long durationMin = Duration.between(session.getCheckInAt(), occurredAt).toMinutes();
-            session.setDurationMinutes((int) Math.max(0, durationMin));
+            int cappedDuration = (int) Math.min(1440, Math.max(0, durationMin));
+            session.setDurationMinutes(cappedDuration);
             sessionRepository.save(session);
 
             AttendanceEvent event = new AttendanceEvent(

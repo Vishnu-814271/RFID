@@ -55,13 +55,20 @@ public class AutoCheckoutScheduler {
         for (AttendanceSession session : openSessions) {
             LocalDateTime checkOutAt = LocalDateTime.of(session.getWorkDate(), cutoffTime);
             if (checkOutAt.isBefore(session.getCheckInAt())) {
-                checkOutAt = checkOutAt.plusDays(1);
+                LocalDateTime nextDayCutoff = checkOutAt.plusDays(1);
+                long durationHours = Duration.between(session.getCheckInAt(), nextDayCutoff).toHours();
+                if (durationHours <= 16) {
+                    checkOutAt = nextDayCutoff;
+                } else {
+                    checkOutAt = session.getCheckInAt().plusHours(8);
+                }
             }
             session.setCheckOutAt(checkOutAt);
             session.setStatus(SessionStatus.AUTO_CLOSED);
 
             long durationMin = Duration.between(session.getCheckInAt(), checkOutAt).toMinutes();
-            session.setDurationMinutes((int) Math.max(0, durationMin));
+            int cappedDuration = (int) Math.min(1440, Math.max(0, durationMin));
+            session.setDurationMinutes(cappedDuration);
             sessionRepository.save(session);
 
             // Audit Log (actor = System/null)

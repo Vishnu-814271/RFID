@@ -11,6 +11,7 @@ import { AuditLogs } from './pages/AuditLogs';
 import { Settings } from './pages/Settings';
 import { StaffUsers } from './pages/StaffUsers';
 import { LiveAttendance } from './pages/LiveAttendance';
+import { AccessLogs } from './pages/AccessLogs';
 import { useAuth } from './context/AuthContext';
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
@@ -32,6 +33,7 @@ function App() {
             <Route path="live" element={<LiveAttendance />} />
             <Route path="people" element={<People />} />
             <Route path="cards" element={<Cards />} />
+            <Route path="access-logs" element={<AccessLogs />} />
             <Route path="reports" element={<ProtectedRoute allowedRoles={['ADMIN', 'MANAGER']}><Reports /></ProtectedRoute>} />
             <Route path="audit" element={<ProtectedRoute allowedRoles={['ADMIN']}><AuditLogs /></ProtectedRoute>} />
             <Route path="settings" element={<ProtectedRoute allowedRoles={['ADMIN', 'MANAGER']}><Settings /></ProtectedRoute>} />

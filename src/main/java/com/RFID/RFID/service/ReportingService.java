@@ -62,15 +62,20 @@ public class ReportingService {
 
             // 1. Present days
             long presentDays = sessions.stream()
-                    .filter(s -> s.getStatus() == SessionStatus.CLOSED && s.getDurationMinutes() != null && s.getDurationMinutes() >= minWorkingMinutes)
                     .map(AttendanceSession::getWorkDate)
                     .distinct()
                     .count();
 
-            // 2. Total hours
-            double totalMinutes = sessions.stream()
+            // 2. Total hours (capped at max 1440 minutes / 24 hours per calendar day)
+            Map<LocalDate, Integer> dailyMinutesMap = sessions.stream()
                     .filter(s -> s.getDurationMinutes() != null)
-                    .mapToInt(AttendanceSession::getDurationMinutes)
+                    .collect(Collectors.groupingBy(
+                            AttendanceSession::getWorkDate,
+                            Collectors.summingInt(AttendanceSession::getDurationMinutes)
+                    ));
+
+            double totalMinutes = dailyMinutesMap.values().stream()
+                    .mapToInt(mins -> Math.min(1440, mins))
                     .sum();
             double totalHours = totalMinutes / 60.0;
 
@@ -89,11 +94,13 @@ public class ReportingService {
 
             Map<String, Object> row = new HashMap<>();
             row.put("personId", person.getPersonId());
+            row.put("externalRef", person.getExternalRef() != null ? person.getExternalRef() : "EXT-" + person.getPersonId());
             row.put("fullName", person.getFullName());
             row.put("memberType", person.getMemberType().name());
             row.put("groupLabel", person.getGroupLabel());
             row.put("email", person.getEmail());
             row.put("phone", person.getPhone());
+            row.put("status", person.getStatus() != null ? person.getStatus().name() : "ACTIVE");
             row.put("daysPresent", presentDays);
             row.put("totalHours", Math.round(totalHours * 100.0) / 100.0);
             row.put("lateCount", lateCount);
@@ -112,18 +119,14 @@ public class ReportingService {
         }
 
         Set<LocalDate> presentDates = sessions.stream()
-                .filter(s -> (s.getStatus() == SessionStatus.CLOSED && s.getDurationMinutes() != null && s.getDurationMinutes() >= minWorkingMinutes)
-                        || (s.getStatus() == SessionStatus.OPEN && s.getWorkDate().equals(LocalDate.now())))
                 .map(AttendanceSession::getWorkDate)
                 .collect(Collectors.toSet());
 
-        LocalDate registrationDate = person.getCreatedAt().toLocalDate();
+        LocalDate today = LocalDate.now();
+        LocalDate effectiveEnd = end.isBefore(today) ? end : today;
         long absences = 0;
 
-        for (LocalDate date = start; !date.isAfter(end); date = date.plusDays(1)) {
-            if (date.isBefore(registrationDate)) {
-                continue;
-            }
+        for (LocalDate date = start; !date.isAfter(effectiveEnd); date = date.plusDays(1)) {
             String dayName = getShortDayName(date.getDayOfWeek());
             if (workingDays.contains(dayName) && !presentDates.contains(date)) {
                 absences++;
@@ -148,12 +151,14 @@ public class ReportingService {
         List<Map<String, Object>> data = generateReportData(start, end, groupLabel, memberType);
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         try (PrintWriter writer = new PrintWriter(out)) {
-            writer.println("Person ID,Full Name,Member Type,Group,Days Present,Total Hours,Late Count,Missed Checkouts,Absent Days");
+            writer.println("Person ID,Student/Member ID,Full Name,Member Type,Status,Group,Days Present,Total Hours,Late Count,Missed Checkouts,Absent Days");
             for (Map<String, Object> row : data) {
-                writer.printf("%s,\"%s\",%s,\"%s\",%s,%s,%s,%s,%s%n",
+                writer.printf("%s,\"%s\",\"%s\",%s,%s,\"%s\",%s,%s,%s,%s,%s%n",
                         row.get("personId"),
+                        row.get("externalRef").toString().replace("\"", "\"\""),
                         row.get("fullName").toString().replace("\"", "\"\""),
                         row.get("memberType"),
+                        row.get("status"),
                         row.get("groupLabel").toString().replace("\"", "\"\""),
                         row.get("daysPresent"),
                         row.get("totalHours"),

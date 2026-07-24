@@ -19,6 +19,7 @@ export function People() {
   const [selectedCardId, setSelectedCardId] = useState('');
   
   const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const [formData, setFormData] = useState({
     fullName: '',
@@ -55,6 +56,7 @@ export function People() {
   const handleAddPerson = async (e) => {
     e.preventDefault();
     setError('');
+    setIsSubmitting(true);
     try {
       await api.post('/people', formData);
       setShowModal(false);
@@ -69,6 +71,8 @@ export function People() {
       fetchPeople();
     } catch (err) {
       setError(err?.message || 'Failed to add person');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -368,8 +372,10 @@ export function People() {
                 />
               </div>
               <div className="modal-actions">
-                <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancel</button>
-                <button type="submit" className="btn btn-primary">Add Person</button>
+                <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)} disabled={isSubmitting}>Cancel</button>
+                <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
+                  {isSubmitting ? 'Adding...' : 'Add Person'}
+                </button>
               </div>
             </form>
           </div>
