@@ -37,8 +37,9 @@ public class MappingController {
     @PostMapping
     @Transactional
     public Envelope mapCard(@RequestBody MappingRequest request) {
-        StaffUser currentUser = (SecurityContextHolder.getContext().getAuthentication() != null) ?
-                (StaffUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal() : null;
+        Object principal = (SecurityContextHolder.getContext().getAuthentication() != null) ?
+                SecurityContextHolder.getContext().getAuthentication().getPrincipal() : null;
+        StaffUser currentUser = (principal instanceof StaffUser) ? (StaffUser) principal : null;
 
         RfidCard card = cardRepository.findById(request.getCardId())
                 .orElseThrow(() -> new RuntimeException("Card not found."));
@@ -82,8 +83,9 @@ public class MappingController {
     @PostMapping("/{id}/release")
     @Transactional
     public Envelope releaseMapping(@PathVariable Long id) {
-        StaffUser currentUser = (SecurityContextHolder.getContext().getAuthentication() != null) ?
-                (StaffUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal() : null;
+        Object principal = (SecurityContextHolder.getContext().getAuthentication() != null) ?
+                SecurityContextHolder.getContext().getAuthentication().getPrincipal() : null;
+        StaffUser currentUser = (principal instanceof StaffUser) ? (StaffUser) principal : null;
 
         CardMapping mapping = mappingRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Mapping not found."));

@@ -96,7 +96,9 @@ public class CardController {
     @PatchMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public Envelope updateCard(@PathVariable Long id, @RequestBody Map<String, Object> updates) {
-        StaffUser currentUser = (StaffUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Object principal = (SecurityContextHolder.getContext().getAuthentication() != null) ?
+                SecurityContextHolder.getContext().getAuthentication().getPrincipal() : null;
+        StaffUser currentUser = (principal instanceof StaffUser) ? (StaffUser) principal : null;
         RfidCard card = cardRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Card not found."));
 

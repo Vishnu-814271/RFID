@@ -36,10 +36,12 @@ public class UserController {
 
     @GetMapping
     public Envelope listUsers() {
-        StaffUser currentUser = (StaffUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Object principal = (SecurityContextHolder.getContext().getAuthentication() != null) ?
+                SecurityContextHolder.getContext().getAuthentication().getPrincipal() : null;
+        StaffUser currentUser = (principal instanceof StaffUser) ? (StaffUser) principal : null;
         List<StaffUser> users = staffUserRepository.findAll();
 
-        if (currentUser.getRole() == Role.MANAGER) {
+        if (currentUser != null && currentUser.getRole() == Role.MANAGER) {
             // Managers can only list OPERATORs
             List<StaffUser> operators = users.stream()
                     .filter(u -> u.getRole() == Role.OPERATOR)
@@ -53,10 +55,12 @@ public class UserController {
 
     @PostMapping
     public Envelope createUser(@RequestBody StaffUserRequest request) {
-        StaffUser currentUser = (StaffUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Object principal = (SecurityContextHolder.getContext().getAuthentication() != null) ?
+                SecurityContextHolder.getContext().getAuthentication().getPrincipal() : null;
+        StaffUser currentUser = (principal instanceof StaffUser) ? (StaffUser) principal : null;
 
         // Role constraint validation
-        if (currentUser.getRole() == Role.MANAGER && request.getRole() != Role.OPERATOR) {
+        if (currentUser != null && currentUser.getRole() == Role.MANAGER && request.getRole() != Role.OPERATOR) {
             throw new RuntimeException("Managers are only permitted to create Operator accounts.");
         }
 
@@ -135,8 +139,10 @@ public class UserController {
         StaffUser user = staffUserRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Staff user not found."));
 
-        StaffUser currentUser = (StaffUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        if (currentUser.getUserId().equals(user.getUserId())) {
+        Object principal = (SecurityContextHolder.getContext().getAuthentication() != null) ?
+                SecurityContextHolder.getContext().getAuthentication().getPrincipal() : null;
+        StaffUser currentUser = (principal instanceof StaffUser) ? (StaffUser) principal : null;
+        if (currentUser != null && currentUser.getUserId().equals(user.getUserId())) {
             throw new RuntimeException("Cannot delete your own account.");
         }
 

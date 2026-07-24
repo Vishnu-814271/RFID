@@ -26,8 +26,10 @@ public class NotificationController {
 
     @GetMapping
     public Envelope getNotifications() {
-        StaffUser currentUser = (StaffUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        String roleStr = currentUser.getRole().name();
+        Object principal = (SecurityContextHolder.getContext().getAuthentication() != null) ?
+                SecurityContextHolder.getContext().getAuthentication().getPrincipal() : null;
+        StaffUser currentUser = (principal instanceof StaffUser) ? (StaffUser) principal : null;
+        String roleStr = (currentUser != null && currentUser.getRole() != null) ? currentUser.getRole().name() : "ADMIN";
         
         List<AppNotification> notifications = notificationRepository.findByTargetRolesContainingOrderByCreatedAtDesc(roleStr);
         return Envelope.ok(notifications);

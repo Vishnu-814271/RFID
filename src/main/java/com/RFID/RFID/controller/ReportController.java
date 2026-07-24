@@ -103,12 +103,14 @@ public class ReportController {
     @GetMapping("/dashboard/analytics")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'OPERATOR')")
     public Envelope getAnalytics(@RequestParam(required = false) String date) {
-        StaffUser currentUser = (StaffUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Object principal = (SecurityContextHolder.getContext().getAuthentication() != null) ?
+                SecurityContextHolder.getContext().getAuthentication().getPrincipal() : null;
+        StaffUser currentUser = (principal instanceof StaffUser) ? (StaffUser) principal : null;
         
         LocalDate targetDate = (date != null && !date.isEmpty()) ?
                 LocalDate.parse(date, DateTimeFormatter.ISO_DATE) : LocalDate.now();
 
-        if (currentUser.getRole() == Role.OPERATOR && !targetDate.equals(LocalDate.now())) {
+        if (currentUser != null && currentUser.getRole() == Role.OPERATOR && !targetDate.equals(LocalDate.now())) {
             throw new RuntimeException("Operators can only view today's analytics.");
         }
 
@@ -118,10 +120,12 @@ public class ReportController {
 
     @GetMapping("/events")
     public Envelope getTapLogs() {
-        StaffUser currentUser = (StaffUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Object principal = (SecurityContextHolder.getContext().getAuthentication() != null) ?
+                SecurityContextHolder.getContext().getAuthentication().getPrincipal() : null;
+        StaffUser currentUser = (principal instanceof StaffUser) ? (StaffUser) principal : null;
         List<AttendanceEvent> events;
 
-        if (currentUser.getRole() == Role.OPERATOR) {
+        if (currentUser != null && currentUser.getRole() == Role.OPERATOR) {
             // Operator: Today only
             events = eventRepository.findByOccurredAtAfterOrderByOccurredAtDesc(LocalDate.now().atStartOfDay());
         } else {
