@@ -112,7 +112,7 @@ export function Reports() {
   };
 
   const uniqueGroupLabels = Array.from(new Set(reportData.map(row => row.groupLabel).filter(Boolean))).sort();
-  const uniquePeople = reportData.map(row => ({ personId: row.personId, fullName: row.fullName })).sort((a, b) => a.fullName.localeCompare(b.fullName));
+  const uniquePeople = reportData.map(row => ({ personId: row.personId, fullName: row.fullName, externalRef: row.externalRef })).sort((a, b) => a.fullName.localeCompare(b.fullName));
 
   const activeCount = reportData.filter(r => r.status !== 'INACTIVE').length;
   const inactiveCount = reportData.filter(r => r.status === 'INACTIVE').length;
@@ -120,6 +120,7 @@ export function Reports() {
   const filteredData = reportData.filter(row => {
     const matchesSearch = searchTerm === '' || 
       row.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      row.externalRef?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       row.groupLabel?.toLowerCase().includes(searchTerm.toLowerCase());
       
     const matchesMemberType = selectedMemberType === 'ALL' || row.memberType === selectedMemberType;
@@ -237,7 +238,9 @@ export function Reports() {
                     return matchesType && matchesGroup;
                   })
                   .map(person => (
-                    <option key={person.personId} value={String(person.personId)}>{person.fullName}</option>
+                    <option key={person.personId} value={String(person.personId)}>
+                      {person.fullName} {person.externalRef ? `(${person.externalRef})` : ''}
+                    </option>
                   ))
                 }
               </select>

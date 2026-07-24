@@ -280,6 +280,7 @@ class RfidApplicationTests {
 		Person person = new Person("Report Student", MemberType.STUDENT, "STUD-999", "STUDENT_GROUP",
 				"stud999@example.com", "99999999");
 		person.setStatus(PersonStatus.ACTIVE);
+		person.setCreatedAt(LocalDateTime.of(2026, 6, 1, 0, 0, 0));
 		person = personRepository.save(person);
 
 		RfidCard card = new RfidCard();
