@@ -124,19 +124,9 @@ public class ReportingService {
 
         LocalDate today = LocalDate.now();
         LocalDate effectiveEnd = end.isBefore(today) ? end : today;
-
-        // Effective start date: if candidate was created after range start date, count absences from creation date
-        LocalDate effectiveStart = start;
-        if (person.getCreatedAt() != null) {
-            LocalDate regDate = person.getCreatedAt().toLocalDate();
-            if (regDate.isAfter(effectiveStart)) {
-                effectiveStart = regDate;
-            }
-        }
-
         long absences = 0;
 
-        for (LocalDate date = effectiveStart; !date.isAfter(effectiveEnd); date = date.plusDays(1)) {
+        for (LocalDate date = start; !date.isAfter(effectiveEnd); date = date.plusDays(1)) {
             String dayName = getShortDayName(date.getDayOfWeek());
             if (workingDays.contains(dayName) && !presentDates.contains(date)) {
                 absences++;
