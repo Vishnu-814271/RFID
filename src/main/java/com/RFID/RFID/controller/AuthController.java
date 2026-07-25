@@ -87,6 +87,7 @@ public class AuthController {
         java.util.Map<String, Object> data = new java.util.HashMap<>();
         data.put("userId", currentUser.getUserId());
         data.put("email", currentUser.getEmail());
+        data.put("name", currentUser.getEmail());
         data.put("role", currentUser.getRole());
         data.put("passwordChangeRequired", currentUser.isPasswordChangeRequired());
         

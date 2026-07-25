@@ -27,6 +27,7 @@ export function Login() {
       const response = await api.post('/login', { email: username, password });
       login(response.token, {
         name: response.email,
+        email: response.email,
         role: response.role,
         userId: response.userId,
         passwordChangeRequired: response.passwordChangeRequired

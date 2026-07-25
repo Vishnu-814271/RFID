@@ -45,10 +45,10 @@ export function Sidebar() {
       </nav>
       <div className="sidebar-footer">
         <div className="user-info">
-          <div className="avatar">{user?.name?.charAt(0) || 'U'}</div>
+          <div className="avatar">{(user?.name || user?.email)?.charAt(0).toUpperCase() || 'U'}</div>
           <div className="details">
-            <span className="name">{user?.name || 'Admin User'}</span>
-            <span className="role">{user?.role || 'Administrator'}</span>
+            <span className="name">{user?.name || user?.email || 'User'}</span>
+            <span className="role">{user?.role || 'Staff'}</span>
           </div>
         </div>
       </div>
