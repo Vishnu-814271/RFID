@@ -64,6 +64,7 @@ public class PersonController {
             Map<String, Object> map = new HashMap<>();
             map.put("personId", person.getPersonId());
             map.put("fullName", person.getFullName());
+            map.put("memberType", person.getMemberType());
             String extRef = (person.getExternalRef() != null && !person.getExternalRef().trim().isEmpty())
                     ? person.getExternalRef()
                     : "EXT-" + String.format("%04d", person.getPersonId());
