@@ -89,8 +89,8 @@ public class ReportingService {
                     .filter(s -> s.getStatus() == SessionStatus.AUTO_CLOSED)
                     .count();
 
-            // 5. Absent days
-            long absentDays = calculateAbsences(person, start, end, workingDays, minWorkingMinutes, sessions);
+            // 5. Absent days & dates list
+            List<String> absentDates = calculateAbsentDates(person, start, end, workingDays, sessions);
 
             Map<String, Object> row = new HashMap<>();
             row.put("personId", person.getPersonId());
@@ -105,7 +105,8 @@ public class ReportingService {
             row.put("totalHours", Math.round(totalHours * 100.0) / 100.0);
             row.put("lateCount", lateCount);
             row.put("missedCheckouts", missedCheckouts);
-            row.put("absentDays", absentDays);
+            row.put("absentDays", absentDates.size());
+            row.put("absentDates", absentDates);
 
             rows.add(row);
         }
@@ -113,30 +114,34 @@ public class ReportingService {
         return rows;
     }
 
-    private long calculateAbsences(Person person, LocalDate start, LocalDate end, Set<String> workingDays, int minWorkingMinutes, List<AttendanceSession> sessions) {
+    private List<String> calculateAbsentDates(Person person, LocalDate start, LocalDate end, Set<String> workingDays, List<AttendanceSession> sessions) {
         if (person.getStatus() == PersonStatus.INACTIVE) {
-            return 0; // Inactive members don't accumulate absences
+            return Collections.emptyList(); // Inactive members don't accumulate absences
         }
 
         Set<LocalDate> presentDates = sessions.stream()
                 .map(AttendanceSession::getWorkDate)
                 .collect(Collectors.toSet());
 
+        Set<String> safeWorkingDays = (workingDays != null && !workingDays.isEmpty())
+                ? workingDays
+                : Set.of("MON", "TUE", "WED", "THU", "FRI", "SAT");
+
         LocalDate today = LocalDate.now();
         LocalDate effectiveEnd = end.isBefore(today) ? end : today;
 
         if (start.isAfter(effectiveEnd)) {
-            return 0;
+            return Collections.emptyList();
         }
 
-        long absences = 0;
+        List<String> absentDates = new ArrayList<>();
         for (LocalDate date = start; !date.isAfter(effectiveEnd); date = date.plusDays(1)) {
             String dayName = getShortDayName(date.getDayOfWeek());
-            if (workingDays.contains(dayName) && !presentDates.contains(date)) {
-                absences++;
+            if (safeWorkingDays.contains(dayName) && !presentDates.contains(date)) {
+                absentDates.add(date.toString());
             }
         }
-        return absences;
+        return absentDates;
     }
 
     private String getShortDayName(DayOfWeek day) {

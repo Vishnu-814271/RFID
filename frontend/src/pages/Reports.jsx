@@ -22,6 +22,9 @@ export function Reports() {
   const [personSessions, setPersonSessions] = useState([]);
   const [sessionsLoading, setSessionsLoading] = useState(false);
   
+  const [showAbsencesModal, setShowAbsencesModal] = useState(false);
+  const [selectedAbsencePerson, setSelectedAbsencePerson] = useState(null);
+  
   const [correctionMode, setCorrectionMode] = useState(null);
   const [correctionForm, setCorrectionForm] = useState({ checkOutAt: '', correctionReason: '' });
 
@@ -318,7 +321,23 @@ export function Reports() {
                     <td>{row.memberType || 'N/A'}</td>
                     <td>{row.groupLabel || 'N/A'}</td>
                     <td><span className="text-success font-medium">{row.daysPresent || 0}</span></td>
-                    <td><span className="text-danger font-medium">{row.absentDays || 0}</span></td>
+                    <td>
+                      {row.absentDays > 0 ? (
+                        <button 
+                          className="badge badge-danger" 
+                          style={{ cursor: 'pointer', border: 'none', padding: '4px 8px', fontSize: '0.85rem', fontWeight: 600 }}
+                          onClick={() => {
+                            setSelectedAbsencePerson(row);
+                            setShowAbsencesModal(true);
+                          }}
+                          title="Click to view specific dates missed"
+                        >
+                          {row.absentDays} {row.absentDays === 1 ? 'day' : 'days'}
+                        </button>
+                      ) : (
+                        <span className="text-muted" style={{ fontSize: '0.85rem' }}>0 days</span>
+                      )}
+                    </td>
                     <td><span className="text-warning font-medium">{row.lateCount || 0}</span></td>
                     <td>
                       {row.missedCheckouts > 0 ? (
@@ -444,6 +463,59 @@ export function Reports() {
                 </form>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {showAbsencesModal && selectedAbsencePerson && (
+        <div className="modal-overlay">
+          <div className="modal" style={{ maxWidth: '550px', width: '90%' }}>
+            <div className="modal-header">
+              <h2 className="modal-title">
+                Absence Breakdown: {selectedAbsencePerson.fullName} {selectedAbsencePerson.externalRef ? `(${selectedAbsencePerson.externalRef})` : ''}
+              </h2>
+              <button className="modal-close" onClick={() => setShowAbsencesModal(false)}><X size={20} /></button>
+            </div>
+            
+            <div style={{ marginBottom: '1rem', padding: '0.75rem', background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: 'var(--border-radius)', color: '#991b1b' }}>
+              <strong>Total Missed Working Days: {selectedAbsencePerson.absentDays}</strong> (Period: {startDate} to {endDate})
+            </div>
+
+            <div className="data-table-container" style={{ maxHeight: '350px', overflowY: 'auto' }}>
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Date</th>
+                    <th>Day</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(selectedAbsencePerson.absentDates || []).map((dateStr, idx) => {
+                    const d = new Date(dateStr + 'T00:00:00');
+                    const dayName = d.toLocaleDateString('en-US', { weekday: 'long' });
+                    return (
+                      <tr key={idx}>
+                        <td className="text-muted">{idx + 1}</td>
+                        <td className="font-medium">{dateStr}</td>
+                        <td>{dayName}</td>
+                        <td><span className="badge badge-danger">ABSENT</span></td>
+                      </tr>
+                    );
+                  })}
+                  {(!selectedAbsencePerson.absentDates || selectedAbsencePerson.absentDates.length === 0) && (
+                    <tr>
+                      <td colSpan="4" style={{ textAlign: 'center' }} className="text-muted">No absences recorded in this period.</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="modal-footer" style={{ marginTop: '1.5rem', textAlign: 'right' }}>
+              <button className="btn btn-secondary" onClick={() => setShowAbsencesModal(false)}>Close</button>
+            </div>
           </div>
         </div>
       )}
