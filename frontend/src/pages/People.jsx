@@ -31,6 +31,9 @@ export function People() {
   });
 
   const [editFormData, setEditFormData] = useState({
+    fullName: '',
+    memberType: 'EMPLOYEE',
+    externalRef: '',
     groupLabel: '',
     email: '',
     phone: ''
@@ -79,6 +82,9 @@ export function People() {
   const openEditModal = (person) => {
     setSelectedPerson(person);
     setEditFormData({
+      fullName: person.fullName || '',
+      memberType: person.memberType || 'EMPLOYEE',
+      externalRef: person.externalRef || '',
       groupLabel: person.groupLabel || '',
       email: person.email || '',
       phone: person.phone || ''
@@ -160,10 +166,18 @@ export function People() {
     }
   };
 
-  const filteredPeople = people.filter(p => 
-    p.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    p.personId?.toString().includes(searchTerm)
-  );
+  const filteredPeople = people.filter(p => {
+    const term = searchTerm.toLowerCase();
+    return (
+      p.fullName?.toLowerCase().includes(term) ||
+      p.personId?.toString().includes(term) ||
+      p.externalRef?.toLowerCase().includes(term) ||
+      p.groupLabel?.toLowerCase().includes(term) ||
+      p.email?.toLowerCase().includes(term) ||
+      p.phone?.includes(term) ||
+      p.assignedCardUid?.toLowerCase().includes(term)
+    );
+  });
 
   return (
     <div className="page-container">
@@ -184,7 +198,7 @@ export function People() {
             <Search size={18} className="search-icon" />
             <input 
               type="text" 
-              placeholder="Search people..." 
+              placeholder="Search by name, ID, student ID, group, email, card..." 
               className="search-input"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -204,7 +218,7 @@ export function People() {
                   <th>Ext. ID</th>
                   <th>Type</th>
                   <th>Group</th>
-                  {isManagerOrAdmin && <th>Contact Info</th>}
+                  <th>Contact Info</th>
                   <th>Assigned Card</th>
                   <th>Status</th>
                   <th style={{ width: '120px' }}>Actions</th>
@@ -223,12 +237,10 @@ export function People() {
                     <td style={{ fontSize: '0.9rem', color: 'var(--color-text-muted)' }}>{person.externalRef || '-'}</td>
                     <td>{person.memberType}</td>
                     <td>{person.groupLabel}</td>
-                    {isManagerOrAdmin && (
-                      <td style={{ fontSize: '0.85rem' }}>
-                        <div>{person.email || '-'}</div>
-                        <div className="text-muted">{person.phone || '-'}</div>
-                      </td>
-                    )}
+                    <td style={{ fontSize: '0.85rem' }}>
+                      <div>{person.email || '-'}</div>
+                      <div className="text-muted">{person.phone || '-'}</div>
+                    </td>
                     <td>
                       {person.assignedCardUid ? (
                         <div style={{display: 'flex', alignItems: 'center', gap: '4px'}}>
@@ -263,19 +275,17 @@ export function People() {
                             <CreditCard size={16} />
                           </button>
                         )}
+                        <button className="icon-btn-small text-primary" title="Edit" onClick={() => openEditModal(person)}>
+                          <Edit size={16} />
+                        </button>
                         {isManagerOrAdmin && (
-                          <>
-                            <button className="icon-btn-small text-primary" title="Edit" onClick={() => openEditModal(person)}>
-                              <Edit size={16} />
-                            </button>
-                            <button 
-                              className={`icon-btn-small ${person.status === 'ACTIVE' ? 'text-danger' : 'text-success'}`} 
-                              title={person.status === 'ACTIVE' ? 'Deactivate' : 'Activate'}
-                              onClick={() => handleToggleStatus(person.personId, person.status)}
-                            >
-                              {person.status === 'ACTIVE' ? <Ban size={16} /> : <CheckCircle size={16} />}
-                            </button>
-                          </>
+                          <button 
+                            className={`icon-btn-small ${person.status === 'ACTIVE' ? 'text-danger' : 'text-success'}`} 
+                            title={person.status === 'ACTIVE' ? 'Deactivate' : 'Activate'}
+                            onClick={() => handleToggleStatus(person.personId, person.status)}
+                          >
+                            {person.status === 'ACTIVE' ? <Ban size={16} /> : <CheckCircle size={16} />}
+                          </button>
                         )}
                       </div>
                     </td>
@@ -283,7 +293,7 @@ export function People() {
                 ))}
                 {filteredPeople.length === 0 && (
                   <tr>
-                    <td colSpan={isManagerOrAdmin ? "9" : "8"} style={{textAlign: 'center'}} className="text-muted">No people found.</td>
+                    <td colSpan="9" style={{textAlign: 'center'}} className="text-muted">No people found.</td>
                   </tr>
                 )}
               </tbody>
@@ -331,8 +341,8 @@ export function People() {
                   className="form-control" 
                   value={formData.externalRef}
                   onChange={(e) => setFormData({...formData, externalRef: e.target.value})}
-                  pattern="^[a-zA-Z0-9]{7}$"
-                  title="Must be exactly 7 alphanumeric characters"
+                  pattern="^[a-zA-Z0-9_\-]{3,20}$"
+                  title="3 to 20 characters (letters, numbers, hyphens, underscores)"
                   required={formData.memberType === 'STUDENT'}
                 />
               </div>
@@ -429,6 +439,41 @@ export function People() {
             {error && <div className="login-error">{error}</div>}
             <form onSubmit={handleEditPerson}>
               <div className="form-group">
+                <label className="form-label">Full Name</label>
+                <input 
+                  type="text" 
+                  className="form-control" 
+                  value={editFormData.fullName}
+                  onChange={(e) => setEditFormData({...editFormData, fullName: e.target.value})}
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Member Type</label>
+                <select 
+                  className="form-control" 
+                  value={editFormData.memberType}
+                  onChange={(e) => setEditFormData({...editFormData, memberType: e.target.value})}
+                >
+                  <option value="EMPLOYEE">Employee</option>
+                  <option value="STUDENT">Student</option>
+                </select>
+              </div>
+              <div className="form-group">
+                <label className="form-label">
+                  {editFormData.memberType === 'STUDENT' ? 'Student ID *' : 'External Reference (ID)'}
+                </label>
+                <input 
+                  type="text" 
+                  className="form-control" 
+                  value={editFormData.externalRef}
+                  onChange={(e) => setEditFormData({...editFormData, externalRef: e.target.value})}
+                  pattern="^[a-zA-Z0-9_\-]{3,20}$"
+                  title="3 to 20 characters (letters, numbers, hyphens, underscores)"
+                  required={editFormData.memberType === 'STUDENT'}
+                />
+              </div>
+              <div className="form-group">
                 <label className="form-label">Group / Department</label>
                 <input 
                   type="text" 
@@ -474,3 +519,4 @@ export function People() {
     </div>
   );
 }
+

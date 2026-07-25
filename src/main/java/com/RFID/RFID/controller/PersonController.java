@@ -49,7 +49,6 @@ public class PersonController {
 
     @GetMapping
     public Envelope listPeople() {
-        StaffUser currentUser = (StaffUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         List<Person> people = personRepository.findAll();
         List<CardMapping> allMappings = mappingRepository.findAll();
         Map<Long, CardMapping> personToActiveMapping = new HashMap<>();
@@ -61,22 +60,14 @@ public class PersonController {
 
         List<Map<String, Object>> response = new ArrayList<>();
 
-        boolean maskContact = (currentUser.getRole() == Role.OPERATOR);
-
         for (Person person : people) {
             Map<String, Object> map = new HashMap<>();
             map.put("personId", person.getPersonId());
             map.put("fullName", person.getFullName());
             map.put("memberType", person.getMemberType());
-            if (maskContact) {
-                map.put("externalRef", null);
-                map.put("email", null);
-                map.put("phone", null);
-            } else {
-                map.put("externalRef", person.getExternalRef());
-                map.put("email", person.getEmail());
-                map.put("phone", person.getPhone());
-            }
+            map.put("externalRef", person.getExternalRef());
+            map.put("email", person.getEmail());
+            map.put("phone", person.getPhone());
             map.put("groupLabel", person.getGroupLabel());
             map.put("status", person.getStatus());
             map.put("createdAt", person.getCreatedAt());
@@ -92,13 +83,6 @@ public class PersonController {
                 map.put("activeMappingId", null);
             }
 
-            if (maskContact) {
-                map.put("email", null);
-                map.put("phone", null);
-            } else {
-                map.put("email", person.getEmail());
-                map.put("phone", person.getPhone());
-            }
             response.add(map);
         }
 
@@ -146,7 +130,7 @@ public class PersonController {
     }
 
     @PatchMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'OPERATOR')")
     @Transactional
     public Envelope editPerson(@PathVariable Long id, @RequestBody Map<String, Object> updates) {
         Person person = personRepository.findById(id)
@@ -154,6 +138,9 @@ public class PersonController {
 
         if (updates.containsKey("fullName")) {
             person.setFullName((String) updates.get("fullName"));
+        }
+        if (updates.containsKey("memberType")) {
+            person.setMemberType(MemberType.valueOf((String) updates.get("memberType")));
         }
         if (updates.containsKey("externalRef")) {
             String ref = (String) updates.get("externalRef");
