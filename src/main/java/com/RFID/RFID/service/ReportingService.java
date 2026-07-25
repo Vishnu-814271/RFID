@@ -114,6 +114,22 @@ public class ReportingService {
         return rows;
     }
 
+    private boolean isWorkingDay(DayOfWeek day, Set<String> workingDays) {
+        if (workingDays == null || workingDays.isEmpty()) {
+            return day != DayOfWeek.SUNDAY; // Default Mon-Sat
+        }
+        String shortName = getShortDayName(day); // "MON"
+        String fullName = day.name(); // "MONDAY"
+        for (String w : workingDays) {
+            if (w == null) continue;
+            String clean = w.trim().toUpperCase();
+            if (clean.equals(shortName) || clean.equals(fullName) || clean.startsWith(shortName) || fullName.startsWith(clean)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private List<String> calculateAbsentDates(Person person, LocalDate start, LocalDate end, Set<String> workingDays, List<AttendanceSession> sessions) {
         if (person.getStatus() == PersonStatus.INACTIVE) {
             return Collections.emptyList(); // Inactive members don't accumulate absences
@@ -122,10 +138,6 @@ public class ReportingService {
         Set<LocalDate> presentDates = sessions.stream()
                 .map(AttendanceSession::getWorkDate)
                 .collect(Collectors.toSet());
-
-        Set<String> safeWorkingDays = (workingDays != null && !workingDays.isEmpty())
-                ? workingDays
-                : Set.of("MON", "TUE", "WED", "THU", "FRI", "SAT");
 
         LocalDate today = LocalDate.now();
         LocalDate effectiveEnd = end.isBefore(today) ? end : today;
@@ -136,8 +148,7 @@ public class ReportingService {
 
         List<String> absentDates = new ArrayList<>();
         for (LocalDate date = start; !date.isAfter(effectiveEnd); date = date.plusDays(1)) {
-            String dayName = getShortDayName(date.getDayOfWeek());
-            if (safeWorkingDays.contains(dayName) && !presentDates.contains(date)) {
+            if (isWorkingDay(date.getDayOfWeek(), workingDays) && !presentDates.contains(date)) {
                 absentDates.add(date.toString());
             }
         }
@@ -228,9 +239,8 @@ public class ReportingService {
         Set<Long> presentIds = dailySessions.stream()
                 .map(s -> s.getPerson().getPersonId())
                 .collect(Collectors.toSet());
-        String dayName = getShortDayName(date.getDayOfWeek());
         long absenteesCount = 0;
-        if (workingDays.contains(dayName)) {
+        if (isWorkingDay(date.getDayOfWeek(), workingDays)) {
             absenteesCount = activePeople.stream()
                     .filter(p -> !presentIds.contains(p.getPersonId()))
                     .count();
