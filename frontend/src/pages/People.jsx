@@ -215,7 +215,7 @@ export function People() {
                 <tr>
                   <th>ID</th>
                   <th>Name</th>
-                  <th>Ext. ID</th>
+                  <th>Ext. ID / Student ID</th>
                   <th>Type</th>
                   <th>Group</th>
                   <th>Contact Info</th>
@@ -234,7 +234,21 @@ export function People() {
                         <span>{person.fullName}</span>
                       </div>
                     </td>
-                    <td style={{ fontSize: '0.9rem', color: 'var(--color-text-muted)' }}>{person.externalRef || '-'}</td>
+                    <td>
+                      <span style={{ 
+                        fontFamily: 'monospace',
+                        fontWeight: '600',
+                        fontSize: '0.85rem',
+                        background: '#f1f5f9',
+                        color: '#0f172a',
+                        padding: '2px 8px',
+                        borderRadius: '4px',
+                        border: '1px solid #cbd5e1',
+                        display: 'inline-block'
+                      }}>
+                        {person.externalRef || `EXT-${String(person.personId).padStart(4, '0')}`}
+                      </span>
+                    </td>
                     <td>{person.memberType}</td>
                     <td>{person.groupLabel}</td>
                     <td style={{ fontSize: '0.85rem' }}>
