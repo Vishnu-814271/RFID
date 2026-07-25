@@ -249,7 +249,11 @@ export function People() {
                         {person.externalRef || `EXT-${String(person.personId).padStart(4, '0')}`}
                       </span>
                     </td>
-                    <td>{person.memberType}</td>
+                    <td>
+                      <span className={`badge ${person.memberType === 'STUDENT' ? 'badge-warning' : 'badge-primary'}`} style={{ fontSize: '0.75rem', letterSpacing: '0.02em', padding: '3px 8px' }}>
+                        {person.memberType || 'EMPLOYEE'}
+                      </span>
+                    </td>
                     <td>{person.groupLabel}</td>
                     <td style={{ fontSize: '0.85rem' }}>
                       <div>{person.email || '-'}</div>
