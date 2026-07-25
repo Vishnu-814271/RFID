@@ -124,9 +124,16 @@ public class ReportingService {
 
         LocalDate today = LocalDate.now();
         LocalDate effectiveEnd = end.isBefore(today) ? end : today;
-        long absences = 0;
 
-        for (LocalDate date = start; !date.isAfter(effectiveEnd); date = date.plusDays(1)) {
+        LocalDate personCreated = (person.getCreatedAt() != null) ? person.getCreatedAt().toLocalDate() : start;
+        LocalDate effectiveStart = start.isBefore(personCreated) ? personCreated : start;
+
+        if (effectiveStart.isAfter(effectiveEnd)) {
+            return 0;
+        }
+
+        long absences = 0;
+        for (LocalDate date = effectiveStart; !date.isAfter(effectiveEnd); date = date.plusDays(1)) {
             String dayName = getShortDayName(date.getDayOfWeek());
             if (workingDays.contains(dayName) && !presentDates.contains(date)) {
                 absences++;

@@ -48,7 +48,11 @@ public class ConfigService {
 
     public Set<String> getWorkingDays() {
         String val = getValue("working_days", "MON,TUE,WED,THU,FRI");
-        return new java.util.LinkedHashSet<>(Arrays.asList(val.split(",")));
+        return Arrays.stream(val.split(","))
+                .map(String::trim)
+                .map(String::toUpperCase)
+                .filter(s -> !s.isEmpty())
+                .collect(java.util.stream.Collectors.toCollection(java.util.LinkedHashSet::new));
     }
 
     public int getTapDebounceSeconds() {
