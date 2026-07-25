@@ -9,15 +9,32 @@ import java.util.HashMap;
 import java.util.Map;
 
 
+import com.RFID.RFID.repository.AttendanceEventRepository;
+import com.RFID.RFID.repository.AttendanceSessionRepository;
+import com.RFID.RFID.repository.AppNotificationRepository;
+import com.RFID.RFID.service.AuditService;
+
 @RestController
 @RequestMapping("/api/config")
 @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'OPERATOR')")
 public class ConfigController {
 
     private final ConfigService configService;
+    private final AttendanceSessionRepository sessionRepository;
+    private final AttendanceEventRepository eventRepository;
+    private final AppNotificationRepository notificationRepository;
+    private final AuditService auditService;
 
-    public ConfigController(ConfigService configService) {
+    public ConfigController(ConfigService configService,
+                            AttendanceSessionRepository sessionRepository,
+                            AttendanceEventRepository eventRepository,
+                            AppNotificationRepository notificationRepository,
+                            AuditService auditService) {
         this.configService = configService;
+        this.sessionRepository = sessionRepository;
+        this.eventRepository = eventRepository;
+        this.notificationRepository = notificationRepository;
+        this.auditService = auditService;
     }
 
     @GetMapping
@@ -64,5 +81,15 @@ public class ConfigController {
         }
 
         return getConfig();
+    }
+
+    @PostMapping("/purge-test-data")
+    @PreAuthorize("hasRole('ADMIN')")
+    public Envelope purgeTestData() {
+        sessionRepository.deleteAll();
+        eventRepository.deleteAll();
+        notificationRepository.deleteAll();
+        auditService.logSystemAction("PURGE_TEST_DATA", "SYSTEM", "All attendance sessions, tap events, and notifications purged.");
+        return Envelope.ok("All test attendance data, tap logs, and notifications purged successfully.");
     }
 }

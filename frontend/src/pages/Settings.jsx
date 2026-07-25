@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
-import { Save } from 'lucide-react';
+import { Save, Trash2 } from 'lucide-react';
 
 export function Settings() {
   const { user } = useAuth();
@@ -9,6 +9,7 @@ export function Settings() {
   // Config state
   const [config, setConfig] = useState(null);
   const [configLoading, setConfigLoading] = useState(false);
+  const [purging, setPurging] = useState(false);
 
   useEffect(() => {
     if (user?.role === 'ADMIN' || user?.role === 'MANAGER') {
@@ -48,6 +49,21 @@ export function Settings() {
       alert(`Error saving config: ${err.message || err.error || JSON.stringify(err)}`);
     } finally {
       setConfigLoading(false);
+    }
+  };
+
+  const handlePurgeTestData = async () => {
+    if (!window.confirm("ARE YOU SURE?\nThis will permanently delete all test attendance sessions, access log events, and system notifications.")) {
+      return;
+    }
+    setPurging(true);
+    try {
+      const res = await api.post('/config/purge-test-data');
+      alert(res || "All test attendance data, tap logs, and notifications purged successfully.");
+    } catch (err) {
+      alert(err?.message || "Failed to purge test data");
+    } finally {
+      setPurging(false);
     }
   };
 
@@ -120,6 +136,25 @@ export function Settings() {
           </form>
         )}
       </div>
+
+      {isAdmin && (
+        <div className="card" style={{ maxWidth: '600px', marginTop: '1.5rem', border: '1px solid var(--color-danger, #ef4444)' }}>
+          <h3 style={{ color: 'var(--color-danger, #ef4444)' }}>Purge System Test Data</h3>
+          <p className="text-muted" style={{ fontSize: '0.85rem', marginTop: '0.5rem', lineHeight: '1.4' }}>
+            Permanently delete all test attendance sessions, access log events, and notifications. Use this to reset the system for production deployment.
+          </p>
+          <button 
+            type="button" 
+            className="btn btn-danger" 
+            style={{ marginTop: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }} 
+            disabled={purging}
+            onClick={handlePurgeTestData}
+          >
+            <Trash2 size={16} />
+            <span>{purging ? 'Purging Test Data...' : 'Purge All Test & Attendance Data'}</span>
+          </button>
+        </div>
+      )}
     </div>
   );
 }
