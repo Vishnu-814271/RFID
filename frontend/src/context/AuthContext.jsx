@@ -33,7 +33,13 @@ export function AuthProvider({ children }) {
     setUser(null);
   };
 
+  const [showSlowNotice, setShowSlowNotice] = useState(false);
+
   useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowSlowNotice(true);
+    }, 2000);
+
     const hydrateAuth = async () => {
       const token = localStorage.getItem('token');
       if (token) {
@@ -48,8 +54,11 @@ export function AuthProvider({ children }) {
         }
       }
       setLoading(false);
+      clearTimeout(timer);
     };
     hydrateAuth();
+
+    return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
@@ -87,7 +96,16 @@ export function AuthProvider({ children }) {
   }, [isAuthenticated]);
 
   if (loading) {
-    return <div className="loading-screen" style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Loading session...</div>;
+    return (
+      <div className="loading-screen" style={{ height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f8fafc', fontFamily: 'system-ui, sans-serif', padding: '1rem', textAlign: 'center' }}>
+        <div style={{ width: '48px', height: '48px', border: '4px solid #e2e8f0', borderTopColor: '#3b82f6', borderRadius: '50%', animation: 'spin 1s linear infinite', marginBottom: '1.25rem' }}></div>
+        <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
+        <h3 style={{ margin: '0 0 0.5rem 0', color: '#1e293b', fontSize: '1.25rem' }}>Loading RFID.ZENCUBE</h3>
+        <p style={{ color: '#64748b', margin: 0, fontSize: '0.95rem' }}>
+          {showSlowNotice ? "⚡ Waking up backend server on Render... (This may take up to 20-30s on cold start)" : "Initializing session..."}
+        </p>
+      </div>
+    );
   }
 
   return (

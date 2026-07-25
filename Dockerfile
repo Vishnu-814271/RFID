@@ -20,4 +20,5 @@ FROM eclipse-temurin:21-jre-jammy
 WORKDIR /app
 COPY --from=backend-build /app/target/*.jar app.jar
 EXPOSE 8081
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-XX:+UseSerialGC", "-XX:TieredStopAtLevel=1", "-Xms64m", "-Xmx256m", "-jar", "app.jar"]
+
