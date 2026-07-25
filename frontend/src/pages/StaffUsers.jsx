@@ -121,6 +121,8 @@ export function StaffUsers() {
           <table className="data-table">
             <thead>
               <tr>
+                <th>User ID</th>
+                <th>Person ID / Ext. ID</th>
                 <th>Email</th>
                 <th>Role</th>
                 <th>Status</th>
@@ -130,6 +132,32 @@ export function StaffUsers() {
             <tbody>
               {users.map(u => (
                 <tr key={u.userId}>
+                  <td className="font-medium">#{u.userId}</td>
+                  <td>
+                    {u.personId ? (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                        <span style={{ 
+                          fontFamily: 'monospace',
+                          fontWeight: '600',
+                          fontSize: '0.85rem',
+                          background: '#f1f5f9',
+                          color: '#0f172a',
+                          padding: '2px 8px',
+                          borderRadius: '4px',
+                          border: '1px solid #cbd5e1',
+                          display: 'inline-block',
+                          width: 'fit-content'
+                        }}>
+                          {u.personExternalRef || `EXT-${String(u.personId).padStart(4, '0')}`}
+                        </span>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
+                          Person #{u.personId} ({u.personName})
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="text-muted" style={{ fontSize: '0.85rem' }}>-</span>
+                    )}
+                  </td>
                   <td className="font-medium">{u.email}</td>
                   <td><span className={`badge ${u.role === 'ADMIN' ? 'badge-danger' : u.role === 'MANAGER' ? 'badge-primary' : 'badge-success'}`}>{u.role}</span></td>
                   <td>

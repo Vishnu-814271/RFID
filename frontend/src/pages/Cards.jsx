@@ -137,9 +137,22 @@ export function Cards() {
                     </td>
                     <td>
                       {c.assignedPersonName ? (
-                        <div style={{display: 'flex', flexDirection: 'column'}}>
-                          <span style={{fontSize: '0.9rem'}}>{c.assignedPersonName}</span>
-                          <span className="text-muted" style={{fontSize: '0.75rem'}}>ID: {c.assignedPersonId}</span>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                          <span style={{ fontSize: '0.9rem', fontWeight: 500 }}>{c.assignedPersonName}</span>
+                          <span style={{ 
+                            fontFamily: 'monospace',
+                            fontWeight: '600',
+                            fontSize: '0.75rem',
+                            background: '#f1f5f9',
+                            color: '#0f172a',
+                            padding: '1px 6px',
+                            borderRadius: '4px',
+                            border: '1px solid #cbd5e1',
+                            display: 'inline-block',
+                            width: 'fit-content'
+                          }}>
+                            {c.assignedPersonExternalRef || `EXT-${String(c.assignedPersonId).padStart(4, '0')}`}
+                          </span>
                         </div>
                       ) : (
                         <span className="text-muted">-</span>

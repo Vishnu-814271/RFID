@@ -49,6 +49,10 @@ public class ReportController {
             map.put("sessionId", session.getSessionId());
             map.put("personId", session.getPerson().getPersonId());
             map.put("fullName", session.getPerson().getFullName());
+            String extRef = (session.getPerson().getExternalRef() != null && !session.getPerson().getExternalRef().trim().isEmpty())
+                    ? session.getPerson().getExternalRef()
+                    : "EXT-" + String.format("%04d", session.getPerson().getPersonId());
+            map.put("externalRef", extRef);
             map.put("memberType", session.getPerson().getMemberType());
             map.put("groupLabel", session.getPerson().getGroupLabel());
             map.put("checkInAt", session.getCheckInAt());

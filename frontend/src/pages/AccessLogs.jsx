@@ -170,7 +170,7 @@ export function AccessLogs() {
               <thead>
                 <tr>
                   <th>Date & Time</th>
-                  <th>Student ID</th>
+                  <th>Student ID / Ext. ID</th>
                   <th>Name</th>
                   <th>Card UID</th>
                   <th>Event Type</th>
@@ -182,8 +182,24 @@ export function AccessLogs() {
                 {filteredEvents.map((ev, i) => (
                   <tr key={ev.eventId || i}>
                     <td className="font-medium">{formatDateTime(ev.occurredAt)}</td>
-                    <td style={{ color: 'var(--color-primary, #4f46e5)', fontWeight: 500 }}>
-                      {ev.person?.externalRef || (ev.person ? `ID: ${ev.person.personId}` : '-')}
+                    <td>
+                      {ev.person ? (
+                        <span style={{ 
+                          fontFamily: 'monospace',
+                          fontWeight: '600',
+                          fontSize: '0.85rem',
+                          background: '#f1f5f9',
+                          color: '#0f172a',
+                          padding: '2px 8px',
+                          borderRadius: '4px',
+                          border: '1px solid #cbd5e1',
+                          display: 'inline-block'
+                        }}>
+                          {ev.person.externalRef || `EXT-${String(ev.person.personId).padStart(4, '0')}`}
+                        </span>
+                      ) : (
+                        <span className="text-muted">-</span>
+                      )}
                     </td>
                     <td className="font-medium">{ev.person ? ev.person.fullName : 'Unknown Card'}</td>
                     <td><code style={{ background: 'var(--color-bg-secondary, #f3f4f6)', padding: '0.2rem 0.4rem', borderRadius: '4px' }}>{ev.cardUid}</code></td>

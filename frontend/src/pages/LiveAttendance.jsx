@@ -30,10 +30,15 @@ export function LiveAttendance() {
     return () => clearInterval(interval);
   }, [user?.passwordChangeRequired]);
 
-  const filteredMembers = (liveData.presentMembers || []).filter(m => 
-    m.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    m.groupLabel?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredMembers = (liveData.presentMembers || []).filter(m => {
+    const term = searchTerm.toLowerCase();
+    return (
+      m.fullName?.toLowerCase().includes(term) ||
+      m.externalRef?.toLowerCase().includes(term) ||
+      m.personId?.toString().includes(term) ||
+      m.groupLabel?.toLowerCase().includes(term)
+    );
+  });
 
   return (
     <div className="page-container">
@@ -55,7 +60,7 @@ export function LiveAttendance() {
             <Search size={18} className="search-icon" />
             <input 
               type="text" 
-              placeholder="Search by name or group..." 
+              placeholder="Search by name, student ID, group..." 
               className="search-input"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -71,6 +76,7 @@ export function LiveAttendance() {
             <table className="data-table">
               <thead>
                 <tr>
+                  <th>Student ID / Ext. ID</th>
                   <th>Person Name</th>
                   <th>Type</th>
                   <th>Group</th>
@@ -87,6 +93,21 @@ export function LiveAttendance() {
                   
                   return (
                     <tr key={i}>
+                      <td>
+                        <span style={{ 
+                          fontFamily: 'monospace',
+                          fontWeight: '600',
+                          fontSize: '0.85rem',
+                          background: '#f1f5f9',
+                          color: '#0f172a',
+                          padding: '2px 8px',
+                          borderRadius: '4px',
+                          border: '1px solid #cbd5e1',
+                          display: 'inline-block'
+                        }}>
+                          {m.externalRef || `EXT-${String(m.personId).padStart(4, '0')}`}
+                        </span>
+                      </td>
                       <td className="font-medium">{m.fullName}</td>
                       <td>{m.memberType}</td>
                       <td>{m.groupLabel}</td>
@@ -97,7 +118,7 @@ export function LiveAttendance() {
                 })}
                 {filteredMembers.length === 0 && (
                   <tr>
-                    <td colSpan="5" style={{textAlign: 'center'}} className="text-muted">No one is currently present.</td>
+                    <td colSpan="6" style={{textAlign: 'center'}} className="text-muted">No one is currently present.</td>
                   </tr>
                 )}
               </tbody>

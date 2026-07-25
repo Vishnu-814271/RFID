@@ -56,9 +56,14 @@ public class CardController {
             if (assignedPerson != null) {
                 map.put("assignedPersonId", assignedPerson.getPersonId());
                 map.put("assignedPersonName", assignedPerson.getFullName());
+                String extRef = (assignedPerson.getExternalRef() != null && !assignedPerson.getExternalRef().trim().isEmpty())
+                        ? assignedPerson.getExternalRef()
+                        : "EXT-" + String.format("%04d", assignedPerson.getPersonId());
+                map.put("assignedPersonExternalRef", extRef);
             } else {
                 map.put("assignedPersonId", null);
                 map.put("assignedPersonName", null);
+                map.put("assignedPersonExternalRef", null);
                 
                 // Auto-heal DB inconsistency caused by partial commits
                 if (card.getStatus() == CardStatus.ASSIGNED) {

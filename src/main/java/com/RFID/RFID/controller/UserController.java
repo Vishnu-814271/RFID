@@ -11,6 +11,9 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
+import com.RFID.RFID.model.Person;
+import com.RFID.RFID.repository.PersonRepository;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,12 +26,18 @@ import java.util.stream.Collectors;
 public class UserController {
 
     private final StaffUserRepository staffUserRepository;
+    private final PersonRepository personRepository;
     private final AuditService auditService;
     private final EmailService emailService;
     private final org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
 
-    public UserController(StaffUserRepository staffUserRepository, AuditService auditService, EmailService emailService, org.springframework.security.crypto.password.PasswordEncoder passwordEncoder) {
+    public UserController(StaffUserRepository staffUserRepository,
+                          PersonRepository personRepository,
+                          AuditService auditService,
+                          EmailService emailService,
+                          org.springframework.security.crypto.password.PasswordEncoder passwordEncoder) {
         this.staffUserRepository = staffUserRepository;
+        this.personRepository = personRepository;
         this.auditService = auditService;
         this.emailService = emailService;
         this.passwordEncoder = passwordEncoder;
@@ -40,17 +49,47 @@ public class UserController {
                 SecurityContextHolder.getContext().getAuthentication().getPrincipal() : null;
         StaffUser currentUser = (principal instanceof StaffUser) ? (StaffUser) principal : null;
         List<StaffUser> users = staffUserRepository.findAll();
+        List<Person> people = personRepository.findAll();
 
-        if (currentUser != null && currentUser.getRole() == Role.MANAGER) {
-            // Managers can only list OPERATORs
-            List<StaffUser> operators = users.stream()
-                    .filter(u -> u.getRole() == Role.OPERATOR)
-                    .collect(Collectors.toList());
-            return Envelope.ok(operators);
+        Map<String, Person> emailToPersonMap = new HashMap<>();
+        for (Person p : people) {
+            if (p.getEmail() != null && !p.getEmail().trim().isEmpty()) {
+                emailToPersonMap.put(p.getEmail().toLowerCase().trim(), p);
+            }
         }
 
-        // Admins see all
-        return Envelope.ok(users);
+        List<Map<String, Object>> response = new ArrayList<>();
+        for (StaffUser user : users) {
+            if (currentUser != null && currentUser.getRole() == Role.MANAGER && user.getRole() != Role.OPERATOR) {
+                continue;
+            }
+
+            Map<String, Object> map = new HashMap<>();
+            map.put("userId", user.getUserId());
+            map.put("email", user.getEmail());
+            map.put("role", user.getRole());
+            map.put("active", user.isActive());
+            map.put("passwordChangeRequired", user.isPasswordChangeRequired());
+            map.put("createdAt", user.getCreatedAt());
+
+            Person matchingPerson = emailToPersonMap.get(user.getEmail().toLowerCase().trim());
+            if (matchingPerson != null) {
+                map.put("personId", matchingPerson.getPersonId());
+                map.put("personName", matchingPerson.getFullName());
+                String extRef = (matchingPerson.getExternalRef() != null && !matchingPerson.getExternalRef().trim().isEmpty())
+                        ? matchingPerson.getExternalRef()
+                        : "EXT-" + String.format("%04d", matchingPerson.getPersonId());
+                map.put("personExternalRef", extRef);
+            } else {
+                map.put("personId", null);
+                map.put("personName", null);
+                map.put("personExternalRef", null);
+            }
+
+            response.add(map);
+        }
+
+        return Envelope.ok(response);
     }
 
     @PostMapping

@@ -129,7 +129,8 @@ export function Dashboard() {
               <thead>
                 <tr>
                   <th>Time</th>
-                  <th>Person</th>
+                  <th>Student ID / Ext. ID</th>
+                  <th>Person Name</th>
                   <th>Event Type</th>
                   <th>Status</th>
                 </tr>
@@ -139,6 +140,25 @@ export function Dashboard() {
                   events.map((ev, i) => (
                     <tr key={ev.eventId || i}>
                       <td>{formatTime(ev.occurredAt, { hour: '2-digit', minute: '2-digit' })}</td>
+                      <td>
+                        {ev.person ? (
+                          <span style={{ 
+                            fontFamily: 'monospace',
+                            fontWeight: '600',
+                            fontSize: '0.85rem',
+                            background: '#f1f5f9',
+                            color: '#0f172a',
+                            padding: '2px 8px',
+                            borderRadius: '4px',
+                            border: '1px solid #cbd5e1',
+                            display: 'inline-block'
+                          }}>
+                            {ev.person.externalRef || `EXT-${String(ev.person.personId).padStart(4, '0')}`}
+                          </span>
+                        ) : (
+                          <span className="text-muted">-</span>
+                        )}
+                      </td>
                       <td>{ev.person ? ev.person.fullName : 'Unknown'}</td>
                       <td>{ev.eventType || 'Denied'}</td>
                       <td>
@@ -157,7 +177,7 @@ export function Dashboard() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="4" style={{ textAlign: 'center' }} className="text-muted">No recent events</td>
+                    <td colSpan="5" style={{ textAlign: 'center' }} className="text-muted">No recent events</td>
                   </tr>
                 )}
               </tbody>

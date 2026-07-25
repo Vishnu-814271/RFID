@@ -277,7 +277,7 @@ export function Reports() {
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>Student ID</th>
+                  <th>Student ID / Ext. ID</th>
                   <th>Name</th>
                   <th>Type</th>
                   <th>Group</th>
@@ -292,7 +292,21 @@ export function Reports() {
               <tbody>
                 {filteredData.map((row, i) => (
                   <tr key={i}>
-                    <td className="font-medium" style={{ color: 'var(--color-primary, #4f46e5)' }}>{row.externalRef || `ID: ${row.personId}`}</td>
+                    <td>
+                      <span style={{ 
+                        fontFamily: 'monospace',
+                        fontWeight: '600',
+                        fontSize: '0.85rem',
+                        background: '#f1f5f9',
+                        color: '#0f172a',
+                        padding: '2px 8px',
+                        borderRadius: '4px',
+                        border: '1px solid #cbd5e1',
+                        display: 'inline-block'
+                      }}>
+                        {row.externalRef || `EXT-${String(row.personId).padStart(4, '0')}`}
+                      </span>
+                    </td>
                     <td className="font-medium">
                       {row.fullName || 'N/A'}
                       {row.status === 'INACTIVE' && (
