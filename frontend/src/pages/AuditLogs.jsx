@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { ShieldAlert, RefreshCw, Search } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { RefreshCw, Search } from 'lucide-react';
 import api from '../utils/api';
 import { formatDateTime } from '../utils/dateUtils';
 
@@ -8,7 +8,7 @@ export function AuditLogs() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
 
-  const fetchLogs = async () => {
+  const fetchLogs = useCallback(async () => {
     setLoading(true);
     try {
       const data = await api.get('/audit-log?size=100');
@@ -22,11 +22,11 @@ export function AuditLogs() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchLogs();
-  }, []);
+  }, [fetchLogs]);
 
   const filteredLogs = logs.filter(log => 
     log.actionType?.toLowerCase().includes(searchTerm.toLowerCase()) ||

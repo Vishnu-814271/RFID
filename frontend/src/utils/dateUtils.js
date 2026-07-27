@@ -17,7 +17,7 @@ export function parseIST(dateString) {
   if (!dateString) return null;
   const str = String(dateString);
   // If there's already a timezone offset (Z, +, -) don't add one
-  if (/[Z+\-]\d{2}:\d{2}$/.test(str) || str.endsWith('Z')) {
+  if (/[Z+-]\d{2}:\d{2}$/.test(str) || str.endsWith('Z')) {
     return new Date(str);
   }
   // Append IST offset so the browser parses it correctly

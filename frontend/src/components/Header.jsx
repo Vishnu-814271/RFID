@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { LogOut, Bell, Search, Rss, Lock } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { LogOut, Bell, Rss, Lock } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
 import { formatDateTime } from '../utils/dateUtils';
@@ -9,7 +8,6 @@ import './Header.css';
 
 export function Header() {
   const { logout, user } = useAuth();
-  const navigate = useNavigate();
   const [cardUidIn, setCardUidIn] = useState('');
   const [isTappingIn, setIsTappingIn] = useState(false);
   const [tapResultIn, setTapResultIn] = useState('');

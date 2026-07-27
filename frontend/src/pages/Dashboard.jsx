@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Users, Activity, CreditCard, ShieldAlert, Clock } from 'lucide-react';
+import { Users, Activity, ShieldAlert, Clock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';

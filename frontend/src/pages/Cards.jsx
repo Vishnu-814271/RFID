@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { CreditCard, Plus, Search, X, Ban, AlertTriangle, Trash2 } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { CreditCard, Plus, Search, X, Ban, AlertTriangle } from 'lucide-react';
 import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
@@ -17,7 +17,7 @@ export function Cards() {
   const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
 
-  const fetchCards = async () => {
+  const fetchCards = useCallback(async () => {
     try {
       const data = await api.get('/cards');
       setCards(data || []);
@@ -27,13 +27,13 @@ export function Cards() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
   useEffect(() => {
     if (!user?.passwordChangeRequired) {
       fetchCards();
     }
-  }, [user?.passwordChangeRequired]);
+  }, [user?.passwordChangeRequired, fetchCards]);
 
   const handleRegisterCard = async (e) => {
     e.preventDefault();
@@ -61,11 +61,6 @@ export function Cards() {
     } catch (err) {
       toast.error(err?.message || 'Failed to update card status');
     }
-  };
-
-  const requestDeleteCard = (id, uid) => {
-    if (user?.role !== 'ADMIN') return toast.warning("Only Admins can delete cards.");
-    setCardToDelete({ id, uid });
   };
 
   const confirmDeleteCard = async () => {

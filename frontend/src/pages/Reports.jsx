@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Download, Filter, Search, Calendar, FileText, Edit, X } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Download, Search, Calendar, FileText, Edit, X } from 'lucide-react';
 import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
@@ -30,7 +30,7 @@ export function Reports() {
   const [correctionMode, setCorrectionMode] = useState(null);
   const [correctionForm, setCorrectionForm] = useState({ checkOutAt: '', correctionReason: '' });
 
-  const fetchReport = async () => {
+  const fetchReport = useCallback(async () => {
     setLoading(true);
     try {
       const data = await api.get(`/attendance/report?startDate=${startDate}&endDate=${endDate}`);
@@ -41,13 +41,13 @@ export function Reports() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [startDate, endDate, toast]);
 
   useEffect(() => {
     if (!user?.passwordChangeRequired) {
       fetchReport();
     }
-  }, [startDate, endDate, user?.passwordChangeRequired]);
+  }, [user?.passwordChangeRequired, fetchReport]);
 
   const handleExportCSV = async () => {
     try {
@@ -74,6 +74,7 @@ export function Reports() {
       window.URL.revokeObjectURL(url);
       toast.success("Attendance report downloaded successfully!");
     } catch (err) {
+      console.error("Failed to download CSV report", err);
       toast.error("Failed to download CSV report");
     }
   };
@@ -87,6 +88,7 @@ export function Reports() {
       const data = await api.get(`/people/${person.personId}/attendance`);
       setPersonSessions(data || []);
     } catch (err) {
+      console.error("Failed to load attendance sessions", err);
       toast.error("Failed to load attendance sessions");
     } finally {
       setSessionsLoading(false);

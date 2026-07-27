@@ -1,3 +1,5 @@
+/* oxlint-disable react/only-export-components */
+/* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import api from '../utils/api';
 
@@ -8,7 +10,6 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   
-  const timeoutRef = useRef(null);
   const activityRef = useRef(Date.now());
 
   const resetActivity = () => {

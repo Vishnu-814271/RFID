@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Plus, Search, Filter, Edit, Ban, CheckCircle, CreditCard, X, Trash2 } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Plus, Search, Edit, Ban, CheckCircle, CreditCard, X } from 'lucide-react';
 import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
@@ -41,7 +41,7 @@ export function People() {
     phone: ''
   });
 
-  const fetchPeople = async () => {
+  const fetchPeople = useCallback(async () => {
     try {
       const data = await api.get('/people');
       setPeople(data || []);
@@ -51,13 +51,13 @@ export function People() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
   useEffect(() => {
     if (!user?.passwordChangeRequired) {
       fetchPeople();
     }
-  }, [user?.passwordChangeRequired]);
+  }, [user?.passwordChangeRequired, fetchPeople]);
 
   const handleAddPerson = async (e) => {
     e.preventDefault();
@@ -126,18 +126,6 @@ export function People() {
     }
   };
 
-  const handleDeletePerson = async (personId) => {
-    if (!window.confirm('Are you sure you want to delete this person?')) return;
-    try {
-      await api.delete(`/people/${personId}`);
-      toast.success('Person deleted successfully');
-      fetchPeople();
-    } catch (err) {
-      toast.error(err?.message || 'Failed to delete person');
-    }
-  };
-
-
   const openAssignModal = async (person) => {
     setSelectedPerson(person);
     setError('');
@@ -147,6 +135,7 @@ export function People() {
       setAvailableCards(available);
       setShowAssignModal(true);
     } catch (err) {
+      console.error("Failed to load available cards", err);
       toast.error("Failed to load available cards");
     }
   };

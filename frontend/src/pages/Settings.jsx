@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
@@ -13,13 +13,7 @@ export function Settings() {
   const [configLoading, setConfigLoading] = useState(false);
   const [saveStatus, setSaveStatus] = useState(null);
 
-  useEffect(() => {
-    if (user?.role === 'ADMIN' || user?.role === 'MANAGER') {
-      fetchConfig();
-    }
-  }, [user?.role]);
-
-  const fetchConfig = async () => {
+  const fetchConfig = useCallback(async () => {
     setConfigLoading(true);
     try {
       const data = await api.get('/config');
@@ -31,7 +25,13 @@ export function Settings() {
     } finally {
       setConfigLoading(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    if (user?.role === 'ADMIN' || user?.role === 'MANAGER') {
+      fetchConfig();
+    }
+  }, [user?.role, fetchConfig]);
 
   const saveConfig = async (e) => {
     e.preventDefault();

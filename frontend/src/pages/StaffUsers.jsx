@@ -1,34 +1,30 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
-import { Users, Plus, ShieldAlert, Trash2 } from 'lucide-react';
+import { Plus, ShieldAlert, Trash2 } from 'lucide-react';
 
 export function StaffUsers() {
   const { user } = useAuth();
   const toast = useToast();
   const [users, setUsers] = useState([]);
-  const [usersLoading, setUsersLoading] = useState(false);
   const [newUser, setNewUser] = useState({ email: '', role: 'OPERATOR' });
   const [showNewUserForm, setShowNewUserForm] = useState(false);
   const [tempPassword, setTempPassword] = useState('');
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
-  const fetchUsers = async () => {
-    setUsersLoading(true);
+  const fetchUsers = useCallback(async () => {
     try {
       const data = await api.get('/users');
       setUsers(data || []);
     } catch (err) {
       console.error(err);
       toast.error('Failed to fetch staff users');
-    } finally {
-      setUsersLoading(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
 
   const handleCreateUser = async (e) => {
     e.preventDefault();
