@@ -63,6 +63,8 @@ public class PersonController {
         for (Person person : people) {
             Map<String, Object> map = new HashMap<>();
             map.put("personId", person.getPersonId());
+            map.put("fullName", person.getFullName());
+            map.put("name", person.getFullName());
             String memberTypeStr = (person.getMemberType() != null) ? person.getMemberType().name() : "EMPLOYEE";
             map.put("memberType", memberTypeStr);
             String extRef = (person.getExternalRef() != null && !person.getExternalRef().trim().isEmpty())
