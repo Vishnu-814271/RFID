@@ -23,14 +23,12 @@ public class CardController {
     private final CardMappingRepository mappingRepository;
     private final AuditService auditService;
     private final com.RFID.RFID.repository.AppNotificationRepository notificationRepository;
-    private final com.RFID.RFID.service.EmailService emailService;
 
-    public CardController(RfidCardRepository cardRepository, CardMappingRepository mappingRepository, AuditService auditService, com.RFID.RFID.repository.AppNotificationRepository notificationRepository, com.RFID.RFID.service.EmailService emailService) {
+    public CardController(RfidCardRepository cardRepository, CardMappingRepository mappingRepository, AuditService auditService, com.RFID.RFID.repository.AppNotificationRepository notificationRepository) {
         this.cardRepository = cardRepository;
         this.mappingRepository = mappingRepository;
         this.auditService = auditService;
         this.notificationRepository = notificationRepository;
-        this.emailService = emailService;
     }
 
     @GetMapping
