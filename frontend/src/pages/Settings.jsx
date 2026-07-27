@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
-import { Save } from 'lucide-react';
+import { Save, Trash2 } from 'lucide-react';
 
 export function Settings() {
   const { user } = useAuth();
@@ -52,6 +52,21 @@ export function Settings() {
   };
 
   const isAdmin = user?.role === 'ADMIN';
+
+  const handlePurgeData = async () => {
+    if (!window.confirm("WARNING: This will permanently delete all test people, RFID cards, card mappings, attendance sessions, tap events, and notifications.\n\nStaff users and system configurations will NOT be deleted.\n\nAre you sure you want to proceed?")) {
+      return;
+    }
+    setConfigLoading(true);
+    try {
+      const res = await api.post('/config/purge-test-data');
+      alert(res || 'All test data purged successfully!');
+    } catch (err) {
+      alert(`Error purging data: ${err.message || err.error || JSON.stringify(err)}`);
+    } finally {
+      setConfigLoading(false);
+    }
+  };
 
   return (
     <div className="page-container">
@@ -120,6 +135,24 @@ export function Settings() {
           </form>
         )}
       </div>
+
+      {isAdmin && (
+        <div className="card" style={{ maxWidth: '600px', marginTop: '1.5rem', borderColor: '#f87171' }}>
+          <h3 style={{ color: '#ef4444' }}>Database Maintenance</h3>
+          <p className="text-muted" style={{ fontSize: '0.9rem', marginTop: '0.5rem' }}>
+            Purge all test/operational data including People, RFID Cards, Card Mappings, Attendance Sessions, Tap Logs, and Notifications. Staff accounts and system configurations will be preserved.
+          </p>
+          <button
+            type="button"
+            className="btn"
+            style={{ backgroundColor: '#ef4444', color: '#fff', marginTop: '1rem', gap: '0.5rem', display: 'inline-flex', alignItems: 'center' }}
+            disabled={configLoading}
+            onClick={handlePurgeData}
+          >
+            <Trash2 size={16} /> Purge System Test Data
+          </button>
+        </div>
+      )}
     </div>
   );
 }
