@@ -100,15 +100,17 @@ public class PersonController {
                 SecurityContextHolder.getContext().getAuthentication().getPrincipal() : null;
         StaffUser currentUser = (principal instanceof StaffUser) ? (StaffUser) principal : null;
 
+        String idLabel = (request.getMemberType() == MemberType.STUDENT) ? "Student ID" : "Employee ID";
+
         if (request.getExternalRef() != null && !request.getExternalRef().trim().isEmpty()) {
             String ref = request.getExternalRef().trim();
             if (!ref.matches("^[a-zA-Z0-9_\\-]{3,20}$")) {
-                throw new RuntimeException("Student / Member ID must be 3-20 characters (letters, numbers, hyphens, underscores).");
+                throw new RuntimeException(idLabel + " must be 3-20 characters (letters, numbers, hyphens, underscores).");
             }
             Optional<Person> existingOpt = personRepository.findByExternalRefIgnoreCase(ref);
             if (existingOpt.isPresent()) {
                 Person existingPerson = existingOpt.get();
-                throw new RuntimeException("Student / Member ID '" + ref + "' is already assigned to " + existingPerson.getFullName() + " (" + existingPerson.getMemberType() + "). Please enter a unique Student ID.");
+                throw new RuntimeException(idLabel + " '" + ref + "' is already assigned to " + existingPerson.getFullName() + " (" + existingPerson.getMemberType() + "). Please enter a unique " + idLabel + ".");
             }
             request.setExternalRef(ref);
         } else if (request.getMemberType() == MemberType.STUDENT) {
@@ -149,16 +151,17 @@ public class PersonController {
         }
         if (updates.containsKey("externalRef")) {
             String ref = (String) updates.get("externalRef");
+            String idLabel = (person.getMemberType() == MemberType.STUDENT) ? "Student ID" : "Employee ID";
             
             if (ref != null && !ref.trim().isEmpty()) {
                 ref = ref.trim();
                 if (!ref.matches("^[a-zA-Z0-9_\\-]{3,20}$")) {
-                    throw new RuntimeException("Student / Member ID must be 3-20 characters (letters, numbers, hyphens, underscores).");
+                    throw new RuntimeException(idLabel + " must be 3-20 characters (letters, numbers, hyphens, underscores).");
                 }
                 Optional<Person> existingOpt = personRepository.findByExternalRefIgnoreCase(ref);
                 if (existingOpt.isPresent() && !existingOpt.get().getPersonId().equals(person.getPersonId())) {
                     Person existingPerson = existingOpt.get();
-                    throw new RuntimeException("Student / Member ID '" + ref + "' is already assigned to " + existingPerson.getFullName() + " (" + existingPerson.getMemberType() + "). Please enter a unique Student ID.");
+                    throw new RuntimeException(idLabel + " '" + ref + "' is already assigned to " + existingPerson.getFullName() + " (" + existingPerson.getMemberType() + "). Please enter a unique " + idLabel + ".");
                 }
                 person.setExternalRef(ref);
             } else if (person.getMemberType() == MemberType.STUDENT) {

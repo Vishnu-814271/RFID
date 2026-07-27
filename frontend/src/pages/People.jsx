@@ -352,13 +352,14 @@ export function People() {
               </div>
               <div className="form-group">
                 <label className="form-label">
-                  {formData.memberType === 'STUDENT' ? 'Student ID *' : 'External Reference (ID)'}
+                  {formData.memberType === 'STUDENT' ? 'Student ID *' : 'Employee ID / External Reference'}
                 </label>
                 <input 
                   type="text" 
                   className="form-control" 
                   value={formData.externalRef}
                   onChange={(e) => setFormData({...formData, externalRef: e.target.value})}
+                  placeholder={formData.memberType === 'STUDENT' ? 'e.g. STU1001' : 'e.g. EMP1001 (Optional)'}
                   pattern="^[a-zA-Z0-9_\-]{3,20}$"
                   title="3 to 20 characters (letters, numbers, hyphens, underscores)"
                   required={formData.memberType === 'STUDENT'}
@@ -479,13 +480,14 @@ export function People() {
               </div>
               <div className="form-group">
                 <label className="form-label">
-                  {editFormData.memberType === 'STUDENT' ? 'Student ID *' : 'External Reference (ID)'}
+                  {editFormData.memberType === 'STUDENT' ? 'Student ID *' : 'Employee ID / External Reference'}
                 </label>
                 <input 
                   type="text" 
                   className="form-control" 
                   value={editFormData.externalRef}
                   onChange={(e) => setEditFormData({...editFormData, externalRef: e.target.value})}
+                  placeholder={editFormData.memberType === 'STUDENT' ? 'e.g. STU1001' : 'e.g. EMP1001 (Optional)'}
                   pattern="^[a-zA-Z0-9_\-]{3,20}$"
                   title="3 to 20 characters (letters, numbers, hyphens, underscores)"
                   required={editFormData.memberType === 'STUDENT'}
