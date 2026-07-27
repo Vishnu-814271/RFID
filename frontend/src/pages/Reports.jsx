@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { Download, Filter, Search, Calendar, FileText, Edit, X } from 'lucide-react';
 import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 import { formatTime, formatHours, formatMinutesToHours } from '../utils/dateUtils';
 
 export function Reports() {
   const { user } = useAuth();
+  const toast = useToast();
   const [reportData, setReportData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -35,6 +37,7 @@ export function Reports() {
       setReportData(data || []);
     } catch (err) {
       console.error('Failed to fetch report', err);
+      toast.error('Failed to fetch attendance report');
     } finally {
       setLoading(false);
     }
@@ -69,8 +72,9 @@ export function Reports() {
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
+      toast.success("Attendance report downloaded successfully!");
     } catch (err) {
-      alert("Failed to download CSV");
+      toast.error("Failed to download CSV report");
     }
   };
 
@@ -83,7 +87,7 @@ export function Reports() {
       const data = await api.get(`/people/${person.personId}/attendance`);
       setPersonSessions(data || []);
     } catch (err) {
-      alert("Failed to load sessions");
+      toast.error("Failed to load attendance sessions");
     } finally {
       setSessionsLoading(false);
     }
@@ -108,9 +112,9 @@ export function Reports() {
       const data = await api.get(`/people/${selectedPerson.personId}/attendance`);
       setPersonSessions(data || []);
       fetchReport(); // Also refresh the main report to update hours
-      alert("Session corrected successfully.");
+      toast.success("Session corrected successfully.");
     } catch (err) {
-      alert(err.message || "Failed to correct session");
+      toast.error(err?.message || "Failed to correct session");
     }
   };
 

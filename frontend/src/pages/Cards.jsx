@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { CreditCard, Plus, Search, X, Ban, AlertTriangle, Trash2 } from 'lucide-react';
 import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 
 export function Cards() {
   const { user } = useAuth();
+  const toast = useToast();
   const isManagerOrAdmin = user?.role === 'ADMIN' || user?.role === 'MANAGER';
   
   const [cards, setCards] = useState([]);
@@ -21,6 +23,7 @@ export function Cards() {
       setCards(data || []);
     } catch (err) {
       console.error('Failed to fetch cards', err);
+      toast.error('Failed to fetch cards');
     } finally {
       setLoading(false);
     }
@@ -39,26 +42,29 @@ export function Cards() {
       await api.post('/cards', { cardUid: newCardUid });
       setShowModal(false);
       setNewCardUid('');
+      toast.success('RFID Card registered successfully!');
       fetchCards(); // refresh
     } catch (err) {
       setError(err?.message || 'Failed to register card');
+      toast.error(err?.message || 'Failed to register card');
     }
   };
 
   const updateCardStatus = async (id, newStatus) => {
-    if (!isManagerOrAdmin) return alert("Only Managers and Admins can update card status.");
+    if (!isManagerOrAdmin) return toast.warning("Only Managers and Admins can update card status.");
     if (!window.confirm(`Are you sure you want to mark this card as ${newStatus}?`)) return;
     
     try {
       await api.patch(`/cards/${id}`, { status: newStatus });
+      toast.success(`Card status updated to ${newStatus}`);
       fetchCards();
     } catch (err) {
-      alert(err?.message || 'Failed to update card status');
+      toast.error(err?.message || 'Failed to update card status');
     }
   };
 
   const requestDeleteCard = (id, uid) => {
-    if (user?.role !== 'ADMIN') return alert("Only Admins can delete cards.");
+    if (user?.role !== 'ADMIN') return toast.warning("Only Admins can delete cards.");
     setCardToDelete({ id, uid });
   };
 
@@ -67,9 +73,10 @@ export function Cards() {
     try {
       await api.delete(`/cards/${cardToDelete.id}`);
       setCardToDelete(null);
+      toast.success('Card deleted successfully');
       fetchCards();
     } catch (err) {
-      alert(err?.message || 'Failed to delete card');
+      toast.error(err?.message || 'Failed to delete card');
     }
   };
 

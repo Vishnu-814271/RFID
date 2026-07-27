@@ -1,14 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
-import { Save, Trash2 } from 'lucide-react';
+import { useToast } from '../context/ToastContext';
+import { Save, Trash2, CheckCircle, AlertCircle } from 'lucide-react';
 
 export function Settings() {
   const { user } = useAuth();
+  const toast = useToast();
   
   // Config state
   const [config, setConfig] = useState(null);
   const [configLoading, setConfigLoading] = useState(false);
+  const [saveStatus, setSaveStatus] = useState(null);
 
   useEffect(() => {
     if (user?.role === 'ADMIN' || user?.role === 'MANAGER') {
@@ -24,6 +27,7 @@ export function Settings() {
       setConfig(data);
     } catch (err) {
       console.error(err);
+      toast.error(`Error loading config: ${err.message || 'Server error'}`);
     } finally {
       setConfigLoading(false);
     }
@@ -32,6 +36,7 @@ export function Settings() {
   const saveConfig = async (e) => {
     e.preventDefault();
     setConfigLoading(true);
+    setSaveStatus(null);
     try {
       await api.patch('/config', {
         expectedStartTime: config.expectedStartTime,
@@ -43,9 +48,13 @@ export function Settings() {
         minWorkingMinutes: parseInt(config.minWorkingMinutes),
         overnightSessionAttribution: config.overnightSessionAttribution
       });
-      alert('Configuration saved successfully');
+      const msg = 'Configuration saved successfully!';
+      setSaveStatus({ type: 'success', message: msg });
+      toast.success(msg);
     } catch (err) {
-      alert(`Error saving config: ${err.message || err.error || JSON.stringify(err)}`);
+      const errMsg = `Error saving config: ${err.message || err.error || JSON.stringify(err)}`;
+      setSaveStatus({ type: 'error', message: errMsg });
+      toast.error(errMsg);
     } finally {
       setConfigLoading(false);
     }
@@ -58,11 +67,16 @@ export function Settings() {
       return;
     }
     setConfigLoading(true);
+    setSaveStatus(null);
     try {
       const res = await api.post('/config/purge-test-data');
-      alert(res || 'All test data purged successfully!');
+      const msg = typeof res === 'string' ? res : 'All test data purged successfully!';
+      setSaveStatus({ type: 'success', message: msg });
+      toast.success(msg);
     } catch (err) {
-      alert(`Error purging data: ${err.message || err.error || JSON.stringify(err)}`);
+      const errMsg = `Error purging data: ${err.message || err.error || JSON.stringify(err)}`;
+      setSaveStatus({ type: 'error', message: errMsg });
+      toast.error(errMsg);
     } finally {
       setConfigLoading(false);
     }
@@ -79,7 +93,28 @@ export function Settings() {
 
       <div className="card" style={{ maxWidth: '600px' }}>
         <h3>Attendance Parameters</h3>
-        {configLoading && !config ? <p>Loading...</p> : config && (
+
+        {saveStatus && (
+          <div className={`status-banner status-${saveStatus.type}`} style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.75rem',
+            padding: '0.85rem 1.1rem',
+            borderRadius: '10px',
+            marginTop: '1rem',
+            fontSize: '0.9rem',
+            fontWeight: '500',
+            background: saveStatus.type === 'success' ? '#ecfdf5' : '#fef2f2',
+            color: saveStatus.type === 'success' ? '#065f46' : '#991b1b',
+            border: `1px solid ${saveStatus.type === 'success' ? '#a7f3d0' : '#fecaca'}`,
+            boxShadow: '0 2px 4px rgba(0,0,0,0.03)'
+          }}>
+            {saveStatus.type === 'success' ? <CheckCircle size={18} color="#10b981" /> : <AlertCircle size={18} color="#ef4444" />}
+            <span>{saveStatus.message}</span>
+          </div>
+        )}
+
+        {configLoading && !config ? <p style={{ marginTop: '1rem' }}>Loading...</p> : config && (
           <form onSubmit={saveConfig} style={{ marginTop: '1.5rem' }}>
             <fieldset disabled={!isAdmin} style={{ border: 'none', padding: 0, margin: 0 }}>
             <div className="form-group">

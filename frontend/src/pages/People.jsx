@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Search, Filter, Edit, Ban, CheckCircle, CreditCard, X, Trash2 } from 'lucide-react';
 import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 import './People.css';
 
 export function People() {
   const { user } = useAuth();
+  const toast = useToast();
   const isManagerOrAdmin = user?.role === 'ADMIN' || user?.role === 'MANAGER';
   
   const [searchTerm, setSearchTerm] = useState('');
@@ -45,6 +47,7 @@ export function People() {
       setPeople(data || []);
     } catch (err) {
       console.error('Failed to fetch people', err);
+      toast.error('Failed to fetch people');
     } finally {
       setLoading(false);
     }
@@ -71,9 +74,11 @@ export function People() {
         email: '',
         phone: ''
       });
+      toast.success('Person registered successfully!');
       fetchPeople();
     } catch (err) {
       setError(err?.message || 'Failed to add person');
+      toast.error(err?.message || 'Failed to add person');
     } finally {
       setIsSubmitting(false);
     }
@@ -99,21 +104,25 @@ export function People() {
     try {
       await api.patch(`/people/${selectedPerson.personId}`, editFormData);
       setShowEditModal(false);
+      toast.success('Person details updated successfully!');
       fetchPeople();
     } catch (err) {
       setError(err?.message || 'Failed to update person');
+      toast.error(err?.message || 'Failed to update person');
     }
   };
 
   const handleToggleStatus = async (personId, currentStatus) => {
     if (!isManagerOrAdmin) {
-      return alert("Only Managers and Admins can deactivate personnel.");
+      return toast.warning("Only Managers and Admins can deactivate personnel.");
     }
     try {
-      await api.patch(`/people/${personId}`, { status: currentStatus === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE' });
+      const nextStatus = currentStatus === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
+      await api.patch(`/people/${personId}`, { status: nextStatus });
+      toast.success(`Person status changed to ${nextStatus}`);
       fetchPeople();
     } catch (err) {
-      alert(err?.message || 'Failed to change status');
+      toast.error(err?.message || 'Failed to change status');
     }
   };
 
@@ -121,8 +130,10 @@ export function People() {
     if (!window.confirm('Are you sure you want to delete this person?')) return;
     try {
       await api.delete(`/people/${personId}`);
+      toast.success('Person deleted successfully');
+      fetchPeople();
     } catch (err) {
-      alert(err?.message || 'Failed to delete person');
+      toast.error(err?.message || 'Failed to delete person');
     }
   };
 
@@ -136,7 +147,7 @@ export function People() {
       setAvailableCards(available);
       setShowAssignModal(true);
     } catch (err) {
-      alert("Failed to load cards");
+      toast.error("Failed to load available cards");
     }
   };
 
@@ -149,9 +160,10 @@ export function People() {
       await api.post('/mappings', { personId: selectedPerson.personId, cardId: parseInt(selectedCardId) });
       setShowAssignModal(false);
       fetchPeople();
-      alert("Card successfully mapped!");
+      toast.success("Card successfully mapped!");
     } catch (err) {
       setError(err?.message || 'Failed to assign card');
+      toast.error(err?.message || 'Failed to assign card');
     }
   };
 
@@ -160,9 +172,9 @@ export function People() {
     try {
       await api.post(`/mappings/${person.activeMappingId}/release`);
       fetchPeople();
-      alert("Card successfully released!");
+      toast.success("Card successfully released!");
     } catch (err) {
-      alert(err?.message || 'Failed to release card');
+      toast.error(err?.message || 'Failed to release card');
     }
   };
 

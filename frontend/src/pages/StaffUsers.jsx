@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 import { Users, Plus, ShieldAlert, Trash2 } from 'lucide-react';
 
 export function StaffUsers() {
   const { user } = useAuth();
+  const toast = useToast();
   const [users, setUsers] = useState([]);
   const [usersLoading, setUsersLoading] = useState(false);
   const [newUser, setNewUser] = useState({ email: '', role: 'OPERATOR' });
@@ -22,6 +24,7 @@ export function StaffUsers() {
       setUsers(data || []);
     } catch (err) {
       console.error(err);
+      toast.error('Failed to fetch staff users');
     } finally {
       setUsersLoading(false);
     }
@@ -33,18 +36,20 @@ export function StaffUsers() {
       const data = await api.post('/users', newUser);
       setTempPassword(data.tempPassword);
       setNewUser({ email: '', role: 'OPERATOR' });
+      toast.success('Staff user created successfully!');
       fetchUsers();
     } catch (err) {
-      alert(err.message);
+      toast.error(err?.message || 'Failed to create staff user');
     }
   };
 
   const toggleUserActive = async (id, currentStatus) => {
     try {
       await api.patch(`/users/${id}`, { active: !currentStatus });
+      toast.success(`User status changed to ${!currentStatus ? 'Active' : 'Inactive'}`);
       fetchUsers();
     } catch (err) {
-      alert(err.message);
+      toast.error(err?.message || 'Failed to update user status');
     }
   };
 
@@ -52,21 +57,22 @@ export function StaffUsers() {
     if (!window.confirm(`Are you sure you want to reset the password for ${email}? It will be reset to their email address.`)) return;
     try {
       await api.patch(`/users/${id}`, { resetPassword: true });
-      alert(`Password successfully reset for ${email}. Their new temporary password is their email address: ${email}`);
+      toast.success(`Password successfully reset for ${email}`);
     } catch (err) {
-      alert(err.message || 'Failed to reset password');
+      toast.error(err?.message || 'Failed to reset password');
     }
   };
 
   const deleteUser = async (id, email) => {
-    if (user?.role !== 'ADMIN') return alert("Only Admins can delete users.");
+    if (user?.role !== 'ADMIN') return toast.warning("Only Admins can delete users.");
     if (!window.confirm(`Are you sure you want to permanently delete user ${email}?`)) return;
     
     try {
       await api.delete(`/users/${id}`);
+      toast.success(`User ${email} deleted successfully`);
       fetchUsers();
     } catch (err) {
-      alert(err?.message || 'Failed to delete user');
+      toast.error(err?.message || 'Failed to delete user');
     }
   };
 
