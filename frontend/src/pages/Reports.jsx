@@ -291,6 +291,7 @@ export function Reports() {
                   <th>Type</th>
                   <th>Group</th>
                   <th>Present</th>
+                  <th>Under Hours</th>
                   <th>Absent</th>
                   <th>Late</th>
                   <th>Missed Checkouts</th>
@@ -328,6 +329,28 @@ export function Reports() {
                     <td>{row.groupLabel || 'N/A'}</td>
                     <td><span className="text-success font-medium">{row.daysPresent || 0}</span></td>
                     <td>
+                      {(row.underHoursDays || 0) > 0 ? (
+                        <span
+                          className="badge"
+                          style={{
+                            background: '#fff7ed',
+                            color: '#c2410c',
+                            border: '1px solid #fed7aa',
+                            display: 'inline-block',
+                            padding: '3px 8px',
+                            borderRadius: '4px',
+                            fontSize: '0.82rem',
+                            fontWeight: 600
+                          }}
+                          title="Tapped in but worked less than the minimum required hours"
+                        >
+                          {row.underHoursDays} {row.underHoursDays === 1 ? 'day' : 'days'}
+                        </span>
+                      ) : (
+                        <span className="text-muted" style={{ fontSize: '0.85rem' }}>0 days</span>
+                      )}
+                    </td>
+                    <td>
                       {row.absentDays > 0 ? (
                         <button 
                           className="badge badge-danger" 
@@ -364,7 +387,7 @@ export function Reports() {
                 ))}
                 {filteredData.length === 0 && (
                   <tr>
-                    <td colSpan="10" style={{textAlign: 'center'}} className="text-muted">No report data found.</td>
+                    <td colSpan="11" style={{textAlign: 'center'}} className="text-muted">No report data found.</td>
                   </tr>
                 )}
               </tbody>
