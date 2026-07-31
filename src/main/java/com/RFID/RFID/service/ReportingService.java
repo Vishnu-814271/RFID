@@ -180,21 +180,12 @@ public class ReportingService {
         LocalDate today = LocalDate.now();
         LocalDate effectiveEnd = end.isBefore(today) ? end : today;
 
-        // Effective start date should not precede person creation date
-        LocalDate effectiveStart = start;
-        if (person.getCreatedAt() != null) {
-            LocalDate createdDate = person.getCreatedAt().toLocalDate();
-            if (effectiveStart.isBefore(createdDate)) {
-                effectiveStart = createdDate;
-            }
-        }
-
-        if (effectiveStart.isAfter(effectiveEnd)) {
+        if (start.isAfter(effectiveEnd)) {
             return Collections.emptyList();
         }
 
         List<String> absentDates = new ArrayList<>();
-        for (LocalDate date = effectiveStart; !date.isAfter(effectiveEnd); date = date.plusDays(1)) {
+        for (LocalDate date = start; !date.isAfter(effectiveEnd); date = date.plusDays(1)) {
             if (date.equals(today) && hasOpenSessionToday) {
                 continue; // Currently present today
             }
