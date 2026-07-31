@@ -20,20 +20,26 @@ public class ReportingService {
     private final AttendanceEventRepository eventRepository;
     private final ConfigService configService;
     private final RfidCardRepository cardRepository;
+    private final com.RFID.RFID.scheduler.AutoCheckoutScheduler autoCheckoutScheduler;
 
     public ReportingService(PersonRepository personRepository,
                             AttendanceSessionRepository sessionRepository,
                             AttendanceEventRepository eventRepository,
                             ConfigService configService,
-                            RfidCardRepository cardRepository) {
+                            RfidCardRepository cardRepository,
+                            com.RFID.RFID.scheduler.AutoCheckoutScheduler autoCheckoutScheduler) {
         this.personRepository = personRepository;
         this.sessionRepository = sessionRepository;
         this.eventRepository = eventRepository;
         this.configService = configService;
         this.cardRepository = cardRepository;
+        this.autoCheckoutScheduler = autoCheckoutScheduler;
     }
 
     public List<Map<String, Object>> generateReportData(LocalDate start, LocalDate end, String groupLabel, MemberType memberType) {
+        // Ensure any past-due open sessions are auto-closed before compiling report
+        autoCheckoutScheduler.checkAndRunAutoCheckout();
+
         List<Person> people = personRepository.findAll();
 
         // Cache config values once — avoids per-iteration DB hits
@@ -61,22 +67,32 @@ public class ReportingService {
             List<AttendanceSession> sessions = sessionsByPerson.getOrDefault(person.getPersonId(), Collections.emptyList());
 
             // 1. Total minutes per day (capped at 1440 min = 24 h per day)
-            Map<LocalDate, Integer> dailyMinutesMap = sessions.stream()
-                    .filter(s -> s.getDurationMinutes() != null)
-                    .collect(Collectors.groupingBy(
-                            AttendanceSession::getWorkDate,
-                            Collectors.summingInt(AttendanceSession::getDurationMinutes)
-                    ));
+            // Includes duration of closed sessions and live elapsed duration for OPEN sessions
+            Map<LocalDate, Integer> dailyMinutesMap = new HashMap<>();
+            Set<LocalDate> openSessionDates = new HashSet<>();
 
-            // 2. Present days = days where total worked minutes >= minWorkingMinutes
-            //    Under-hours days (showed up but < min threshold) are NOT counted as present
+            for (AttendanceSession s : sessions) {
+                int mins = 0;
+                if (s.getDurationMinutes() != null) {
+                    mins = s.getDurationMinutes();
+                } else if (s.getStatus() == SessionStatus.OPEN) {
+                    mins = (int) Duration.between(s.getCheckInAt(), LocalDateTime.now()).toMinutes();
+                    mins = Math.max(0, mins);
+                    openSessionDates.add(s.getWorkDate());
+                }
+                dailyMinutesMap.merge(s.getWorkDate(), mins, Integer::sum);
+            }
+
+            final boolean openToday = openSessionDates.contains(LocalDate.now());
+
+            // 2. Present days = days where total worked minutes >= minWorkingMinutes (or active open session today)
             long presentDays = dailyMinutesMap.entrySet().stream()
-                    .filter(e -> Math.min(1440, e.getValue()) >= minWorkingMinutes)
+                    .filter(e -> Math.min(1440, e.getValue()) >= minWorkingMinutes || (e.getKey().equals(LocalDate.now()) && openToday))
                     .count();
 
-            // 3. Under-hours days — tapped in but didn't meet the minimum working hours
+            // 3. Under-hours days — completed/auto-closed sessions where total worked minutes < minWorkingMinutes on past days
             Set<LocalDate> underHoursDates = dailyMinutesMap.entrySet().stream()
-                    .filter(e -> Math.min(1440, e.getValue()) < minWorkingMinutes)
+                    .filter(e -> !e.getKey().equals(LocalDate.now()) && Math.min(1440, e.getValue()) < minWorkingMinutes)
                     .map(Map.Entry::getKey)
                     .collect(Collectors.toSet());
             long underHoursDays = underHoursDates.size();
@@ -98,8 +114,7 @@ public class ReportingService {
                     .count();
 
             // 7. Absent days & dates list
-            //    Include days where person tapped in but didn't meet minimum hours as absent
-            List<String> absentDates = calculateAbsentDates(person, start, end, workingDays, sessions, underHoursDates);
+            List<String> absentDates = calculateAbsentDates(person, start, end, workingDays, sessions, underHoursDates, openToday);
 
             Map<String, Object> row = new HashMap<>();
             row.put("personId", person.getPersonId());
@@ -143,12 +158,12 @@ public class ReportingService {
     /**
      * Calculates absent dates for a person in the given range.
      * A date is considered absent if:
-     *   a) It is a working day AND the person has no session at all, OR
+     *   a) It is a working day AND after the person was created AND the person has no session, OR
      *   b) It is a working day AND the person tapped in but worked less than minWorkingMinutes (under-hours).
      */
     private List<String> calculateAbsentDates(Person person, LocalDate start, LocalDate end,
                                               Set<String> workingDays, List<AttendanceSession> sessions,
-                                              Set<LocalDate> underHoursDates) {
+                                              Set<LocalDate> underHoursDates, boolean hasOpenSessionToday) {
         if (person.getStatus() == PersonStatus.INACTIVE) {
             return Collections.emptyList(); // Inactive members don't accumulate absences
         }
@@ -157,7 +172,7 @@ public class ReportingService {
         Set<LocalDate> sessionDates = sessions.stream()
                 .map(AttendanceSession::getWorkDate)
                 .collect(Collectors.toSet());
-        // Present dates = has a session AND is NOT in the under-hours set
+
         Set<LocalDate> fullyPresentDates = sessionDates.stream()
                 .filter(d -> !underHoursDates.contains(d))
                 .collect(Collectors.toSet());
@@ -165,14 +180,25 @@ public class ReportingService {
         LocalDate today = LocalDate.now();
         LocalDate effectiveEnd = end.isBefore(today) ? end : today;
 
-        if (start.isAfter(effectiveEnd)) {
+        // Effective start date should not precede person creation date
+        LocalDate effectiveStart = start;
+        if (person.getCreatedAt() != null) {
+            LocalDate createdDate = person.getCreatedAt().toLocalDate();
+            if (effectiveStart.isBefore(createdDate)) {
+                effectiveStart = createdDate;
+            }
+        }
+
+        if (effectiveStart.isAfter(effectiveEnd)) {
             return Collections.emptyList();
         }
 
         List<String> absentDates = new ArrayList<>();
-        for (LocalDate date = start; !date.isAfter(effectiveEnd); date = date.plusDays(1)) {
+        for (LocalDate date = effectiveStart; !date.isAfter(effectiveEnd); date = date.plusDays(1)) {
+            if (date.equals(today) && hasOpenSessionToday) {
+                continue; // Currently present today
+            }
             if (isWorkingDay(date.getDayOfWeek(), workingDays) && !fullyPresentDates.contains(date)) {
-                // Absent OR under-hours — both count as not fully present
                 absentDates.add(date.toString());
             }
         }
@@ -217,6 +243,9 @@ public class ReportingService {
     }
 
     public Map<String, Object> getAnalytics(LocalDate date) {
+        // Ensure any past-due open sessions are auto-closed before calculating analytics
+        autoCheckoutScheduler.checkAndRunAutoCheckout();
+
         // Cache config values once
         Set<String> workingDays = configService.getWorkingDays();
         int minWorkingMinutes = configService.getMinWorkingMinutes();

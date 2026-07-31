@@ -31,30 +31,30 @@ public class AutoCheckoutScheduler {
         this.notificationRepository = notificationRepository;
     }
 
-    // Runs every minute to check if the current time matches the configured auto_checkout_time
+    // Runs every minute to auto-close any open sessions that have reached or passed auto_checkout_time
     @Scheduled(cron = "0 * * * * ?")
     @Transactional
     public void checkAndRunAutoCheckout() {
-        LocalTime now = LocalTime.now().withSecond(0).withNano(0);
         LocalTime cutoffTime = configService.getAutoCheckoutTime().withSecond(0).withNano(0);
-
-        if (now.equals(cutoffTime)) {
-            runAutoCheckout(cutoffTime);
-        }
+        runAutoCheckout(cutoffTime);
     }
 
     @Transactional
     public void runAutoCheckout(LocalTime cutoffTime) {
+        runAutoCheckout(cutoffTime, LocalDateTime.now());
+    }
+
+    @Transactional
+    public void runAutoCheckout(LocalTime cutoffTime, LocalDateTime referenceTime) {
         List<AttendanceSession> openSessions = sessionRepository.findByStatus(SessionStatus.OPEN);
         if (openSessions.isEmpty()) {
             return;
         }
 
-        System.out.println("Running Daily Auto-Checkout at " + cutoffTime + " for " + openSessions.size() + " open sessions.");
-
+        int autoClosedCount = 0;
         for (AttendanceSession session : openSessions) {
             LocalDateTime checkOutAt = LocalDateTime.of(session.getWorkDate(), cutoffTime);
-            if (checkOutAt.isBefore(session.getCheckInAt())) {
+            if (!checkOutAt.isAfter(session.getCheckInAt())) {
                 LocalDateTime nextDayCutoff = checkOutAt.plusDays(1);
                 long durationHours = Duration.between(session.getCheckInAt(), nextDayCutoff).toHours();
                 if (durationHours <= 16) {
@@ -63,21 +63,28 @@ public class AutoCheckoutScheduler {
                     checkOutAt = session.getCheckInAt().plusHours(8);
                 }
             }
-            session.setCheckOutAt(checkOutAt);
-            session.setStatus(SessionStatus.AUTO_CLOSED);
 
-            long durationMin = Duration.between(session.getCheckInAt(), checkOutAt).toMinutes();
-            int cappedDuration = (int) Math.min(1440, Math.max(0, durationMin));
-            session.setDurationMinutes(cappedDuration);
-            sessionRepository.save(session);
+            // Auto-checkout if reference time (current time) has reached or passed the session's checkout cutoff
+            if (!referenceTime.isBefore(checkOutAt)) {
+                session.setCheckOutAt(checkOutAt);
+                session.setStatus(SessionStatus.AUTO_CLOSED);
 
-            // Audit Log (actor = System/null)
-            auditService.logSystemAction("AUTO_CHECKOUT", "SESSION", session.getSessionId().toString());
+                long durationMin = Duration.between(session.getCheckInAt(), checkOutAt).toMinutes();
+                int cappedDuration = (int) Math.min(1440, Math.max(0, durationMin));
+                session.setDurationMinutes(cappedDuration);
+                sessionRepository.save(session);
+
+                // Audit Log (actor = System/null)
+                auditService.logSystemAction("AUTO_CHECKOUT", "SESSION", session.getSessionId().toString());
+                autoClosedCount++;
+            }
         }
 
-        // Notification for Auto-checkout summary
-        String summary = "Auto-checkout completed. Processed " + openSessions.size() + " missed checkouts.";
-        com.RFID.RFID.model.AppNotification notif = new com.RFID.RFID.model.AppNotification(summary, "AUTO_CHECKOUT_SUMMARY", "MANAGER");
-        notificationRepository.save(notif);
+        if (autoClosedCount > 0) {
+            System.out.println("Auto-Checkout completed at " + cutoffTime + ". Processed " + autoClosedCount + " missed checkouts.");
+            String summary = "Auto-checkout completed. Processed " + autoClosedCount + " missed checkouts.";
+            com.RFID.RFID.model.AppNotification notif = new com.RFID.RFID.model.AppNotification(summary, "AUTO_CHECKOUT_SUMMARY", "MANAGER");
+            notificationRepository.save(notif);
+        }
     }
 }

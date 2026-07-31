@@ -294,7 +294,7 @@ class RfidApplicationTests {
 
 		// Record a session on July 24, 2026
 		tapService.processTap("99999999", LocalDateTime.of(2026, 7, 24, 10, 0, 0), "READER_IN");
-		tapService.processTap("99999999", LocalDateTime.of(2026, 7, 24, 15, 30, 0), "READER_OUT");
+		tapService.processTap("99999999", LocalDateTime.of(2026, 7, 24, 18, 30, 0), "READER_OUT");
 
 		// Fetch report for 2026-06-01 to 2026-07-24
 		java.util.List<java.util.Map<String, Object>> report = reportingService.generateReportData(

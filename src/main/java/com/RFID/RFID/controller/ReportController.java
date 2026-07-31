@@ -28,19 +28,23 @@ public class ReportController {
     private final AttendanceSessionRepository sessionRepository;
     private final AttendanceEventRepository eventRepository;
     private final com.RFID.RFID.service.AuditService auditService;
+    private final com.RFID.RFID.scheduler.AutoCheckoutScheduler autoCheckoutScheduler;
 
     public ReportController(ReportingService reportingService,
                             AttendanceSessionRepository sessionRepository,
                             AttendanceEventRepository eventRepository,
-                            com.RFID.RFID.service.AuditService auditService) {
+                            com.RFID.RFID.service.AuditService auditService,
+                            com.RFID.RFID.scheduler.AutoCheckoutScheduler autoCheckoutScheduler) {
         this.reportingService = reportingService;
         this.sessionRepository = sessionRepository;
         this.eventRepository = eventRepository;
         this.auditService = auditService;
+        this.autoCheckoutScheduler = autoCheckoutScheduler;
     }
 
     @GetMapping("/attendance/live")
     public Envelope getLiveBoard() {
+        autoCheckoutScheduler.checkAndRunAutoCheckout();
         List<AttendanceSession> openSessions = sessionRepository.findByStatusAndWorkDate(SessionStatus.OPEN, LocalDate.now());
         List<Map<String, Object>> presentList = new ArrayList<>();
 
