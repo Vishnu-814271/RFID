@@ -79,15 +79,16 @@ public class CardController {
     @PostMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public Envelope registerCard(@RequestBody CardRequest request) {
-        if (request.getCardUid() == null || !request.getCardUid().matches("^(?=.*[a-zA-Z])(?=.*[0-9])[a-zA-Z0-9]{7}$")) {
-            throw new RuntimeException("Card UID must be exactly 7 characters and contain both numbers and alphabets.");
+        if (request.getCardUid() == null || request.getCardUid().trim().isEmpty()) {
+            throw new RuntimeException("Card UID cannot be empty.");
         }
 
-        if (cardRepository.findByCardUid(request.getCardUid()).isPresent()) {
+        String uid = request.getCardUid().trim();
+        if (cardRepository.findByCardUid(uid).isPresent()) {
             throw new RuntimeException("Card UID already exists in inventory.");
         }
 
-        RfidCard card = new RfidCard(request.getCardUid());
+        RfidCard card = new RfidCard(uid);
         RfidCard saved = cardRepository.save(card);
 
         // Audit Trail

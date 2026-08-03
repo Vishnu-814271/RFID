@@ -228,9 +228,7 @@ export function Cards() {
                   className="form-control" 
                   value={newCardUid}
                   onChange={(e) => setNewCardUid(e.target.value)}
-                  placeholder="Scan or enter 7-char alphanumeric UID..."
-                  pattern="^(?=.*[a-zA-Z])(?=.*[0-9])[a-zA-Z0-9]{7}$"
-                  title="Card UID must be exactly 7 characters and contain both numbers and alphabets"
+                  placeholder="Scan or enter Card UID..."
                   required
                 />
               </div>
