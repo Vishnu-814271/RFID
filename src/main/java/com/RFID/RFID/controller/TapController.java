@@ -17,7 +17,7 @@ public class TapController {
     private final String expectedDeviceKey;
 
     public TapController(TapService tapService,
-                         @Value("${device.key:ZEN_DEVICE_SECRET_KEY}") String expectedDeviceKey) {
+                         @Value("${device.key:RFTSA085E3E85280}") String expectedDeviceKey) {
         this.tapService = tapService;
         this.expectedDeviceKey = expectedDeviceKey;
     }

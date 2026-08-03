@@ -55,7 +55,7 @@ export function Header() {
     setRes('');
     try {
       const res = await api.post('/taps', { cardUid: uid, readerId }, {
-        headers: { 'X-Device-Key': 'ZEN_DEVICE_SECRET_KEY' }
+        headers: { 'X-Device-Key': 'RFTSA085E3E85280' }
       });
       setRes(`Success: ${res.decision}`);
       setUid('');
