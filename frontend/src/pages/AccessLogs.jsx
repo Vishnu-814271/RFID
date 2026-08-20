@@ -5,6 +5,72 @@ import { useAuth } from '../context/AuthContext';
 import { useAutoRefresh } from '../context/RefreshContext';
 import { formatDateTime } from '../utils/dateUtils';
 
+// ── Reason label map ──────────────────────────────────────────────────────────
+const REASON_MAP = {
+  OK:                                  { label: 'OK',                                  icon: '✅', color: 'var(--color-success, #00B894)' },
+  DEBOUNCED:                           { label: 'Denied – Debounced',                  icon: '⏱️', color: 'var(--color-warning, #FFB800)' },
+  ALREADY_CHECKED_IN:                  { label: 'Denied – Already Checked In',         icon: '🔁', color: 'var(--color-danger,  #FF3B30)' },
+  NOT_CHECKED_IN:                      { label: 'Denied – Not Checked In',             icon: '🚪', color: 'var(--color-danger,  #FF3B30)' },
+  UNKNOWN_CARD:                        { label: 'Denied – Unknown Card',               icon: '❓', color: 'var(--color-danger,  #FF3B30)' },
+  CARD_LOST:                           { label: 'Denied – Card Lost',                  icon: '🔴', color: 'var(--color-danger,  #FF3B30)' },
+  CARD_DEACTIVATED:                    { label: 'Denied – Card Deactivated',           icon: '🚫', color: 'var(--color-danger,  #FF3B30)' },
+  NO_MAPPING:                          { label: 'Denied – No Card Mapping',            icon: '🔗', color: 'var(--color-danger,  #FF3B30)' },
+  PERSON_INACTIVE:                     { label: 'Denied – Person Inactive',            icon: '👤', color: 'var(--color-danger,  #FF3B30)' },
+  INVALID_READER:                      { label: 'Denied – Invalid Reader',             icon: '📡', color: 'var(--color-warning, #FFB800)' },
+  OVERLAPPING_SESSION:                 { label: 'Denied – Session Overlap',            icon: '⚠️', color: 'var(--color-warning, #FFB800)' },
+  INVALID_CHECK_OUT_TIME:              { label: 'Denied – Invalid Checkout Time',      icon: '🕐', color: 'var(--color-warning, #FFB800)' },
+  CHECK_IN_BEFORE_FIRST_DAILY_CHECKIN: { label: 'Denied – Before First Check-In',      icon: '⏪', color: 'var(--color-warning, #FFB800)' },
+  CHECK_IN_BEFORE_PREVIOUS_CHECKOUT:   { label: 'Denied – Before Previous Checkout',   icon: '⏮️', color: 'var(--color-warning, #FFB800)' },
+};
+
+function ReasonBadge({ reason, decision }) {
+  if (!reason || reason === 'OK') {
+    return <span className="text-muted" style={{ fontSize: '0.82rem' }}>✅ OK</span>;
+  }
+  const entry = REASON_MAP[reason];
+  const icon  = entry?.icon  ?? '⚠️';
+  const label = entry?.label ?? reason.replace(/_/g, ' ');
+  const color = entry?.color ?? (decision === 'GRANTED' ? 'var(--color-success)' : 'var(--color-danger)');
+
+  return (
+    <span style={{
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: '0.3rem',
+      fontSize: '0.82rem',
+      fontWeight: 600,
+      color,
+      background: `${color}18`,
+      border: `1px solid ${color}55`,
+      borderRadius: '999px',
+      padding: '0.18rem 0.65rem',
+      whiteSpace: 'nowrap',
+    }}>
+      {icon} {label}
+    </span>
+  );
+}
+
+function EventTypeBadge({ type }) {
+  const isIn = type === 'CHECK_IN';
+  return (
+    <span style={{
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: '0.25rem',
+      fontSize: '0.8rem',
+      fontWeight: 600,
+      color: isIn ? 'var(--color-success, #00B894)' : 'var(--color-primary, #0066FF)',
+      background: isIn ? 'rgba(0,184,148,0.1)' : 'rgba(0,102,255,0.1)',
+      border: `1px solid ${isIn ? 'rgba(0,184,148,0.35)' : 'rgba(0,102,255,0.35)'}`,
+      borderRadius: '999px',
+      padding: '0.18rem 0.65rem',
+    }}>
+      {isIn ? '↓ Check-In' : '↑ Check-Out'}
+    </span>
+  );
+}
+
 export function AccessLogs() {
   const { user } = useAuth();
   const [events, setEvents] = useState([]);
@@ -13,6 +79,7 @@ export function AccessLogs() {
   const [selectedDecision, setSelectedDecision] = useState('ALL');
   const [selectedEventType, setSelectedEventType] = useState('ALL');
   const [selectedMemberType, setSelectedMemberType] = useState('ALL');
+  const [selectedReason, setSelectedReason] = useState('ALL');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
 
@@ -30,6 +97,11 @@ export function AccessLogs() {
 
   useAutoRefresh(fetchEvents, { intervalMs: 10000 });
 
+  // Collect all unique denial reasons present in data for the filter dropdown
+  const availableReasons = Array.from(
+    new Set(events.map(e => e.reason).filter(r => r && r !== 'OK'))
+  ).sort();
+
   const filteredEvents = events.filter(ev => {
     const term = searchTerm.toLowerCase();
     const personName = ev.person?.fullName?.toLowerCase() || '';
@@ -41,6 +113,7 @@ export function AccessLogs() {
     const matchesDecision = selectedDecision === 'ALL' || ev.decision === selectedDecision;
     const matchesEventType = selectedEventType === 'ALL' || ev.eventType === selectedEventType;
     const matchesMemberType = selectedMemberType === 'ALL' || ev.person?.memberType === selectedMemberType;
+    const matchesReason = selectedReason === 'ALL' || ev.reason === selectedReason;
 
     let matchesDate = true;
     if (ev.occurredAt) {
@@ -49,7 +122,7 @@ export function AccessLogs() {
       if (endDate && eventDateStr > endDate) matchesDate = false;
     }
 
-    return matchesSearch && matchesDecision && matchesEventType && matchesMemberType && matchesDate;
+    return matchesSearch && matchesDecision && matchesEventType && matchesMemberType && matchesReason && matchesDate;
   });
 
   const totalEvents = filteredEvents.length;
@@ -148,6 +221,19 @@ export function AccessLogs() {
             </select>
           </div>
 
+          {availableReasons.length > 0 && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <select className="form-control" value={selectedReason} onChange={(e) => setSelectedReason(e.target.value)}>
+                <option value="ALL">All Denial Reasons</option>
+                {availableReasons.map(r => (
+                  <option key={r} value={r}>
+                    {REASON_MAP[r]?.label ?? r.replace(/_/g, ' ')}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <Calendar size={16} className="text-muted" />
             <input
@@ -204,21 +290,13 @@ export function AccessLogs() {
                     </td>
                     <td className="font-medium">{ev.person ? ev.person.fullName : 'Unknown Card'}</td>
                     <td><code style={{ background: 'var(--color-bg-subtle)', padding: '0.2rem 0.4rem', borderRadius: 'var(--border-radius-sm)', border: '1px solid var(--color-border)' }}>{ev.cardUid}</code></td>
-                    <td>{ev.eventType || '-'}</td>
+                    <td>{ev.eventType ? <EventTypeBadge type={ev.eventType} /> : <span className="text-muted">—</span>}</td>
                     <td>
                       <span className={`badge badge-${ev.decision === 'GRANTED' ? 'success' : 'danger'}`}>
                         {ev.decision}
                       </span>
                     </td>
-                    <td>
-                      {ev.reason ? (
-                        <span className="text-danger font-medium" style={{ fontSize: '0.85rem' }}>
-                          {ev.reason.replace(/_/g, ' ')}
-                        </span>
-                      ) : (
-                        <span className="text-muted" style={{ fontSize: '0.85rem' }}>OK</span>
-                      )}
-                    </td>
+                    <td><ReasonBadge reason={ev.reason} decision={ev.decision} /></td>
                   </tr>
                 ))}
                 {filteredEvents.length === 0 && (
