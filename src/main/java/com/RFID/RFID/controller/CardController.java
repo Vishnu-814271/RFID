@@ -3,6 +3,7 @@ package com.RFID.RFID.controller;
 import com.RFID.RFID.dto.DTOs.CardRequest;
 import com.RFID.RFID.dto.Envelope;
 import com.RFID.RFID.model.*;
+import com.RFID.RFID.mqtt.MqttPublisherService;
 import com.RFID.RFID.repository.CardMappingRepository;
 import com.RFID.RFID.repository.RfidCardRepository;
 import com.RFID.RFID.service.AuditService;
@@ -23,12 +24,18 @@ public class CardController {
     private final CardMappingRepository mappingRepository;
     private final AuditService auditService;
     private final com.RFID.RFID.repository.AppNotificationRepository notificationRepository;
+    private final MqttPublisherService mqttPublisherService;
 
-    public CardController(RfidCardRepository cardRepository, CardMappingRepository mappingRepository, AuditService auditService, com.RFID.RFID.repository.AppNotificationRepository notificationRepository) {
+    public CardController(RfidCardRepository cardRepository,
+                          CardMappingRepository mappingRepository,
+                          AuditService auditService,
+                          com.RFID.RFID.repository.AppNotificationRepository notificationRepository,
+                          MqttPublisherService mqttPublisherService) {
         this.cardRepository = cardRepository;
         this.mappingRepository = mappingRepository;
         this.auditService = auditService;
         this.notificationRepository = notificationRepository;
+        this.mqttPublisherService = mqttPublisherService;
     }
 
     @GetMapping
@@ -94,6 +101,11 @@ public class CardController {
         // Audit Trail
         auditService.log("CARD_REGISTERED", "CARD", saved.getCardId().toString());
 
+        // Broadcast to MQTT
+        if (mqttPublisherService != null) {
+            mqttPublisherService.broadcastCardLifecycleEvent("CARD_REGISTERED", saved, null);
+        }
+
         return Envelope.ok(saved);
     }
 
@@ -105,6 +117,8 @@ public class CardController {
         StaffUser currentUser = (principal instanceof StaffUser) ? (StaffUser) principal : null;
         RfidCard card = cardRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Card not found."));
+
+        Person previouslyAssignedPerson = null;
 
         if (updates.containsKey("status")) {
             String statusStr = (String) updates.get("status");
@@ -126,6 +140,7 @@ public class CardController {
                 Optional<CardMapping> activeOpt = mappingRepository.findByCardAndStatus(card, MappingStatus.ACTIVE);
                 if (activeOpt.isPresent()) {
                     CardMapping mapping = activeOpt.get();
+                    previouslyAssignedPerson = mapping.getPerson();
                     mapping.setStatus(MappingStatus.RELEASED);
                     mapping.setReleasedAt(LocalDateTime.now());
                     mappingRepository.save(mapping);
@@ -139,12 +154,9 @@ public class CardController {
                 auditService.log("CARD_LOST", "CARD", id.toString());
                 
                 // In-app notification to Admin + Manager
-                String msg = "Card " + card.getCardUid() + " was marked as LOST by " + currentUser.getEmail();
+                String msg = "Card " + card.getCardUid() + " was marked as LOST by " + (currentUser != null ? currentUser.getEmail() : "SYSTEM");
                 com.RFID.RFID.model.AppNotification notif = new com.RFID.RFID.model.AppNotification(msg, "CARD_LOST", "ADMIN,MANAGER");
                 notificationRepository.save(notif);
-                
-                // Optional email to admin/managers could be implemented here
-                // emailService.sendEmail("admin@example.com", "Card Lost Alert", msg);
                 
             } else if (newStatus == CardStatus.DEACTIVATED) {
                 auditService.log("CARD_DEACTIVATED", "CARD", id.toString());
@@ -156,6 +168,12 @@ public class CardController {
         }
 
         RfidCard saved = cardRepository.save(card);
+
+        // Broadcast to MQTT
+        if (mqttPublisherService != null) {
+            mqttPublisherService.broadcastCardLifecycleEvent("CARD_STATUS_CHANGED", saved, previouslyAssignedPerson);
+        }
+
         return Envelope.ok(saved);
     }
 
@@ -170,6 +188,12 @@ public class CardController {
 
         cardRepository.delete(card);
         auditService.log("CARD_DELETED", "CARD", id.toString());
+
+        // Broadcast to MQTT
+        if (mqttPublisherService != null) {
+            mqttPublisherService.broadcastCardLifecycleEvent("CARD_DELETED", card, null);
+        }
+
         return Envelope.ok("Card deleted successfully.");
     }
 }

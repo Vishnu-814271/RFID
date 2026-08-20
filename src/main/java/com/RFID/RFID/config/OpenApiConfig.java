@@ -21,4 +21,9 @@ public class OpenApiConfig {
                                 .scheme("bearer")
                                 .bearerFormat("JWT")));
     }
+
+    @Bean
+    public com.fasterxml.jackson.databind.ObjectMapper objectMapper() {
+        return new com.fasterxml.jackson.databind.ObjectMapper().findAndRegisterModules();
+    }
 }

@@ -1,42 +1,29 @@
-import React, { useState, useEffect } from 'react';
-import { LogOut, Bell, Rss, Lock } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { LogOut, Bell, Lock, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
+import { useAutoRefresh } from '../context/RefreshContext';
 import { formatDateTime } from '../utils/dateUtils';
 import { ChangePasswordModal } from './ChangePasswordModal';
 import './Header.css';
 
 export function Header() {
   const { logout, user } = useAuth();
-  const [cardUidIn, setCardUidIn] = useState('');
-  const [isTappingIn, setIsTappingIn] = useState(false);
-  const [tapResultIn, setTapResultIn] = useState('');
-
-  const [cardUidOut, setCardUidOut] = useState('');
-  const [isTappingOut, setIsTappingOut] = useState(false);
-  const [tapResultOut, setTapResultOut] = useState('');
-
   const [showChangePassword, setShowChangePassword] = useState(false);
-
   const [notifications, setNotifications] = useState([]);
   const [showNotifications, setShowNotifications] = useState(false);
 
-  useEffect(() => {
-    if (user?.role === 'ADMIN' || user?.role === 'MANAGER') {
-      fetchNotifications();
-      const interval = setInterval(fetchNotifications, 10000); // poll every 10s
-      return () => clearInterval(interval);
-    }
-  }, [user]);
-
-  const fetchNotifications = async () => {
+  const fetchNotifications = useCallback(async () => {
+    if (user?.role !== 'ADMIN' && user?.role !== 'MANAGER') return;
     try {
       const res = await api.get('/notifications');
       setNotifications(res || []);
     } catch (err) {
       console.error('Failed to fetch notifications', err);
     }
-  };
+  }, [user?.role]);
+
+  useAutoRefresh(fetchNotifications, { intervalMs: 10000 });
 
   const markAsRead = async (id) => {
     try {
@@ -49,69 +36,18 @@ export function Header() {
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
-  const handleTapSubmit = async (e, uid, readerId, setUid, setIsTapping, setRes) => {
-    e.preventDefault();
-    setIsTapping(true);
-    setRes('');
-    try {
-      const res = await api.post('/taps', { cardUid: uid, readerId }, {
-        headers: { 'X-Device-Key': 'RFTSA085E3E85280' }
-      });
-      setRes(`Success: ${res.decision}`);
-      setUid('');
-      setTimeout(() => setRes(''), 3000);
-    } catch (err) {
-      setRes(`Error: ${err?.message || err?.error || 'Failed'}`);
-    } finally {
-      setIsTapping(false);
-    }
-  };
-
   return (
-    <header className="header">
+    <header className="header" style={{ position: 'relative' }}>
       <div className="header-left">
-        <form className="tap-simulator" onSubmit={(e) => handleTapSubmit(e, cardUidIn, 'READER_IN', setCardUidIn, setIsTappingIn, setTapResultIn)}>
-          <Rss size={18} className="search-icon text-muted" style={{ color: 'var(--color-success)' }} />
-          <input
-            type="text"
-            placeholder="Entrance (In) Card UID"
-            className="search-input"
-            style={{ width: '180px' }}
-            value={cardUidIn}
-            onChange={(e) => setCardUidIn(e.target.value)}
-            required
-          />
-          <button type="submit" className="btn btn-success" style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem' }} disabled={isTappingIn}>
-            {isTappingIn ? '...' : 'Tap In'}
-          </button>
-        </form>
-        {tapResultIn && (
-          <span style={{ marginLeft: '1rem', fontSize: '0.85rem', color: tapResultIn.includes('DENIED') || tapResultIn.includes('Error') ? 'var(--color-danger)' : 'var(--color-success)' }}>
-            {tapResultIn}
-          </span>
-        )}
       </div>
-      <div className="header-right">
-        {tapResultOut && (
-          <span style={{ marginRight: '1rem', fontSize: '0.85rem', color: tapResultOut.includes('DENIED') || tapResultOut.includes('Error') ? 'var(--color-danger)' : 'var(--color-success)' }}>
-            {tapResultOut}
-          </span>
-        )}
-        <form className="tap-simulator" onSubmit={(e) => handleTapSubmit(e, cardUidOut, 'READER_OUT', setCardUidOut, setIsTappingOut, setTapResultOut)} style={{ marginRight: '1rem' }}>
-          <Rss size={18} className="search-icon text-muted" style={{ color: 'var(--color-warning)' }} />
-          <input
-            type="text"
-            placeholder="Exit (Out) Card UID"
-            className="search-input"
-            style={{ width: '180px' }}
-            value={cardUidOut}
-            onChange={(e) => setCardUidOut(e.target.value)}
-            required
-          />
-          <button type="submit" className="btn btn-warning" style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem', color: '#000' }} disabled={isTappingOut}>
-            {isTappingOut ? '...' : 'Tap Out'}
-          </button>
-        </form>
+
+      <div className="header-center" style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
+        <span style={{ fontFamily: 'var(--font-family-display, var(--font-family))', fontWeight: '700', fontSize: '1.5rem', color: 'var(--color-primary-light)', letterSpacing: '0.02em', whiteSpace: 'nowrap' }}>
+          Rftrack Access & Attendance Track
+        </span>
+      </div>
+
+      <div className="header-right" style={{ marginLeft: 'auto' }}>
         {(user?.role === 'ADMIN' || user?.role === 'MANAGER') && (
           <div style={{ position: 'relative' }}>
             <button className="icon-btn" aria-label="Notifications" onClick={() => setShowNotifications(!showNotifications)}>
@@ -123,9 +59,9 @@ export function Header() {
                 position: 'absolute', right: 0, top: '100%',
                 backgroundColor: 'var(--color-bg-surface)',
                 border: '1px solid var(--color-border)',
-                borderRadius: '8px', width: '300px',
+                borderRadius: '2px', width: '320px',
                 maxHeight: '400px', overflowY: 'auto',
-                zIndex: 1000, boxShadow: 'var(--shadow-md)'
+                zIndex: 1000, boxShadow: 'var(--shadow-lg)'
               }}>
                 <div style={{ padding: '1rem', borderBottom: '1px solid var(--color-border)', fontWeight: 'bold' }}>
                   Notifications
@@ -141,7 +77,7 @@ export function Header() {
                       style={{
                         padding: '1rem',
                         borderBottom: '1px solid var(--color-border)',
-                        backgroundColor: n.read ? 'transparent' : 'rgba(15, 58, 104, 0.05)',
+                        backgroundColor: n.read ? 'transparent' : 'rgba(16, 43, 76, 0.05)',
                         cursor: n.read ? 'default' : 'pointer'
                       }}
                       onClick={() => !n.read && markAsRead(n.id)}
@@ -158,7 +94,7 @@ export function Header() {
           </div>
         )}
         <div className="header-divider"></div>
-        <button className="btn btn-secondary" onClick={() => setShowChangePassword(true)} style={{ marginRight: '1rem', padding: '0.5rem' }} title="Change Password">
+        <button className="btn btn-secondary" onClick={() => setShowChangePassword(true)} style={{ padding: '0.5rem' }} title="Change Password">
           <Lock size={16} />
         </button>
         <button className="btn btn-secondary btn-logout" onClick={logout}>
@@ -166,6 +102,7 @@ export function Header() {
           <span>Logout</span>
         </button>
       </div>
+
       {showChangePassword && (
         <ChangePasswordModal onClose={() => setShowChangePassword(false)} />
       )}

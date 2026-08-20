@@ -61,7 +61,7 @@ public class ConfigService {
     }
 
     public int getSessionTimeoutMinutes() {
-        String val = getValue("session_timeout_minutes", "5");
+        String val = getValue("session_timeout_minutes", "1440"); // 24 hours (1440 minutes)
         return Integer.parseInt(val);
     }
 

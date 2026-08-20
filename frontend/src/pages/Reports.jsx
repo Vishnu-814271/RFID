@@ -3,22 +3,28 @@ import { Download, Search, Calendar, FileText, Edit, X } from 'lucide-react';
 import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import { useRefresh, useAutoRefresh } from '../context/RefreshContext';
 import { formatTime, formatHours, formatMinutesToHours } from '../utils/dateUtils';
 
 export function Reports() {
   const { user } = useAuth();
   const toast = useToast();
+  const { triggerRefresh } = useRefresh();
   const [reportData, setReportData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedMemberType, setSelectedMemberType] = useState('ALL');
   const [selectedGroupLabel, setSelectedGroupLabel] = useState('ALL');
-  const [selectedPersonId, setSelectedPersonId] = useState('ALL');
   const [selectedStatusTab, setSelectedStatusTab] = useState('ACTIVE');
   
-  const [startDate, setStartDate] = useState(new Date(new Date().setDate(new Date().getDate() - 30)).toISOString().split('T')[0]);
-  const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
-  
+  // Default to the current month (from 1st of this month to today)
+  const now = new Date();
+  const currentMonthStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
+  const currentToday = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
+  const [startDate, setStartDate] = useState(currentMonthStart);
+  const [endDate, setEndDate] = useState(currentToday);
+
   const [showSessionsModal, setShowSessionsModal] = useState(false);
   const [selectedPerson, setSelectedPerson] = useState(null);
   const [personSessions, setPersonSessions] = useState([]);
@@ -31,23 +37,18 @@ export function Reports() {
   const [correctionForm, setCorrectionForm] = useState({ checkOutAt: '', correctionReason: '' });
 
   const fetchReport = useCallback(async () => {
-    setLoading(true);
+    if (user?.passwordChangeRequired) return;
     try {
       const data = await api.get(`/attendance/report?startDate=${startDate}&endDate=${endDate}`);
       setReportData(data || []);
     } catch (err) {
       console.error('Failed to fetch report', err);
-      toast.error('Failed to fetch attendance report');
     } finally {
       setLoading(false);
     }
-  }, [startDate, endDate, toast]);
+  }, [startDate, endDate, user?.passwordChangeRequired]);
 
-  useEffect(() => {
-    if (!user?.passwordChangeRequired) {
-      fetchReport();
-    }
-  }, [user?.passwordChangeRequired, fetchReport]);
+  useAutoRefresh(fetchReport, { intervalMs: 10000 });
 
   const handleExportCSV = async () => {
     try {
@@ -121,7 +122,6 @@ export function Reports() {
   };
 
   const uniqueGroupLabels = Array.from(new Set(reportData.map(row => row.groupLabel).filter(Boolean))).sort();
-  const uniquePeople = reportData.map(row => ({ personId: row.personId, fullName: row.fullName, externalRef: row.externalRef })).sort((a, b) => a.fullName.localeCompare(b.fullName));
 
   const activeCount = reportData.filter(r => r.status !== 'INACTIVE').length;
   const inactiveCount = reportData.filter(r => r.status === 'INACTIVE').length;
@@ -134,10 +134,9 @@ export function Reports() {
       
     const matchesMemberType = selectedMemberType === 'ALL' || row.memberType === selectedMemberType;
     const matchesGroupLabel = selectedGroupLabel === 'ALL' || row.groupLabel === selectedGroupLabel;
-    const matchesPerson = selectedPersonId === 'ALL' || String(row.personId) === selectedPersonId;
     const matchesStatus = selectedStatusTab === 'ALL' || (selectedStatusTab === 'INACTIVE' ? row.status === 'INACTIVE' : row.status !== 'INACTIVE');
     
-    return matchesSearch && matchesMemberType && matchesGroupLabel && matchesPerson && matchesStatus;
+    return matchesSearch && matchesMemberType && matchesGroupLabel && matchesStatus;
   });
 
   return (
@@ -154,30 +153,6 @@ export function Reports() {
       </div>
 
       <div className="card">
-        <div style={{ display: 'flex', gap: '0.5rem', borderBottom: '1px solid var(--color-border, #e5e7eb)', paddingBottom: '0.75rem', marginBottom: '1.25rem' }}>
-          <button
-            className={`btn ${selectedStatusTab === 'ACTIVE' ? 'btn-primary' : 'btn-secondary'}`}
-            style={{ fontSize: '0.85rem', padding: '0.35rem 0.85rem' }}
-            onClick={() => setSelectedStatusTab('ACTIVE')}
-          >
-            Active Personnel ({activeCount})
-          </button>
-          <button
-            className={`btn ${selectedStatusTab === 'INACTIVE' ? 'btn-danger' : 'btn-secondary'}`}
-            style={{ fontSize: '0.85rem', padding: '0.35rem 0.85rem' }}
-            onClick={() => setSelectedStatusTab('INACTIVE')}
-          >
-            Deactivated Personnel ({inactiveCount})
-          </button>
-          <button
-            className={`btn ${selectedStatusTab === 'ALL' ? 'btn-primary' : 'btn-secondary'}`}
-            style={{ fontSize: '0.85rem', padding: '0.35rem 0.85rem' }}
-            onClick={() => setSelectedStatusTab('ALL')}
-          >
-            All Members ({reportData.length})
-          </button>
-        </div>
-
         <div className="table-toolbar" style={{ flexWrap: 'wrap', gap: '1rem' }}>
           <div className="search-bar table-search" style={{ flex: '1 1 200px', marginBottom: 0 }}>
             <Search size={18} className="search-icon" />
@@ -196,16 +171,13 @@ export function Reports() {
               <span className="text-muted" style={{ fontSize: '0.85rem', fontWeight: 500 }}>Type:</span>
               <select 
                 className="form-control" 
-                style={{ padding: '0.25rem 0.5rem', minWidth: '120px' }}
+                style={{ padding: '0.25rem 0.5rem', minWidth: '130px' }}
                 value={selectedMemberType}
-                onChange={(e) => {
-                  setSelectedMemberType(e.target.value);
-                  setSelectedPersonId('ALL'); // Reset person filter when type changes
-                }}
+                onChange={(e) => setSelectedMemberType(e.target.value)}
               >
                 <option value="ALL">All Types</option>
-                <option value="STUDENT">Student</option>
                 <option value="EMPLOYEE">Employee</option>
+                <option value="STUDENT">Student</option>
               </select>
             </div>
 
@@ -216,10 +188,7 @@ export function Reports() {
                 className="form-control" 
                 style={{ padding: '0.25rem 0.5rem', minWidth: '120px' }}
                 value={selectedGroupLabel}
-                onChange={(e) => {
-                  setSelectedGroupLabel(e.target.value);
-                  setSelectedPersonId('ALL'); // Reset person filter when group changes
-                }}
+                onChange={(e) => setSelectedGroupLabel(e.target.value)}
               >
                 <option value="ALL">All Groups</option>
                 {uniqueGroupLabels.map(group => (
@@ -228,30 +197,18 @@ export function Reports() {
               </select>
             </div>
 
-            {/* Person Filter */}
+            {/* Status Dropdown Filter (Active, Deactivated, All Members) */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <span className="text-muted" style={{ fontSize: '0.85rem', fontWeight: 500 }}>Person:</span>
+              <span className="text-muted" style={{ fontSize: '0.85rem', fontWeight: 500 }}>Status:</span>
               <select 
                 className="form-control" 
-                style={{ padding: '0.25rem 0.5rem', minWidth: '150px' }}
-                value={selectedPersonId}
-                onChange={(e) => setSelectedPersonId(e.target.value)}
+                style={{ padding: '0.25rem 0.5rem', minWidth: '185px' }}
+                value={selectedStatusTab}
+                onChange={(e) => setSelectedStatusTab(e.target.value)}
               >
-                <option value="ALL">All People</option>
-                {uniquePeople
-                  .filter(p => {
-                    const row = reportData.find(r => r.personId === p.personId);
-                    if (!row) return false;
-                    const matchesType = selectedMemberType === 'ALL' || row.memberType === selectedMemberType;
-                    const matchesGroup = selectedGroupLabel === 'ALL' || row.groupLabel === selectedGroupLabel;
-                    return matchesType && matchesGroup;
-                  })
-                  .map(person => (
-                    <option key={person.personId} value={String(person.personId)}>
-                      {person.fullName} {person.externalRef ? `(${person.externalRef})` : ''}
-                    </option>
-                  ))
-                }
+                <option value="ACTIVE">Active Personnel ({activeCount})</option>
+                <option value="INACTIVE">Deactivated Personnel ({inactiveCount})</option>
+                <option value="ALL">All Members ({reportData.length})</option>
               </select>
             </div>
 
@@ -286,7 +243,7 @@ export function Reports() {
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>Student ID / Ext. ID</th>
+                  <th>ID</th>
                   <th>Name</th>
                   <th>Type</th>
                   <th>Group</th>
@@ -377,7 +334,7 @@ export function Reports() {
                         0
                       )}
                     </td>
-                    <td>{formatHours(row.totalHours)} <span className="text-muted" style={{ fontSize: '0.8rem' }}>({row.totalHours || 0} hrs)</span></td>
+                    <td>{formatHours(row.totalHours)}</td>
                     <td>
                       <button className="btn btn-secondary" style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem' }} onClick={() => openSessionsModal(row)}>
                         <FileText size={14} style={{ marginRight: '4px' }}/> Sessions
@@ -416,7 +373,7 @@ export function Reports() {
                       <th>Date</th>
                       <th>Check-In</th>
                       <th>Check-Out</th>
-                      <th>Duration (Hours)</th>
+                      <th>Duration</th>
                       <th>Status</th>
                       <th>Actions</th>
                     </tr>

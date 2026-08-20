@@ -22,6 +22,16 @@ api.interceptors.request.use(
 // Response interceptor to handle Envelope format and errors
 api.interceptors.response.use(
   (response) => {
+    // Automatically trigger app-wide refresh on any successful mutating action
+    const method = response.config?.method?.toUpperCase();
+    if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(method)) {
+      const url = response.config?.url || '';
+      // Don't trigger on auth login/forgot-password to avoid unnecessary refreshes
+      if (!url.includes('/auth/login') && !url.includes('/auth/forgot-password')) {
+        window.dispatchEvent(new CustomEvent('app:data-changed'));
+      }
+    }
+
     // If the backend returns an Envelope
     if (response.data && typeof response.data.success !== 'undefined') {
       if (response.data.success) {

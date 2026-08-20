@@ -3,10 +3,12 @@ import { CreditCard, Plus, Search, X, Ban, AlertTriangle } from 'lucide-react';
 import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import { useRefresh, useAutoRefresh } from '../context/RefreshContext';
 
 export function Cards() {
   const { user } = useAuth();
   const toast = useToast();
+  const { triggerRefresh } = useRefresh();
   const isManagerOrAdmin = user?.role === 'ADMIN' || user?.role === 'MANAGER';
   
   const [cards, setCards] = useState([]);
@@ -16,24 +18,21 @@ export function Cards() {
   const [newCardUid, setNewCardUid] = useState('');
   const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('ACTIVE'); // 'ACTIVE' (Default) | 'INACTIVE' | 'ALL'
 
   const fetchCards = useCallback(async () => {
+    if (user?.passwordChangeRequired) return;
     try {
       const data = await api.get('/cards');
       setCards(data || []);
     } catch (err) {
       console.error('Failed to fetch cards', err);
-      toast.error('Failed to fetch cards');
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  }, [user?.passwordChangeRequired]);
 
-  useEffect(() => {
-    if (!user?.passwordChangeRequired) {
-      fetchCards();
-    }
-  }, [user?.passwordChangeRequired, fetchCards]);
+  useAutoRefresh(fetchCards, { intervalMs: 10000 });
 
   const handleRegisterCard = async (e) => {
     e.preventDefault();
@@ -43,21 +42,27 @@ export function Cards() {
       setShowModal(false);
       setNewCardUid('');
       toast.success('RFID Card registered successfully!');
-      fetchCards(); // refresh
+      triggerRefresh();
     } catch (err) {
       setError(err?.message || 'Failed to register card');
       toast.error(err?.message || 'Failed to register card');
     }
   };
 
-  const updateCardStatus = async (id, newStatus) => {
+  const [cardStatusToUpdate, setCardStatusToUpdate] = useState(null);
+
+  const handleRequestStatusChange = (card, newStatus) => {
     if (!isManagerOrAdmin) return toast.warning("Only Managers and Admins can update card status.");
-    if (!window.confirm(`Are you sure you want to mark this card as ${newStatus}?`)) return;
-    
+    setCardStatusToUpdate({ card, newStatus });
+  };
+
+  const confirmUpdateCardStatus = async () => {
+    if (!cardStatusToUpdate) return;
     try {
-      await api.patch(`/cards/${id}`, { status: newStatus });
-      toast.success(`Card status updated to ${newStatus}`);
-      fetchCards();
+      await api.patch(`/cards/${cardStatusToUpdate.card.cardId}`, { status: cardStatusToUpdate.newStatus });
+      toast.success(`Card status updated to ${cardStatusToUpdate.newStatus}`);
+      setCardStatusToUpdate(null);
+      triggerRefresh();
     } catch (err) {
       toast.error(err?.message || 'Failed to update card status');
     }
@@ -69,16 +74,30 @@ export function Cards() {
       await api.delete(`/cards/${cardToDelete.id}`);
       setCardToDelete(null);
       toast.success('Card deleted successfully');
-      fetchCards();
+      triggerRefresh();
     } catch (err) {
       toast.error(err?.message || 'Failed to delete card');
     }
   };
 
-  const filteredCards = cards.filter(c => 
-    c.cardUid?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    c.cardId?.toString().includes(searchTerm)
-  );
+  const activeCount = cards.filter(c => c.status === 'AVAILABLE' || c.status === 'ASSIGNED').length;
+  const inactiveCount = cards.filter(c => c.status === 'DEACTIVATED' || c.status === 'LOST').length;
+
+  const filteredCards = cards.filter(c => {
+    const matchesSearch = c.cardUid?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          c.cardId?.toString().includes(searchTerm) ||
+                          c.assignedPersonName?.toLowerCase().includes(searchTerm.toLowerCase());
+
+    const isActive = c.status === 'AVAILABLE' || c.status === 'ASSIGNED';
+    const isInactive = c.status === 'DEACTIVATED' || c.status === 'LOST';
+
+    const matchesStatus = (statusFilter === 'ALL') ||
+                          (statusFilter === 'ACTIVE' && isActive) ||
+                          (statusFilter === 'INACTIVE' && isInactive) ||
+                          (c.status === statusFilter);
+
+    return matchesSearch && matchesStatus;
+  });
 
   return (
     <div className="page-container">
@@ -96,16 +115,31 @@ export function Cards() {
       </div>
 
       <div className="card">
-        <div className="table-toolbar">
-          <div className="search-bar table-search">
+        <div className="table-toolbar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.25rem' }}>
+          <div className="search-bar table-search" style={{ flex: '1 1 240px', minWidth: '200px' }}>
             <Search size={18} className="search-icon" />
             <input 
               type="text" 
-              placeholder="Search cards by UID..." 
+              placeholder="Search cards by UID or name..." 
               className="search-input" 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
+          </div>
+
+          {/* Status Filter Dropdown (Default: Active) */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-text-muted)' }}>Status:</span>
+            <select
+              className="form-control"
+              style={{ padding: '0.35rem 0.65rem', fontSize: '0.85rem', minWidth: '150px' }}
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+            >
+              <option value="ACTIVE">Active ({activeCount})</option>
+              <option value="INACTIVE">Inactive ({inactiveCount})</option>
+              <option value="ALL">All Cards ({cards.length})</option>
+            </select>
           </div>
         </div>
 
@@ -167,15 +201,15 @@ export function Cards() {
                             <>
                               <button 
                                 className="icon-btn-small text-warning" 
-                                title="Mark Lost"
-                                onClick={() => updateCardStatus(c.cardId, 'LOST')}
+                                title="Mark Lost" 
+                                onClick={() => handleRequestStatusChange(c, 'LOST')}
                               >
                                 <AlertTriangle size={16} />
                               </button>
                               <button 
                                 className="icon-btn-small text-danger" 
-                                title="Deactivate"
-                                onClick={() => updateCardStatus(c.cardId, 'DEACTIVATED')}
+                                title="Deactivate" 
+                                onClick={() => handleRequestStatusChange(c, 'DEACTIVATED')}
                               >
                                 <Ban size={16} />
                               </button>
@@ -186,7 +220,7 @@ export function Cards() {
                               className="btn btn-success" 
                               style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}
                               title="Reactivate Card"
-                              onClick={() => updateCardStatus(c.cardId, 'AVAILABLE')}
+                              onClick={() => handleRequestStatusChange(c, 'AVAILABLE')}
                             >
                               Reactivate
                             </button>
@@ -237,6 +271,66 @@ export function Cards() {
                 <button type="submit" className="btn btn-primary">Register</button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Custom Modal: Card Status Change */}
+      {cardStatusToUpdate && (
+        <div className="modal-overlay">
+          <div className="modal" style={{ maxWidth: '440px', borderRadius: 'var(--border-radius-sm, 2px)', border: '1px solid var(--color-border)', boxShadow: '0 20px 40px rgba(0,0,0,0.2)' }}>
+            <div className="modal-header" style={{ borderBottom: '1px solid var(--color-border)', paddingBottom: '0.85rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                <div style={{ 
+                  width: '34px', 
+                  height: '34px', 
+                  borderRadius: '2px', 
+                  background: cardStatusToUpdate.newStatus === 'LOST' || cardStatusToUpdate.newStatus === 'DEACTIVATED' ? 'rgba(239, 68, 68, 0.12)' : 'rgba(16, 43, 76, 0.1)', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center', 
+                  color: cardStatusToUpdate.newStatus === 'LOST' || cardStatusToUpdate.newStatus === 'DEACTIVATED' ? 'var(--color-danger, #ef4444)' : 'var(--color-primary)',
+                  flexShrink: 0
+                }}>
+                  {cardStatusToUpdate.newStatus === 'LOST' ? <AlertTriangle size={20} /> : <CreditCard size={20} />}
+                </div>
+                <div>
+                  <h2 className="modal-title" style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--color-primary)', margin: 0 }}>
+                    Update Card Status
+                  </h2>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>CARD LIFECYCLE MANAGEMENT</span>
+                </div>
+              </div>
+              <button className="modal-close" onClick={() => setCardStatusToUpdate(null)}><X size={20} /></button>
+            </div>
+
+            <div style={{ padding: '1rem 0', fontSize: '0.88rem', color: 'var(--color-text-main)' }}>
+              <p style={{ margin: '0 0 0.65rem 0' }}>
+                Are you sure you want to change status of card <strong style={{ fontFamily: 'monospace' }}>{cardStatusToUpdate.card.cardUid}</strong> to <span className={`badge badge-${cardStatusToUpdate.newStatus === 'AVAILABLE' ? 'success' : cardStatusToUpdate.newStatus === 'LOST' ? 'warning' : 'danger'}`}>{cardStatusToUpdate.newStatus}</span>?
+              </p>
+              {cardStatusToUpdate.newStatus === 'LOST' && (
+                <p style={{ fontSize: '0.82rem', color: '#92400e', background: '#fffbeb', border: '1px solid #fef3c7', padding: '0.65rem', borderRadius: '2px', margin: 0 }}>
+                  Marking a card as LOST will permanently disable it and immediately prevent any door access or check-ins.
+                </p>
+              )}
+            </div>
+
+            <div className="modal-actions" style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', borderTop: '1px solid var(--color-border)', paddingTop: '0.85rem' }}>
+              <button 
+                type="button" 
+                className="btn btn-secondary" 
+                onClick={() => setCardStatusToUpdate(null)}
+              >
+                Cancel
+              </button>
+              <button 
+                type="button" 
+                className="btn btn-primary"
+                onClick={confirmUpdateCardStatus}
+              >
+                Confirm Update
+              </button>
+            </div>
           </div>
         </div>
       )}

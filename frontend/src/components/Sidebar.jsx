@@ -1,7 +1,8 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Users, CreditCard, Activity, FileText, Settings, ShieldAlert, UserCog, Box } from 'lucide-react';
+import { LayoutDashboard, Users, CreditCard, Activity, FileText, Settings, ShieldAlert, UserCog } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { ZenvLogo } from './ZenvLogo';
 import './Sidebar.css';
 
 export function Sidebar() {
@@ -24,9 +25,8 @@ export function Sidebar() {
 
   return (
     <aside className="sidebar">
-      <div className="sidebar-header" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-        <Box size={24} color="var(--color-primary)" />
-        <h2>ZENCUBE</h2>
+      <div className="sidebar-header">
+        <ZenvLogo variant="white" size="md" subtext="QUANTUM" />
       </div>
       <nav className="sidebar-nav">
         <ul>
@@ -55,3 +55,4 @@ export function Sidebar() {
     </aside>
   );
 }
+

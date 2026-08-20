@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Box } from 'lucide-react';
+import { ShieldCheck, Cpu, KeyRound, ArrowRight } from 'lucide-react';
+import { ZenvLogo } from '../components/ZenvLogo';
 import api from '../utils/api';
 import './Login.css';
 
@@ -10,7 +11,7 @@ export function Login() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  
+
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [forgotEmail, setForgotEmail] = useState('');
   const [forgotMessage, setForgotMessage] = useState('');
@@ -35,7 +36,7 @@ export function Login() {
       navigate('/');
     } catch (err) {
       console.error(err);
-      setError(err?.message || 'Invalid credentials or server error.');
+      setError(err?.message || 'Invalid credentials or server connection failure.');
     } finally {
       setLoading(false);
     }
@@ -48,7 +49,7 @@ export function Login() {
     setForgotMessage('');
     try {
       const res = await api.post('/auth/forgot-password', { email: forgotEmail });
-      setForgotMessage(res || 'Temp password delivered by email');
+      setForgotMessage(res || 'Temporary password sent to registered email address.');
     } catch (err) {
       setError(err?.message || 'Failed to request password reset');
     } finally {
@@ -58,46 +59,93 @@ export function Login() {
 
   return (
     <div className="login-container">
+      {/* Left Brand Showcase Banner */}
       <div className="login-left">
-        <div>
-          <h1 className="project-title">ZENCUBE ACCESS-TRACK</h1>
-          <div className="project-subtitle">OFFICE ACCESS & ATTENDANCE SYSTEM</div>
+        <div className="login-brand-content">
+          <div className="login-hero-tag">
+            <span className="hero-tag-dot"></span>
+            CONSCIOUS QUANTUM ENGINEERING
+          </div>
+
+          <h1 className="project-title">
+            RFTRACK
+          </h1>
+          <div className="project-brand-lockup">
+            <span className="lockup-brand">ZENV QUANTUM</span>
+            <span className="lockup-sep">|</span>
+            <span className="lockup-sub">SMART FIELD INTELLIGENCE</span>
+          </div>
+
+          <p className="project-tagline">
+            "Think. Adapt. Evolve."
+          </p>
+
+          <div className="brand-features-grid">
+            <div className="brand-feature-item">
+              <ShieldCheck size={20} className="feature-icon" />
+              <div>
+                <strong>Autonomous Security</strong>
+                <span>Real-time RFID edge telemetry & instant access verification</span>
+              </div>
+            </div>
+            <div className="brand-feature-item">
+              <Cpu size={20} className="feature-icon" />
+              <div>
+                <strong>DeepTech Continuum</strong>
+                <span>AI-driven attendance analytics with tamper-evident audit logs</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="login-footer-meta">
+            <span>ZENV QUANTUM PVT. LTD.</span>
+            <span>•</span>
+            <span>HYDERABAD, INDIA</span>
+          </div>
         </div>
       </div>
+
+      {/* Right Authentication Card */}
       <div className="login-right">
         <div className="login-card">
           <div className="login-header">
-            <div className="login-logo">
-              <Box size={32} color="var(--color-primary)" />
+            <div className="login-logo-wrapper">
+              <ZenvLogo variant="horizontal" size="md" />
             </div>
-            <h2>Sign In</h2>
-            <p className="text-muted">Enter your credentials to access the portal</p>
+            <h2>Portal Authentication</h2>
+            <p className="text-muted">Enter authorized credentials to access system telemetry</p>
           </div>
 
           {error && <div className="login-error">{error}</div>}
-          {forgotMessage && <div className="login-error" style={{ background: 'var(--color-success-light, #d4edda)', color: 'var(--color-success, #155724)', border: '1px solid var(--color-success, #c3e6cb)' }}>{forgotMessage}</div>}
+          {forgotMessage && (
+            <div className="login-success">
+              {forgotMessage}
+            </div>
+          )}
 
           {!showForgotPassword ? (
             <form onSubmit={handleLogin} className="login-form">
               <div className="form-group">
-                <label className="form-label" htmlFor="username">Username</label>
+                <label className="form-label" htmlFor="username">Username / Email</label>
                 <input
                   id="username"
                   type="text"
                   className="form-control"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  placeholder="Enter username"
+                  placeholder="admin@zenv.ai"
+                  autoComplete="username"
                   required
                 />
               </div>
+
               <div className="form-group">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
                   <label className="form-label" htmlFor="password" style={{ marginBottom: 0 }}>Password</label>
-                  <button 
-                    type="button" 
-                    onClick={() => { setShowForgotPassword(true); setError(''); setForgotMessage(''); }} 
-                    style={{ background: 'none', border: 'none', color: 'var(--color-primary)', fontSize: '0.8rem', cursor: 'pointer', padding: 0 }}
+                  <button
+                    type="button"
+                    onClick={() => { setShowForgotPassword(true); setError(''); setForgotMessage(''); }}
+                    className="forgot-link"
                   >
                     Forgot Password?
                   </button>
@@ -108,42 +156,57 @@ export function Login() {
                   className="form-control"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter password"
+                  placeholder="••••••••"
+                  autoComplete="current-password"
                   required
                 />
               </div>
+
               <button type="submit" className="btn btn-primary login-btn" disabled={loading}>
-                {loading ? 'Authenticating...' : 'Sign In'}
+                {loading ? (
+                  <span>Authenticating...</span>
+                ) : (
+                  <>
+                    <span>Authenticate & Access</span>
+                    <ArrowRight size={16} />
+                  </>
+                )}
               </button>
             </form>
           ) : (
             <form onSubmit={handleForgotPassword} className="login-form">
               <div className="form-group">
-                <label className="form-label" htmlFor="forgotEmail">Email Address</label>
+                <label className="form-label" htmlFor="forgotEmail">Registered Staff Email</label>
                 <input
                   id="forgotEmail"
                   type="email"
                   className="form-control"
                   value={forgotEmail}
                   onChange={(e) => setForgotEmail(e.target.value)}
-                  placeholder="Enter your email"
+                  placeholder="staff@zenv.ai"
                   required
                 />
               </div>
+
               <button type="submit" className="btn btn-primary login-btn" disabled={loading}>
-                {loading ? 'Requesting...' : 'Reset Password'}
+                {loading ? 'Dispatching Token...' : 'Send Temporary Password'}
               </button>
-              <div style={{ textAlign: 'center', marginTop: '1rem' }}>
-                <button 
-                  type="button" 
-                  onClick={() => { setShowForgotPassword(false); setError(''); setForgotMessage(''); }} 
-                  style={{ background: 'none', border: 'none', color: 'var(--color-text-muted)', fontSize: '0.9rem', cursor: 'pointer' }}
+
+              <div style={{ textAlign: 'center', marginTop: '1.25rem' }}>
+                <button
+                  type="button"
+                  onClick={() => { setShowForgotPassword(false); setError(''); setForgotMessage(''); }}
+                  className="back-link"
                 >
-                  Back to Sign In
+                  ← Return to Sign In
                 </button>
               </div>
             </form>
           )}
+
+          <div className="login-card-footer">
+            <span>Protected by Post-Quantum Cryptographic & Edge Security</span>
+          </div>
         </div>
       </div>
     </div>

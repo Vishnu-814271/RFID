@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { ShieldAlert, Search, Filter, Calendar, CheckCircle, XCircle } from 'lucide-react';
 import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
+import { useAutoRefresh } from '../context/RefreshContext';
 import { formatDateTime } from '../utils/dateUtils';
 
 export function AccessLogs() {
@@ -11,11 +12,12 @@ export function AccessLogs() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDecision, setSelectedDecision] = useState('ALL');
   const [selectedEventType, setSelectedEventType] = useState('ALL');
+  const [selectedMemberType, setSelectedMemberType] = useState('ALL');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
 
-  const fetchEvents = async () => {
-    setLoading(true);
+  const fetchEvents = useCallback(async () => {
+    if (user?.passwordChangeRequired) return;
     try {
       const data = await api.get('/events');
       setEvents(data || []);
@@ -24,13 +26,9 @@ export function AccessLogs() {
     } finally {
       setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    if (!user?.passwordChangeRequired) {
-      fetchEvents();
-    }
   }, [user?.passwordChangeRequired]);
+
+  useAutoRefresh(fetchEvents, { intervalMs: 10000 });
 
   const filteredEvents = events.filter(ev => {
     const term = searchTerm.toLowerCase();
@@ -42,6 +40,7 @@ export function AccessLogs() {
     const matchesSearch = !term || personName.includes(term) || studentId.includes(term) || cardUid.includes(term) || reason.includes(term);
     const matchesDecision = selectedDecision === 'ALL' || ev.decision === selectedDecision;
     const matchesEventType = selectedEventType === 'ALL' || ev.eventType === selectedEventType;
+    const matchesMemberType = selectedMemberType === 'ALL' || ev.person?.memberType === selectedMemberType;
 
     let matchesDate = true;
     if (ev.occurredAt) {
@@ -50,7 +49,7 @@ export function AccessLogs() {
       if (endDate && eventDateStr > endDate) matchesDate = false;
     }
 
-    return matchesSearch && matchesDecision && matchesEventType && matchesDate;
+    return matchesSearch && matchesDecision && matchesEventType && matchesMemberType && matchesDate;
   });
 
   const totalEvents = filteredEvents.length;
@@ -104,7 +103,7 @@ export function AccessLogs() {
             <Search size={18} className="search-icon text-muted" style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)' }} />
             <input
               type="text"
-              placeholder="Search by Name, Student ID, Card UID..."
+              placeholder="Search by Name, ID, Card UID..."
               className="form-control search-input"
               style={{ paddingLeft: '2.2rem', width: '100%' }}
               value={searchTerm}
@@ -116,10 +115,22 @@ export function AccessLogs() {
             <Filter size={16} className="text-muted" />
             <select
               className="form-control"
+              value={selectedMemberType}
+              onChange={(e) => setSelectedMemberType(e.target.value)}
+            >
+              <option value="ALL">All Personnel Types</option>
+              <option value="EMPLOYEE">Employees</option>
+              <option value="STUDENT">Students</option>
+            </select>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <select
+              className="form-control"
               value={selectedDecision}
               onChange={(e) => setSelectedDecision(e.target.value)}
             >
-              <option value="ALL">All Statuses</option>
+              <option value="ALL">All Decisions</option>
               <option value="GRANTED">Granted</option>
               <option value="DENIED">Denied</option>
             </select>
@@ -170,7 +181,7 @@ export function AccessLogs() {
               <thead>
                 <tr>
                   <th>Date & Time</th>
-                  <th>Student ID / Ext. ID</th>
+                  <th>ID</th>
                   <th>Name</th>
                   <th>Card UID</th>
                   <th>Event Type</th>
@@ -184,17 +195,7 @@ export function AccessLogs() {
                     <td className="font-medium">{formatDateTime(ev.occurredAt)}</td>
                     <td>
                       {ev.person ? (
-                        <span style={{ 
-                          fontFamily: 'monospace',
-                          fontWeight: '600',
-                          fontSize: '0.85rem',
-                          background: '#f1f5f9',
-                          color: '#0f172a',
-                          padding: '2px 8px',
-                          borderRadius: '4px',
-                          border: '1px solid #cbd5e1',
-                          display: 'inline-block'
-                        }}>
+                        <span className="ext-id-badge">
                           {ev.person.externalRef || `EXT-${String(ev.person.personId).padStart(4, '0')}`}
                         </span>
                       ) : (
@@ -202,7 +203,7 @@ export function AccessLogs() {
                       )}
                     </td>
                     <td className="font-medium">{ev.person ? ev.person.fullName : 'Unknown Card'}</td>
-                    <td><code style={{ background: 'var(--color-bg-secondary, #f3f4f6)', padding: '0.2rem 0.4rem', borderRadius: '4px' }}>{ev.cardUid}</code></td>
+                    <td><code style={{ background: 'var(--color-bg-subtle)', padding: '0.2rem 0.4rem', borderRadius: 'var(--border-radius-sm)', border: '1px solid var(--color-border)' }}>{ev.cardUid}</code></td>
                     <td>{ev.eventType || '-'}</td>
                     <td>
                       <span className={`badge badge-${ev.decision === 'GRANTED' ? 'success' : 'danger'}`}>

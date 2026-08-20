@@ -65,27 +65,16 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     if (!isAuthenticated) return;
 
-    let timeoutMinutes = 5; // default fallback
-
-    const fetchTimeoutConfig = async () => {
-      try {
-        const config = await api.get('/config');
-        if (config.sessionTimeoutMinutes) {
-          timeoutMinutes = parseInt(config.sessionTimeoutMinutes, 10);
-        }
-      } catch (err) {
-        console.error("Failed to fetch session timeout config:", err);
-      }
-    };
-    fetchTimeoutConfig();
+    // Fixed default: 7 days (7 * 24 * 60 * 60 * 1000 ms)
+    const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 
     const checkIdle = setInterval(() => {
       const idleTime = Date.now() - activityRef.current;
-      if (idleTime >= timeoutMinutes * 60 * 1000) {
-        console.log("Session timed out due to inactivity");
+      if (idleTime >= SEVEN_DAYS_MS) {
+        console.log("Session timed out due to inactivity (7 days)");
         logout();
       }
-    }, 30000); // Check every 30 seconds
+    }, 60000); // Check every minute
 
     const events = ['mousemove', 'keydown', 'mousedown', 'touchstart'];
     events.forEach(e => window.addEventListener(e, resetActivity));

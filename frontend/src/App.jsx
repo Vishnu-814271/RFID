@@ -13,6 +13,7 @@ import { Settings } from './pages/Settings';
 import { StaffUsers } from './pages/StaffUsers';
 import { LiveAttendance } from './pages/LiveAttendance';
 import { AccessLogs } from './pages/AccessLogs';
+import { RefreshProvider } from './context/RefreshContext';
 import { useAuth } from './context/AuthContext';
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
@@ -27,23 +28,25 @@ function App() {
   return (
     <ToastProvider>
       <AuthProvider>
-        <BrowserRouter>
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route path="/" element={<Layout />}>
-              <Route index element={<Dashboard />} />
-              <Route path="live" element={<LiveAttendance />} />
-              <Route path="people" element={<People />} />
-              <Route path="cards" element={<Cards />} />
-              <Route path="access-logs" element={<AccessLogs />} />
-              <Route path="reports" element={<ProtectedRoute allowedRoles={['ADMIN', 'MANAGER']}><Reports /></ProtectedRoute>} />
-              <Route path="audit" element={<ProtectedRoute allowedRoles={['ADMIN']}><AuditLogs /></ProtectedRoute>} />
-              <Route path="settings" element={<ProtectedRoute allowedRoles={['ADMIN', 'MANAGER']}><Settings /></ProtectedRoute>} />
-              <Route path="staff-users" element={<ProtectedRoute allowedRoles={['ADMIN', 'MANAGER']}><StaffUsers /></ProtectedRoute>} />
-              <Route path="*" element={<div>Page Not Found</div>} />
-            </Route>
-          </Routes>
-        </BrowserRouter>
+        <RefreshProvider>
+          <BrowserRouter>
+            <Routes>
+              <Route path="/login" element={<Login />} />
+              <Route path="/" element={<Layout />}>
+                <Route index element={<Dashboard />} />
+                <Route path="live" element={<LiveAttendance />} />
+                <Route path="people" element={<People />} />
+                <Route path="cards" element={<Cards />} />
+                <Route path="access-logs" element={<AccessLogs />} />
+                <Route path="reports" element={<ProtectedRoute allowedRoles={['ADMIN', 'MANAGER']}><Reports /></ProtectedRoute>} />
+                <Route path="audit" element={<ProtectedRoute allowedRoles={['ADMIN']}><AuditLogs /></ProtectedRoute>} />
+                <Route path="settings" element={<ProtectedRoute allowedRoles={['ADMIN', 'MANAGER']}><Settings /></ProtectedRoute>} />
+                <Route path="staff-users" element={<ProtectedRoute allowedRoles={['ADMIN', 'MANAGER']}><StaffUsers /></ProtectedRoute>} />
+                <Route path="*" element={<div>Page Not Found</div>} />
+              </Route>
+            </Routes>
+          </BrowserRouter>
+        </RefreshProvider>
       </AuthProvider>
     </ToastProvider>
   );

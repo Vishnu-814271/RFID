@@ -36,14 +36,15 @@
 .avatar-small {
   width: 28px;
   height: 28px;
-  border-radius: 50%;
+  border-radius: 2px;
   background-color: var(--color-primary-light);
   color: white;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 700;
+  border: 1px solid rgba(16, 43, 76, 0.15);
 }
 
 .font-medium {

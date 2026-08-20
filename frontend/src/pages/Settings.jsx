@@ -2,11 +2,13 @@ import React, { useState, useEffect, useCallback } from 'react';
 import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import { useRefresh, useAutoRefresh } from '../context/RefreshContext';
 import { Save, Trash2, CheckCircle, AlertCircle } from 'lucide-react';
 
 export function Settings() {
   const { user } = useAuth();
   const toast = useToast();
+  const { triggerRefresh } = useRefresh();
   
   // Config state
   const [config, setConfig] = useState(null);
@@ -14,24 +16,18 @@ export function Settings() {
   const [saveStatus, setSaveStatus] = useState(null);
 
   const fetchConfig = useCallback(async () => {
-    setConfigLoading(true);
+    if (user?.role !== 'ADMIN' && user?.role !== 'MANAGER') return;
     try {
       const data = await api.get('/config');
-      // workingDays is returned as comma separated string
       setConfig(data);
     } catch (err) {
       console.error(err);
-      toast.error(`Error loading config: ${err.message || 'Server error'}`);
     } finally {
       setConfigLoading(false);
     }
-  }, [toast]);
+  }, [user?.role]);
 
-  useEffect(() => {
-    if (user?.role === 'ADMIN' || user?.role === 'MANAGER') {
-      fetchConfig();
-    }
-  }, [user?.role, fetchConfig]);
+  useAutoRefresh(fetchConfig);
 
   const saveConfig = async (e) => {
     e.preventDefault();
@@ -42,12 +38,13 @@ export function Settings() {
         expectedStartTime: config.expectedStartTime,
         lateGraceMinutes: parseInt(config.lateGraceMinutes),
         autoCheckoutTime: config.autoCheckoutTime,
-        workingDays: config.workingDays, // Backend expects a string, not an array
+        workingDays: config.workingDays,
         tapDebounceSeconds: parseInt(config.tapDebounceSeconds),
-        sessionTimeoutMinutes: parseInt(config.sessionTimeoutMinutes),
         minWorkingMinutes: parseInt(config.minWorkingMinutes),
         overnightSessionAttribution: config.overnightSessionAttribution
       });
+      toast.success('Configuration updated successfully!');
+      triggerRefresh();
       const msg = 'Configuration saved successfully!';
       setSaveStatus({ type: 'success', message: msg });
       toast.success(msg);
@@ -138,12 +135,20 @@ export function Settings() {
               <input type="number" className="form-control" value={config.tapDebounceSeconds} onChange={e => setConfig({...config, tapDebounceSeconds: e.target.value})} required />
             </div>
             <div className="form-group">
-              <label className="form-label">Session Idle Timeout (minutes)</label>
-              <input type="number" className="form-control" value={config.sessionTimeoutMinutes || 5} onChange={e => setConfig({...config, sessionTimeoutMinutes: e.target.value})} required />
-            </div>
-            <div className="form-group">
-              <label className="form-label">Minimum Working Hours (minutes)</label>
-              <input type="number" className="form-control" value={config.minWorkingMinutes || 480} onChange={e => setConfig({...config, minWorkingMinutes: e.target.value})} required />
+              <label className="form-label">Minimum Working Hours</label>
+              <input 
+                type="number" 
+                step="0.01"
+                min="0.01"
+                max="24"
+                className="form-control" 
+                value={Number(config.minWorkingMinutes !== undefined ? (config.minWorkingMinutes / 60) : 8).toFixed(2)} 
+                onChange={e => {
+                  const hrs = parseFloat(e.target.value) || 0;
+                  setConfig({...config, minWorkingMinutes: Math.round(hrs * 60)});
+                }} 
+                required 
+              />
             </div>
             <div className="form-group">
               <label className="form-label">Overnight Session Attribution</label>

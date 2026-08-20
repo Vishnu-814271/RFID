@@ -1,48 +1,51 @@
 :root {
-  /* Corporate Color Palette */
-  --color-primary: #0f3a68;      /* Deep Corporate Blue */
-  --color-primary-light: #1b538f;
-  --color-primary-dark: #0a2542;
+  /* ZENV Quantum Brand Color Palette (Page 29 of Brand Guidelines) */
+  --color-primary: #102b4d;          /* Dark Blue / Navy (HEX: 102b4d, RGB: 16-43-76) */
+  --color-primary-light: #1e556d;    /* Green / Teal Blue (HEX: 1e556d, RGB: 30-85-109) */
+  --color-primary-dark: #1d4150;     /* Dark Green (HEX: 1d4150, RGB: 29-65-80) */
   
-  --color-secondary: #475569;    /* Slate Gray */
-  --color-secondary-light: #64748b;
+  --color-secondary: #979085;        /* Taupe / Gray-Brown (HEX: 979085, RGB: 151-144-133) */
+  --color-secondary-light: #d1d1d1;  /* American Silver / Light Gray (HEX: d1d1d1) */
   
-  --color-accent: #0284c7;       /* Light Blue Accent */
+  --color-accent: #193e65;           /* Blue (HEX: 193e65, RGB: 25-62-101) */
   
-  --color-success: #10b981;
-  --color-warning: #f59e0b;
-  --color-danger: #ef4444;
-  --color-info: #3b82f6;
+  --color-success: #1e556d;      /* ZENV Teal */
+  --color-warning: #979085;      /* ZENV Taupe */
+  --color-danger: #d93838;
+  --color-info: #193e65;
 
-  /* Neutrals & Backgrounds */
-  --color-bg-body: #f8fafc;
+  /* Neutrals & Background Canvas (Page 23-24) */
+  --color-bg-body: #f4f4f4;      /* Smoke White (HEX: f4f4f4) */
   --color-bg-surface: #ffffff;
-  --color-bg-subtle: #f1f5f9;
+  --color-bg-subtle: #e9ecef;
   
-  /* Typography */
-  --color-text-main: #1e293b;
-  --color-text-muted: #64748b;
+  /* Typography Colors */
+  --color-text-main: #102b4d;    /* ZENV Dark Blue */
+  --color-text-muted: #5c6773;
+  --color-taupe: #979085;
   
   /* Borders */
-  --color-border: #e2e8f0;
-  --color-border-hover: #cbd5e1;
+  --color-border: #d1d1d1;       /* American Silver */
+  --color-border-hover: #979085;
 
-  /* Typography Settings */
-  --font-family: 'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  --font-size-base: 15px;
+  /* Typography Settings (Stem Medium / Segoe UI / Noto Sans / Vision Light per Pages 30-34) */
+  --font-family: 'Noto Sans', 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+  --font-family-display: 'Outfit', 'Space Grotesk', 'Noto Sans', 'Segoe UI', sans-serif;
+  --font-size-base: 14.5px;
   --line-height: 1.5;
 
-  /* Layout & Sizing */
+  /* Layout & Sharp Geometry Sizing (Page 46: Strictly No Circular/Rounded Corners) */
   --sidebar-width: 260px;
   --header-height: 64px;
-  --border-radius-sm: 4px;
-  --border-radius-md: 6px;
-  --border-radius-lg: 8px;
+  --border-radius-sm: 2px;
+  --border-radius-md: 2px;
+  --border-radius-lg: 2px;
+  --border-radius-full: 2px;
   
   /* Shadows */
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-sm: 0 1px 3px rgba(16, 43, 76, 0.08);
+  --shadow-md: 0 4px 12px rgba(16, 43, 76, 0.12);
+  --shadow-lg: 0 10px 25px rgba(16, 43, 76, 0.18);
 }
 
 /* Reset & Base Styles */
@@ -63,8 +66,10 @@ body {
 }
 
 h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-family-display);
   color: var(--color-text-main);
   font-weight: 600;
+  letter-spacing: -0.01em;
   margin-bottom: 0.5rem;
 }
 
@@ -87,7 +92,7 @@ a:hover {
 .text-danger { color: var(--color-danger); }
 .text-warning { color: var(--color-warning); }
 
-/* Common Components */
+/* Common Components (ZENV Sharp Rectangular Cards) */
 .card {
   background-color: var(--color-bg-surface);
   border: 1px solid var(--color-border);
@@ -96,7 +101,7 @@ a:hover {
   padding: 1.5rem;
 }
 
-/* Buttons */
+/* Buttons (ZENV Sharp Edged Buttons) */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -104,7 +109,7 @@ a:hover {
   gap: 0.5rem;
   padding: 0.5rem 1rem;
   font-size: 0.875rem;
-  font-weight: 500;
+  font-weight: 600;
   border-radius: var(--border-radius-sm);
   border: 1px solid transparent;
   cursor: pointer;
@@ -154,7 +159,7 @@ a:hover {
 .form-label {
   display: block;
   font-size: 0.875rem;
-  font-weight: 500;
+  font-weight: 600;
   margin-bottom: 0.5rem;
   color: var(--color-text-main);
 }
@@ -177,21 +182,26 @@ a:hover {
 .form-control:focus {
   border-color: var(--color-primary);
   outline: 0;
-  box-shadow: 0 0 0 2px rgba(15, 58, 104, 0.15);
+  box-shadow: 0 0 0 2px rgba(16, 43, 76, 0.15);
 }
 
-/* Data Table */
+/* Data Table with Sticky Headers */
 .data-table-container {
   width: 100%;
   overflow-x: auto;
+  overflow-y: auto;
+  max-height: calc(100vh - 260px);
+  min-height: 200px;
   background: var(--color-bg-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--border-radius-md);
+  position: relative;
 }
 
 .data-table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   text-align: left;
 }
 
@@ -202,65 +212,92 @@ a:hover {
 }
 
 .data-table th {
-  background-color: var(--color-bg-subtle);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background-color: #e9eff5;
+  background-clip: padding-box;
   font-weight: 600;
   font-size: 0.8125rem;
   text-transform: uppercase;
-  color: var(--color-text-muted);
+  color: var(--color-primary);
   letter-spacing: 0.05em;
+  box-shadow: inset 0 -1px 0 var(--color-border);
 }
 
 .data-table tbody tr:hover {
-  background-color: rgba(241, 245, 249, 0.5);
+  background-color: rgba(30, 85, 109, 0.05);
 }
 
 .data-table tbody tr:last-child td {
   border-bottom: none;
 }
 
-/* Badges */
+/* Badges (ZENV Sharp Rectangular Badges per Page 46 Guidelines) */
 .badge {
   display: inline-flex;
   align-items: center;
-  padding: 0.125rem 0.5rem;
+  padding: 0.2rem 0.55rem;
   font-size: 0.75rem;
-  font-weight: 600;
-  border-radius: 9999px;
+  font-weight: 700;
+  border-radius: 2px;
+  border: 1px solid transparent;
 }
 
 .badge-success {
-  background-color: rgba(16, 185, 129, 0.1);
+  background-color: rgba(30, 85, 109, 0.12);
   color: var(--color-success);
+  border-color: rgba(30, 85, 109, 0.3);
 }
 
 .badge-danger {
-  background-color: rgba(239, 68, 68, 0.1);
+  background-color: rgba(217, 56, 56, 0.12);
   color: var(--color-danger);
+  border-color: rgba(217, 56, 56, 0.3);
 }
 
 .badge-warning {
-  background-color: rgba(245, 158, 11, 0.1);
-  color: var(--color-warning);
+  background-color: rgba(151, 144, 133, 0.15);
+  color: var(--color-primary);
+  border-color: rgba(151, 144, 133, 0.4);
 }
 
 .badge-info {
-  background-color: rgba(59, 130, 246, 0.1);
+  background-color: rgba(25, 62, 101, 0.12);
   color: var(--color-info);
+  border-color: rgba(25, 62, 101, 0.3);
 }
 
 .badge-neutral {
   background-color: var(--color-bg-subtle);
   color: var(--color-text-muted);
+  border-color: var(--color-border);
 }
 
-.modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
-.modal { background: var(--color-bg-surface); padding: 2rem; border-radius: var(--border-radius-lg); width: 100%; max-width: 500px; box-shadow: var(--shadow-lg); }
+.modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(16, 43, 76, 0.6); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+.modal { background: var(--color-bg-surface); padding: 2rem; border-radius: var(--border-radius-sm); width: 100%; max-width: 500px; box-shadow: var(--shadow-lg); border: 1px solid var(--color-border); }
 .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
-.modal-title { font-size: 1.25rem; font-weight: 600; margin: 0; }
+.modal-title { font-size: 1.25rem; font-weight: 700; color: var(--color-primary); margin: 0; }
 .modal-close { background: none; border: none; cursor: pointer; color: var(--color-text-muted); }
 .modal-actions { display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem; }
 
 .topbar { background: var(--color-bg-surface); padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--color-border); }
-.tap-simulator { display: flex; gap: 0.5rem; align-items: center; background: var(--color-bg-subtle); padding: 0.5rem 1rem; border-radius: var(--border-radius-full); border: 1px solid var(--color-border); }
+.tap-simulator { display: flex; gap: 0.5rem; align-items: center; background: var(--color-bg-subtle); padding: 0.4rem 0.85rem; border-radius: var(--border-radius-sm); border: 1px solid var(--color-border); }
 .tap-simulator input { background: transparent; border: none; outline: none; width: 150px; }
-.tap-btn { background: var(--color-primary); color: white; border: none; border-radius: var(--border-radius-full); padding: 0.25rem 0.75rem; font-size: 0.8rem; font-weight: 600; cursor: pointer; }
+.tap-btn { background: var(--color-primary); color: white; border: none; border-radius: var(--border-radius-sm); padding: 0.3rem 0.75rem; font-size: 0.8rem; font-weight: 700; cursor: pointer; transition: background 0.2s ease; }
+.tap-btn:hover { background: var(--color-primary-light); }
+
+/* ZENV Brand Ext ID / Code Badge */
+.ext-id-badge {
+  font-family: 'JetBrains Mono', 'Consolas', monospace;
+  font-weight: 600;
+  font-size: 0.825rem;
+  background: var(--color-bg-subtle);
+  color: var(--color-primary);
+  padding: 2px 8px;
+  border-radius: var(--border-radius-sm);
+  border: 1px solid var(--color-border);
+  display: inline-block;
+  letter-spacing: 0.5px;
+}
+

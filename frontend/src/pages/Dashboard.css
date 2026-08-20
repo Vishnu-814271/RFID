@@ -2,23 +2,33 @@
   margin-bottom: 2rem;
 }
 
+.dashboard-header h1 {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  letter-spacing: 0.5px;
+  margin-bottom: 0.25rem;
+}
+
 .metrics-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 1.25rem;
   margin-bottom: 2rem;
 }
 
 .metric-card {
   background: var(--color-bg-surface);
   border: 1px solid var(--color-border);
-  border-radius: var(--border-radius-md);
-  padding: 1.5rem;
+  border-radius: var(--border-radius-sm);
+  padding: 1.25rem 1.5rem;
   display: flex;
   align-items: center;
   box-shadow: var(--shadow-sm);
   cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  position: relative;
+  overflow: hidden;
 }
 
 .metric-card:hover {
@@ -27,40 +37,65 @@
 }
 
 .metric-icon {
-  width: 48px;
-  height: 48px;
+  width: 46px;
+  height: 46px;
   border-radius: var(--border-radius-sm);
   display: flex;
   align-items: center;
   justify-content: center;
   margin-right: 1.25rem;
+  flex-shrink: 0;
 }
 
-.bg-primary-light { background-color: var(--color-primary); }
-.bg-success-light { background-color: var(--color-success); }
-.bg-info-light { background-color: var(--color-info); }
-.bg-warning-light { background-color: var(--color-warning); }
-.bg-danger-light { background-color: var(--color-danger); }
-.bg-purple-light { background-color: #8b5cf6; }
+/* ZENV Official Brand Card Palettes (Page 29 Guidelines) */
+.metric-card.fill-zenv-navy,
+.metric-card.fill-primary { 
+  background-color: var(--color-primary); /* Dark Blue #102b4d (Pantone 2767 C) */
+  border-color: var(--color-primary); 
+}
 
-/* Filled Card Styles */
-.metric-card.fill-primary { background-color: var(--color-primary); border-color: var(--color-primary); }
-.metric-card.fill-success { background-color: var(--color-success); border-color: var(--color-success); }
-.metric-card.fill-info { background-color: var(--color-info); border-color: var(--color-info); }
-.metric-card.fill-warning { background-color: var(--color-warning); border-color: var(--color-warning); }
-.metric-card.fill-purple { background-color: #8b5cf6; border-color: #8b5cf6; }
-.metric-card.fill-danger { background-color: var(--color-danger); border-color: var(--color-danger); }
+.metric-card.fill-zenv-teal,
+.metric-card.fill-success { 
+  background-color: var(--color-primary-light); /* Teal Blue #1e556d (Pantone 3025 U) */
+  border-color: var(--color-primary-light); 
+}
+
+.metric-card.fill-zenv-taupe,
+.metric-card.fill-warning { 
+  background-color: var(--color-secondary); /* Taupe #979085 (Pantone 403 U) */
+  border-color: var(--color-secondary); 
+}
+
+.metric-card.fill-zenv-blue,
+.metric-card.fill-info { 
+  background-color: var(--color-accent); /* Accent Blue #193e65 (Pantone 302 C) */
+  border-color: var(--color-accent); 
+}
+
+.metric-card.fill-zenv-darkgreen,
+.metric-card.fill-danger,
+.metric-card.fill-purple { 
+  background-color: var(--color-primary-dark); /* Dark Green #1d4150 (Pantone 309 C) */
+  border-color: var(--color-primary-dark); 
+}
 
 .metric-card[class*="fill-"] .metric-title {
-  color: rgba(255, 255, 255, 0.9);
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.8rem;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  font-weight: 600;
 }
 
 .metric-card[class*="fill-"] .metric-value {
   color: #ffffff;
+  font-size: 1.6rem;
+  font-weight: 800;
 }
 
 .metric-card[class*="fill-"] .metric-icon {
-  background-color: rgba(255, 255, 255, 0.2);
+  background-color: rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.25);
   color: #ffffff;
 }
 
@@ -71,9 +106,10 @@
 
 .metric-title {
   color: var(--color-text-muted);
-  font-size: 0.875rem;
-  font-weight: 500;
+  font-size: 0.8rem;
+  font-weight: 600;
   margin-bottom: 0.25rem;
+  letter-spacing: 0.5px;
 }
 
 .metric-value {
@@ -85,6 +121,13 @@
 .dashboard-content {
   display: grid;
   gap: 1.5rem;
+}
+
+.chart-card {
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-sm);
+  background: var(--color-bg-surface);
+  box-shadow: var(--shadow-sm);
 }
 
 .mt-4 {

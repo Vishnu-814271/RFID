@@ -106,7 +106,7 @@ public class TapService {
         Person person = mapping.getPerson();
 
         // 5. Person Status Check
-        if (person.getStatus() == PersonStatus.INACTIVE) {
+        if (person.getStatus() != PersonStatus.ACTIVE) {
             AttendanceEvent errorEvent = new AttendanceEvent(
                     cardUid, person, Decision.DENIED, null, "PERSON_INACTIVE", TapSource.SIMULATED, occurredAt
             );

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import { useAutoRefresh } from '../context/RefreshContext';
 import { Plus, ShieldAlert, Trash2 } from 'lucide-react';
 
 export function StaffUsers() {
@@ -22,9 +23,7 @@ export function StaffUsers() {
     }
   }, [toast]);
 
-  useEffect(() => {
-    fetchUsers();
-  }, [fetchUsers]);
+  useAutoRefresh(fetchUsers, { intervalMs: 10000 });
 
   const handleCreateUser = async (e) => {
     e.preventDefault();
@@ -124,7 +123,7 @@ export function StaffUsers() {
             <thead>
               <tr>
                 <th>User ID</th>
-                <th>Person ID / Ext. ID</th>
+                <th>ID</th>
                 <th>Email</th>
                 <th>Role</th>
                 <th>Status</th>

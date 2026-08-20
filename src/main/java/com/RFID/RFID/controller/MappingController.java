@@ -3,6 +3,7 @@ package com.RFID.RFID.controller;
 import com.RFID.RFID.dto.DTOs.MappingRequest;
 import com.RFID.RFID.dto.Envelope;
 import com.RFID.RFID.model.*;
+import com.RFID.RFID.mqtt.MqttPublisherService;
 import com.RFID.RFID.repository.CardMappingRepository;
 import com.RFID.RFID.repository.PersonRepository;
 import com.RFID.RFID.repository.RfidCardRepository;
@@ -23,15 +24,18 @@ public class MappingController {
     private final RfidCardRepository cardRepository;
     private final PersonRepository personRepository;
     private final AuditService auditService;
+    private final MqttPublisherService mqttPublisherService;
 
     public MappingController(CardMappingRepository mappingRepository,
                              RfidCardRepository cardRepository,
                              PersonRepository personRepository,
-                             AuditService auditService) {
+                             AuditService auditService,
+                             MqttPublisherService mqttPublisherService) {
         this.mappingRepository = mappingRepository;
         this.cardRepository = cardRepository;
         this.personRepository = personRepository;
         this.auditService = auditService;
+        this.mqttPublisherService = mqttPublisherService;
     }
 
     @PostMapping
@@ -77,6 +81,11 @@ public class MappingController {
             auditService.log("CARD_ASSIGNED", "MAPPING", saved.getMappingId().toString());
         }
 
+        // Broadcast Card Assignment Event via MQTT
+        if (mqttPublisherService != null) {
+            mqttPublisherService.broadcastCardLifecycleEvent("CARD_ASSIGNED", card, person);
+        }
+
         return Envelope.ok(saved);
     }
 
@@ -107,6 +116,11 @@ public class MappingController {
         // Audit Trail
         if (currentUser != null) {
             auditService.log("CARD_RELEASED", "MAPPING", saved.getMappingId().toString());
+        }
+
+        // Broadcast Card Release Event via MQTT
+        if (mqttPublisherService != null) {
+            mqttPublisherService.broadcastCardLifecycleEvent("CARD_RELEASED", card, mapping.getPerson());
         }
 
         return Envelope.ok(saved);

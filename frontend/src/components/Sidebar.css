@@ -55,9 +55,9 @@
 }
 
 .sidebar-link.active {
-  background-color: var(--color-primary);
+  background-color: rgba(30, 85, 109, 0.35);
   color: white;
-  border-right: 3px solid var(--color-accent);
+  border-left: 3px solid #1e556d;
 }
 
 .sidebar-icon {
@@ -74,7 +74,7 @@
 .sidebar-footer {
   padding: 1rem 1.5rem;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
-  background-color: rgba(0, 0, 0, 0.2);
+  background-color: rgba(0, 0, 0, 0.25);
 }
 
 .user-info {
@@ -85,14 +85,15 @@
 .user-info .avatar {
   width: 36px;
   height: 36px;
-  border-radius: 50%;
-  background-color: var(--color-accent);
+  border-radius: 2px;
+  background-color: var(--color-primary-light);
   color: white;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 600;
+  font-weight: 700;
   margin-right: 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .user-info .details {
@@ -109,4 +110,5 @@
 .user-info .role {
   font-size: 0.75rem;
   color: rgba(255, 255, 255, 0.6);
+  letter-spacing: 0.5px;
 }

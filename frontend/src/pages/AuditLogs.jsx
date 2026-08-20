@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { RefreshCw, Search } from 'lucide-react';
 import api from '../utils/api';
+import { useAutoRefresh } from '../context/RefreshContext';
 import { formatDateTime } from '../utils/dateUtils';
 
 export function AuditLogs() {
@@ -9,7 +10,6 @@ export function AuditLogs() {
   const [searchTerm, setSearchTerm] = useState('');
 
   const fetchLogs = useCallback(async () => {
-    setLoading(true);
     try {
       const data = await api.get('/audit-log?size=100');
       if (Array.isArray(data)) {
@@ -24,9 +24,7 @@ export function AuditLogs() {
     }
   }, []);
 
-  useEffect(() => {
-    fetchLogs();
-  }, [fetchLogs]);
+  useAutoRefresh(fetchLogs, { intervalMs: 10000 });
 
   const filteredLogs = logs.filter(log => 
     log.actionType?.toLowerCase().includes(searchTerm.toLowerCase()) ||

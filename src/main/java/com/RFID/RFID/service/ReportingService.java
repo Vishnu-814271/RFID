@@ -164,8 +164,8 @@ public class ReportingService {
     private List<String> calculateAbsentDates(Person person, LocalDate start, LocalDate end,
                                               Set<String> workingDays, List<AttendanceSession> sessions,
                                               Set<LocalDate> underHoursDates, boolean hasOpenSessionToday) {
-        if (person.getStatus() == PersonStatus.INACTIVE) {
-            return Collections.emptyList(); // Inactive members don't accumulate absences
+        if (person.getStatus() != PersonStatus.ACTIVE) {
+            return Collections.emptyList(); // Inactive / Completed members don't accumulate absences
         }
 
         // Days with sessions but above the minimum threshold = truly present
