@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { ShieldCheck, Cpu, KeyRound, ArrowRight } from 'lucide-react';
-import { ZenvLogo } from '../components/ZenvLogo';
+import { ArrowRight } from 'lucide-react';
+import zenvFoundationLogo from '../assets/zenv-foundation-logo.png';
 import api from '../utils/api';
 import './Login.css';
 
@@ -62,15 +62,19 @@ export function Login() {
       {/* Left Brand Showcase Banner */}
       <div className="login-left">
         <div className="login-brand-content">
-          <div className="project-title-row">
-            <ZenvLogo variant="white" size="xl" subtext="QUANTUM" />
-          </div>
-
-
-
-
-
-
+          <img 
+            src={zenvFoundationLogo} 
+            alt="ZENV FOUNDATION" 
+            className="login-hero-logo"
+            style={{
+              maxWidth: '420px',
+              width: '85%',
+              height: 'auto',
+              objectFit: 'contain',
+              filter: 'brightness(0) invert(1) drop-shadow(0 8px 32px rgba(0, 0, 0, 0.5))',
+              userSelect: 'none'
+            }} 
+          />
         </div>
       </div>
 
@@ -78,11 +82,20 @@ export function Login() {
       <div className="login-right">
         <div className="login-card">
           <div className="login-header">
-            <div className="login-logo-wrapper">
-              <ZenvLogo variant="horizontal" size="md" />
+            <div className="login-logo-wrapper" style={{ marginBottom: '1.25rem', display: 'flex', justifyContent: 'center' }}>
+              <img 
+                src={zenvFoundationLogo} 
+                alt="ZENV FOUNDATION" 
+                style={{
+                  maxWidth: '230px',
+                  width: '75%',
+                  height: 'auto',
+                  objectFit: 'contain',
+                  userSelect: 'none'
+                }} 
+              />
             </div>
             <h2>SIGN IN</h2>
-
           </div>
 
           {error && <div className="login-error">{error}</div>}
