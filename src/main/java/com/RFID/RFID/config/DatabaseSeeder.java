@@ -57,8 +57,8 @@ public class DatabaseSeeder implements CommandLineRunner {
         // 3. Seed Default Manager User
         seedManagerUser();
 
-        // 4. Seed 50 Diverse People with Cards & Attendance History
-        seedFiftyPeople();
+        // 4. Seed 200 Diverse People with Cards & Attendance History
+        seedTwoHundredPeople();
     }
 
     private void migrateSchema() {
@@ -111,90 +111,70 @@ public class DatabaseSeeder implements CommandLineRunner {
         }
     }
 
-    private void seedFiftyPeople() {
-        if (personRepository.count() >= 50) {
+    private void seedTwoHundredPeople() {
+        if (personRepository.count() >= 200) {
             return;
         }
 
-        String[][] peopleData = {
-            // Employees (35)
-            {"Aarav Sharma", "EMPLOYEE", "EMP-1001", "Engineering", "aarav.sharma@zencube.com", "+91 9876543201"},
-            {"Priya Patel", "EMPLOYEE", "EMP-1002", "Engineering", "priya.patel@zencube.com", "+91 9876543202"},
-            {"Rohan Verma", "EMPLOYEE", "EMP-1003", "AI Research", "rohan.verma@zencube.com", "+91 9876543203"},
-            {"Ananya Iyer", "EMPLOYEE", "EMP-1004", "Product", "ananya.iyer@zencube.com", "+91 9876543204"},
-            {"Vikram Malhotra", "EMPLOYEE", "EMP-1005", "Operations", "vikram.m@zencube.com", "+91 9876543205"},
-            {"Neha Gupta", "EMPLOYEE", "EMP-1006", "Design", "neha.gupta@zencube.com", "+91 9876543206"},
-            {"Karthik Reddy", "EMPLOYEE", "EMP-1007", "Engineering", "karthik.r@zencube.com", "+91 9876543207"},
-            {"Sneha Nair", "EMPLOYEE", "EMP-1008", "Cybersecurity", "sneha.nair@zencube.com", "+91 9876543208"},
-            {"Aditya Joshi", "EMPLOYEE", "EMP-1009", "Engineering", "aditya.j@zencube.com", "+91 9876543209"},
-            {"Pooja Kulkarni", "EMPLOYEE", "EMP-1010", "Marketing", "pooja.k@zencube.com", "+91 9876543210"},
-            {"Rahul Nambiar", "EMPLOYEE", "EMP-1011", "Finance", "rahul.n@zencube.com", "+91 9876543211"},
-            {"Divya Rao", "EMPLOYEE", "EMP-1012", "Engineering", "divya.rao@zencube.com", "+91 9876543212"},
-            {"Siddharth Mehta", "EMPLOYEE", "EMP-1013", "AI Research", "siddharth.m@zencube.com", "+91 9876543213"},
-            {"Kavya Menon", "EMPLOYEE", "EMP-1014", "Product", "kavya.menon@zencube.com", "+91 9876543214"},
-            {"Varun Desai", "EMPLOYEE", "EMP-1015", "Engineering", "varun.d@zencube.com", "+91 9876543215"},
-            {"Meera Pillai", "EMPLOYEE", "EMP-1016", "Design", "meera.pillai@zencube.com", "+91 9876543216"},
-            {"Arjun Singhania", "EMPLOYEE", "EMP-1017", "Operations", "arjun.s@zencube.com", "+91 9876543217"},
-            {"Ishita Roy", "EMPLOYEE", "EMP-1018", "Marketing", "ishita.roy@zencube.com", "+91 9876543218"},
-            {"Manish Chawla", "EMPLOYEE", "EMP-1019", "Engineering", "manish.c@zencube.com", "+91 9876543219"},
-            {"Sunita Das", "EMPLOYEE", "EMP-1020", "Finance", "sunita.das@zencube.com", "+91 9876543220"},
-            {"Kunal Kapoor", "EMPLOYEE", "EMP-1021", "Cybersecurity", "kunal.k@zencube.com", "+91 9876543221"},
-            {"Swati Saxena", "EMPLOYEE", "EMP-1022", "AI Research", "swati.s@zencube.com", "+91 9876543222"},
-            {"Abhishek Sen", "EMPLOYEE", "EMP-1023", "Engineering", "abhishek.sen@zencube.com", "+91 9876543223"},
-            {"Tanvi Bhatt", "EMPLOYEE", "EMP-1024", "Product", "tanvi.bhatt@zencube.com", "+91 9876543224"},
-            {"Harsh Vardhan", "EMPLOYEE", "EMP-1025", "Engineering", "harsh.v@zencube.com", "+91 9876543225"},
-            {"Rhea Gokhale", "EMPLOYEE", "EMP-1026", "Design", "rhea.g@zencube.com", "+91 9876543226"},
-            {"Deepak Aggarwal", "EMPLOYEE", "EMP-1027", "Operations", "deepak.a@zencube.com", "+91 9876543227"},
-            {"Shreya Ghosh", "EMPLOYEE", "EMP-1028", "Engineering", "shreya.g@zencube.com", "+91 9876543228"},
-            {"Nikhil Shenoy", "EMPLOYEE", "EMP-1029", "AI Research", "nikhil.s@zencube.com", "+91 9876543229"},
-            {"Rashmi Hegde", "EMPLOYEE", "EMP-1030", "Marketing", "rashmi.h@zencube.com", "+91 9876543230"},
-            {"Pranav Tiwari", "EMPLOYEE", "EMP-1031", "Engineering", "pranav.t@zencube.com", "+91 9876543231"},
-            {"Alok Pandey", "EMPLOYEE", "EMP-1032", "Finance", "alok.pandey@zencube.com", "+91 9876543232"},
-            {"Shruti Bansal", "EMPLOYEE", "EMP-1033", "Cybersecurity", "shruti.b@zencube.com", "+91 9876543233"},
-            {"Gaurav Dubey", "EMPLOYEE", "EMP-1034", "Engineering", "gaurav.d@zencube.com", "+91 9876543234"},
-            {"Nisha Mathur", "EMPLOYEE", "EMP-1035", "Product", "nisha.m@zencube.com", "+91 9876543235"},
+        String[] firstNames = {
+            "Aarav", "Priya", "Rohan", "Ananya", "Vikram", "Neha", "Karthik", "Sneha", "Aditya", "Pooja",
+            "Rahul", "Divya", "Siddharth", "Kavya", "Varun", "Meera", "Arjun", "Ishita", "Manish", "Sunita",
+            "Kunal", "Swati", "Abhishek", "Tanvi", "Harsh", "Rhea", "Deepak", "Shreya", "Nikhil", "Rashmi",
+            "Pranav", "Alok", "Shruti", "Gaurav", "Nisha", "Tarun", "Bhavna", "Chirag", "Deepa", "Eshan",
+            "Farhan", "Geetika", "Himanshu", "Ira", "Jayant", "Kiran", "Lavanya", "Mohit", "Navya", "Omkar",
+            "Payal", "Qasim", "Ritu", "Sameer", "Tara", "Uday", "Vaishnavi", "Waseem", "Yash", "Zoya",
+            "Aakash", "Bipasha", "Chetan", "Damini", "Dev", "Ekta", "Girish", "Hema", "Inder", "Juhi",
+            "Kabir", "Lata", "Madhav", "Nandini", "Ojas", "Pallavi", "Raghav", "Sakshi", "Tejas", "Urvashi",
+            "Vidur", "Yamini", "Zain", "Avinash", "Charu", "Darshan", "Esha", "Gautam", "Harini", "Ishaan",
+            "Janki", "Keshav", "Leela", "Manoj", "Naveen", "Pratibha", "Rupal", "Sanjay", "Trisha", "Utkarsh"
+        };
 
-            // Students (15)
-            {"Tarun Reddy", "STUDENT", "STU-2001", "Computer Science", "tarun.r@student.zencube.com", "+91 9876543236"},
-            {"Bhavna Mishra", "STUDENT", "STU-2002", "Data Science", "bhavna.m@student.zencube.com", "+91 9876543237"},
-            {"Chirag Patel", "STUDENT", "STU-2003", "Robotics", "chirag.p@student.zencube.com", "+91 9876543238"},
-            {"Deepa Pillai", "STUDENT", "STU-2004", "Computer Science", "deepa.p@student.zencube.com", "+91 9876543239"},
-            {"Eshan Kaushik", "STUDENT", "STU-2005", "Data Science", "eshan.k@student.zencube.com", "+91 9876543240"},
-            {"Farhan Ali", "STUDENT", "STU-2006", "Electrical Eng", "farhan.a@student.zencube.com", "+91 9876543241"},
-            {"Geetika Somani", "STUDENT", "STU-2007", "Computer Science", "geetika.s@student.zencube.com", "+91 9876543242"},
-            {"Himanshu Rawat", "STUDENT", "STU-2008", "Robotics", "himanshu.r@student.zencube.com", "+91 9876543243"},
-            {"Ira Mukhopadhyay", "STUDENT", "STU-2009", "Data Science", "ira.m@student.zencube.com", "+91 9876543244"},
-            {"Jayant Saxena", "STUDENT", "STU-2010", "Computer Science", "jayant.s@student.zencube.com", "+91 9876543245"},
-            {"Kiran Bhat", "STUDENT", "STU-2011", "Electrical Eng", "kiran.b@student.zencube.com", "+91 9876543246"},
-            {"Lavanya Subramanian", "STUDENT", "STU-2012", "Computer Science", "lavanya.s@student.zencube.com", "+91 9876543247"},
-            {"Mohit Sehgal", "STUDENT", "STU-2013", "Robotics", "mohit.s@student.zencube.com", "+91 9876543248"},
-            {"Navya Namboodiri", "STUDENT", "STU-2014", "Data Science", "navya.n@student.zencube.com", "+91 9876543249"},
-            {"Omkar Deshmukh", "STUDENT", "STU-2015", "Computer Science", "omkar.d@student.zencube.com", "+91 9876543250"}
+        String[] lastNames = {
+            "Sharma", "Patel", "Verma", "Iyer", "Malhotra", "Gupta", "Reddy", "Nair", "Joshi", "Kulkarni",
+            "Nambiar", "Rao", "Mehta", "Menon", "Desai", "Pillai", "Singhania", "Roy", "Chawla", "Das",
+            "Kapoor", "Saxena", "Sen", "Bhatt", "Vardhan", "Gokhale", "Aggarwal", "Ghosh", "Shenoy", "Hegde",
+            "Tiwari", "Pandey", "Bansal", "Dubey", "Mathur", "Mishra", "Kaushik", "Ali", "Somani", "Rawat",
+            "Mukhopadhyay", "Bhat", "Subramanian", "Sehgal", "Namboodiri", "Deshmukh", "Choudhury", "Bose", "Venkatesh", "Poddar"
+        };
+
+        String[] empGroups = {
+            "Engineering", "AI Research", "Product", "Design", "Operations", 
+            "Cybersecurity", "Finance", "Marketing", "Human Resources", "Quality Assurance"
+        };
+
+        String[] stuGroups = {
+            "Computer Science", "Data Science", "Robotics", "Electrical Eng", 
+            "Artificial Intelligence", "Information Technology", "Cyber Security", "Mechanical Eng"
         };
 
         LocalDate today = LocalDate.now();
 
-        for (int i = 0; i < peopleData.length; i++) {
-            String[] row = peopleData[i];
-            String name = row[0];
-            MemberType type = MemberType.valueOf(row[1]);
-            String ref = row[2];
-            String group = row[3];
-            String email = row[4];
-            String phone = row[5];
+        for (int i = 1; i <= 200; i++) {
+            boolean isEmployee = (i <= 135);
+            MemberType type = isEmployee ? MemberType.EMPLOYEE : MemberType.STUDENT;
+            String ref = isEmployee ? String.format("EMP-%04d", i) : String.format("STU-%04d", i);
+            
+            String fName = firstNames[(i - 1) % firstNames.length];
+            String lName = lastNames[((i - 1) * 3 + (i / firstNames.length)) % lastNames.length];
+            String fullName = fName + " " + lName;
+            
+            String group = isEmployee ? empGroups[(i - 1) % empGroups.length] : stuGroups[(i - 1) % stuGroups.length];
+            String emailPrefix = (fName.toLowerCase() + "." + lName.toLowerCase()).replaceAll("[^a-z0-9.]", "");
+            String email = emailPrefix + (i > 100 ? i : "") + (isEmployee ? "@zencube.com" : "@student.zencube.com");
+            String phone = String.format("+91 98%08d", i + 76543200);
 
-            // Check if person already exists
+            // 1. Create or Find Person
             Optional<Person> existing = personRepository.findByExternalRefIgnoreCase(ref);
             Person person;
             if (existing.isPresent()) {
                 person = existing.get();
             } else {
-                person = new Person(name, type, ref, group, email, phone);
+                person = new Person(fullName, type, ref, group, email, phone);
                 person = personRepository.save(person);
             }
 
-            // Assign Active Card
-            String cardUid = "CARD_" + ref.replace("-", "_");
+            // 2. Assign RFID Card
+            String cardUid = String.format("CARD_%s_%04d", isEmployee ? "EMP" : "STU", i);
             Optional<RfidCard> cardOpt = rfidCardRepository.findByCardUid(cardUid);
             RfidCard card;
             if (cardOpt.isEmpty()) {
@@ -207,32 +187,32 @@ public class DatabaseSeeder implements CommandLineRunner {
                 card = rfidCardRepository.save(card);
             }
 
+            // 3. Card Mapping
             Optional<CardMapping> mappingOpt = cardMappingRepository.findByPersonAndStatus(person, MappingStatus.ACTIVE);
             if (mappingOpt.isEmpty()) {
                 CardMapping mapping = new CardMapping(card, person);
                 cardMappingRepository.save(mapping);
             }
 
-            // Seed Past 5 Days Attendance Sessions & Events
-            for (int dayOffset = 4; dayOffset >= 0; dayOffset--) {
+            // 4. Seed Past 10 Days Attendance Sessions & Events
+            for (int dayOffset = 9; dayOffset >= 0; dayOffset--) {
                 LocalDate workDate = today.minusDays(dayOffset);
-                // Skip Sunday (day of week 7)
+                // Skip Sunday (7)
                 if (workDate.getDayOfWeek().getValue() == 7) continue;
 
-                // 85% attendance rate for realistic distribution
-                if ((i + dayOffset) % 7 == 0) continue; // Absent on this day
+                // 88% attendance rate for realistic metrics
+                if ((i + dayOffset * 3) % 8 == 0) continue; // Absent
 
-                boolean isLate = (i % 5 == 0); // Some late arrivals
+                boolean isLate = ((i + dayOffset) % 6 == 0);
                 int checkInHour = isLate ? 10 : 9;
                 int checkInMinute = isLate ? 5 + (i % 25) : 10 + (i % 20);
 
                 LocalDateTime inTime = LocalDateTime.of(workDate, LocalTime.of(checkInHour, checkInMinute));
                 
-                // If today, check if currently inside or checked out
-                boolean checkedOut = (dayOffset > 0) || (i % 3 != 0);
-                LocalDateTime outTime = checkedOut ? inTime.plusHours(8).plusMinutes(i % 45) : null;
+                // If today, check if currently active inside
+                boolean checkedOut = (dayOffset > 0) || (i % 4 != 0);
+                LocalDateTime outTime = checkedOut ? inTime.plusHours(8).plusMinutes((i * 7) % 45) : null;
 
-                // Create AttendanceSession if not exists
                 List<AttendanceSession> sessList = sessionRepository.findByPersonAndWorkDate(person, workDate);
                 if (sessList.isEmpty()) {
                     AttendanceSession session = new AttendanceSession(person, workDate, inTime, isLate);
@@ -246,7 +226,7 @@ public class DatabaseSeeder implements CommandLineRunner {
                     sessionRepository.save(session);
                 }
 
-                // Check-in Event
+                // Check-in & Check-out events for Access Logs
                 AttendanceEvent inEvent = new AttendanceEvent(cardUid, person, Decision.GRANTED, EventType.CHECK_IN, "OK", TapSource.SIMULATED, inTime);
                 eventRepository.save(inEvent);
 
@@ -257,6 +237,6 @@ public class DatabaseSeeder implements CommandLineRunner {
             }
         }
 
-        System.out.println("Successfully seeded 50 mock people with active RFID cards and attendance history!");
+        System.out.println("Successfully seeded 200 mock people with active RFID cards, mappings, and attendance history!");
     }
 }
