@@ -62,9 +62,9 @@ export function Login() {
       {/* Left Brand Showcase Banner */}
       <div className="login-left">
         <div className="login-brand-content">
-          <img 
-            src={zenvQuantumLogo} 
-            alt="ZENV QUANTUM" 
+          <img
+            src={zenvQuantumLogo}
+            alt="ZENV QUANTUM"
             className="login-hero-logo"
             style={{
               maxWidth: '420px',
@@ -73,7 +73,7 @@ export function Login() {
               objectFit: 'contain',
               filter: 'brightness(0) invert(1) drop-shadow(0 8px 32px rgba(0, 0, 0, 0.5))',
               userSelect: 'none'
-            }} 
+            }}
           />
         </div>
       </div>
@@ -83,16 +83,17 @@ export function Login() {
         <div className="login-card">
           <div className="login-header">
             <div className="login-logo-wrapper" style={{ marginBottom: '1.25rem', display: 'flex', justifyContent: 'center' }}>
-              <img 
-                src={zenvQuantumLogo} 
-                alt="ZENV QUANTUM" 
+              <img
+                src={zenvQuantumLogo}
+                alt="ZENV QUANTUM"
                 style={{
-                  maxWidth: '230px',
-                  width: '75%',
+                  maxWidth: '220px',
+                  width: '65%',
                   height: 'auto',
+                  maxHeight: '50px',
                   objectFit: 'contain',
                   userSelect: 'none'
-                }} 
+                }}
               />
             </div>
             <h2>{showForgotPassword ? 'Forgot Password' : 'SIGN IN'}</h2>
