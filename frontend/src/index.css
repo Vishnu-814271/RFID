@@ -222,7 +222,7 @@ a:hover {
   box-shadow: 0 0 0 2px rgba(16, 43, 76, 0.15);
 }
 
-/* Data Table with Sticky Headers (Borderless with Visible Shadows) */
+/* Data Table with Sticky Headers (Consistent Alignment, Seamless Sticky Shadow) */
 .data-table-container {
   width: 100%;
   overflow-x: auto;
@@ -238,34 +238,46 @@ a:hover {
 
 .data-table {
   width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
+  border-collapse: collapse;
   text-align: left;
 }
 
-.data-table th,
-.data-table td {
-  padding: 0.85rem 1.15rem;
-  border: none;
-}
-
-.data-table th {
+.data-table thead {
   position: sticky;
   top: 0;
   z-index: 10;
+  box-shadow: 0 3px 10px rgba(16, 43, 76, 0.06);
+}
+
+.data-table thead tr {
   background-color: #e9eff5;
-  background-clip: padding-box;
+}
+
+.data-table th {
+  padding: 0.9rem 1.25rem;
+  background-color: #e9eff5;
+  color: var(--color-primary);
   font-weight: 700;
   font-size: 0.8125rem;
   text-transform: uppercase;
-  color: var(--color-primary);
   letter-spacing: 0.05em;
+  text-align: left;
+  vertical-align: middle;
   border: none;
-  box-shadow: 0 4px 12px rgba(16, 43, 76, 0.08);
+  white-space: nowrap;
+}
+
+.data-table td {
+  padding: 0.9rem 1.25rem;
+  text-align: left;
+  vertical-align: middle;
+  border: none;
+  color: var(--color-text-main);
+  font-size: 0.875rem;
 }
 
 .data-table tbody tr {
-  transition: all 0.15s ease;
+  transition: background-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .data-table tbody tr:nth-child(even) {
@@ -274,13 +286,27 @@ a:hover {
 
 .data-table tbody tr:hover {
   background-color: #ffffff;
-  box-shadow: 0 4px 14px rgba(16, 43, 76, 0.09);
-  position: relative;
-  z-index: 2;
+  box-shadow: 0 3px 12px rgba(16, 43, 76, 0.08);
 }
 
-.data-table tbody tr:last-child td {
-  border-bottom: none;
+.data-table th:first-child,
+.data-table td:first-child {
+  padding-left: 1.5rem;
+}
+
+.data-table th:last-child,
+.data-table td:last-child {
+  padding-right: 1.5rem;
+}
+
+.data-table th.text-center,
+.data-table td.text-center {
+  text-align: center;
+}
+
+.data-table th.text-right,
+.data-table td.text-right {
+  text-align: right;
 }
 
 /* Badges (ZENV Sharp Rectangular Badges per Page 46 Guidelines) */
