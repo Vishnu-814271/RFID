@@ -28,22 +28,17 @@
   --color-border: #d1d1d1;       /* American Silver */
   --color-border-hover: #979085;
 
-  /* ZENV Brand Typography Hierarchy (Brand Guidelines Pages 30-34 & Page 41) */
-  /* 1. Stem Medium: Headers and Sub-headers */
-  --font-family-header: 'Stem', 'Stem-Medium', 'Noto Sans', 'Segoe UI', sans-serif;
-  --font-weight-header: 500;
+  /* ZENV Unified Brand Typography - Noto Sans across all content (Page 33) */
+  --font-family: 'Noto Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-family-display: 'Noto Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-family-header: 'Noto Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-family-body: 'Noto Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-family-lockup: 'Noto Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   
-  /* 2. Vision Light: Body Copy */
-  --font-family-body: 'Vision', 'Vision-Light', 'Noto Sans', 'Segoe UI', sans-serif;
-  --font-weight-body: 300;
+  --font-weight-header: 700;
+  --font-weight-body: 400;
+  --font-weight-lockup: 300;
 
-  /* 3. Stem ExtraLight: Primary Lockups & Entity Names */
-  --font-family-lockup: 'Stem', 'Stem-ExtraLight', 'Noto Sans', 'Segoe UI', sans-serif;
-  --font-weight-lockup: 200;
-
-  /* General Fallbacks */
-  --font-family: var(--font-family-body);
-  --font-family-display: var(--font-family-header);
   --font-size-base: 14.5px;
   --line-height: 1.5;
 
@@ -64,17 +59,18 @@
 /* Reset & Base Styles */
 html {
   scrollbar-gutter: stable;
+  font-family: var(--font-family);
 }
 
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+  font-family: var(--font-family);
 }
 
 body {
-  font-family: var(--font-family-body);
-  font-weight: var(--font-weight-body);
+  font-family: var(--font-family);
   font-size: var(--font-size-base);
   line-height: var(--line-height);
   color: var(--color-text-main);
@@ -84,11 +80,15 @@ body {
 }
 
 h1, h2, h3, h4, h5, h6 {
-  font-family: var(--font-family-header);
-  font-weight: var(--font-weight-header);
+  font-family: var(--font-family);
+  font-weight: 700;
   color: var(--color-text-main);
   letter-spacing: -0.01em;
   margin-bottom: 0.5rem;
+}
+
+button, input, select, textarea {
+  font-family: var(--font-family);
 }
 
 a {
