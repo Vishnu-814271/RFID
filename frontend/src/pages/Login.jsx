@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { ArrowRight } from 'lucide-react';
-import zenvFoundationLogo from '../assets/zenv-foundation-logo.png';
+import zenvQuantumLogo from '../assets/zenv-quantum-logo.png';
 import api from '../utils/api';
 import './Login.css';
 
@@ -63,8 +63,8 @@ export function Login() {
       <div className="login-left">
         <div className="login-brand-content">
           <img 
-            src={zenvFoundationLogo} 
-            alt="ZENV FOUNDATION" 
+            src={zenvQuantumLogo} 
+            alt="ZENV QUANTUM" 
             className="login-hero-logo"
             style={{
               maxWidth: '420px',
@@ -84,8 +84,8 @@ export function Login() {
           <div className="login-header">
             <div className="login-logo-wrapper" style={{ marginBottom: '1.25rem', display: 'flex', justifyContent: 'center' }}>
               <img 
-                src={zenvFoundationLogo} 
-                alt="ZENV FOUNDATION" 
+                src={zenvQuantumLogo} 
+                alt="ZENV QUANTUM" 
                 style={{
                   maxWidth: '230px',
                   width: '75%',
