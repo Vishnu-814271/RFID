@@ -12,8 +12,9 @@ export function Settings() {
   
   // Config state
   const [config, setConfig] = useState(null);
-  const [configLoading, setConfigLoading] = useState(false);
+  const [configLoading, setConfigLoading] = useState(true);
   const [saveStatus, setSaveStatus] = useState(null);
+  const [savingField, setSavingField] = useState(null);
 
   const fetchConfig = useCallback(async () => {
     if (user?.role !== 'ADMIN' && user?.role !== 'MANAGER') return;
@@ -29,31 +30,39 @@ export function Settings() {
 
   useAutoRefresh(fetchConfig);
 
-  const saveConfig = async (e) => {
-    e.preventDefault();
-    setConfigLoading(true);
+  const fieldLabels = {
+    expectedStartTime: 'Expected Start Time',
+    lateGraceMinutes: 'Late Grace Period',
+    autoCheckoutTime: 'Auto Checkout Time',
+    workingDays: 'Working Days',
+    tapDebounceSeconds: 'Tap Debounce',
+    minWorkingMinutes: 'Minimum Working Hours',
+    overnightSessionAttribution: 'Overnight Session Attribution',
+    sessionTimeoutMinutes: 'Session Timeout'
+  };
+
+  const saveField = async (fieldKey, value) => {
+    setSavingField(fieldKey);
     setSaveStatus(null);
     try {
-      await api.patch('/config', {
-        expectedStartTime: config.expectedStartTime,
-        lateGraceMinutes: parseInt(config.lateGraceMinutes),
-        autoCheckoutTime: config.autoCheckoutTime,
-        workingDays: config.workingDays,
-        tapDebounceSeconds: parseInt(config.tapDebounceSeconds),
-        minWorkingMinutes: parseInt(config.minWorkingMinutes),
-        overnightSessionAttribution: config.overnightSessionAttribution
-      });
-      toast.success('Configuration updated successfully!');
+      const payload = {};
+      if (fieldKey === 'lateGraceMinutes' || fieldKey === 'tapDebounceSeconds' || fieldKey === 'sessionTimeoutMinutes' || fieldKey === 'minWorkingMinutes') {
+        payload[fieldKey] = parseInt(value, 10);
+      } else {
+        payload[fieldKey] = value;
+      }
+
+      await api.patch('/config', payload);
       triggerRefresh();
-      const msg = 'Configuration saved successfully!';
+      const msg = `${fieldLabels[fieldKey] || 'Configuration'} saved successfully!`;
       setSaveStatus({ type: 'success', message: msg });
       toast.success(msg);
     } catch (err) {
-      const errMsg = `Error saving config: ${err.message || err.error || JSON.stringify(err)}`;
+      const errMsg = `Error saving ${fieldLabels[fieldKey] || 'setting'}: ${err.message || err.error || JSON.stringify(err)}`;
       setSaveStatus({ type: 'error', message: errMsg });
       toast.error(errMsg);
     } finally {
-      setConfigLoading(false);
+      setSavingField(null);
     }
   };
 
@@ -84,12 +93,14 @@ export function Settings() {
       <div className="page-header">
         <div>
           <h1>System Settings</h1>
-          <p className="text-muted">Manage system configuration.</p>
+          <p className="text-muted">Manage system parameters. Changes can be saved individually per configuration.</p>
         </div>
       </div>
 
-      <div className="card" style={{ maxWidth: '600px' }}>
-        <h3>Attendance Parameters</h3>
+      <div className="card" style={{ width: '100%', maxWidth: '1100px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+          <h3 style={{ margin: 0 }}>Attendance Parameters</h3>
+        </div>
 
         {saveStatus && (
           <div className={`status-banner status-${saveStatus.type}`} style={{
@@ -97,87 +108,245 @@ export function Settings() {
             alignItems: 'center',
             gap: '0.75rem',
             padding: '0.85rem 1.1rem',
-            borderRadius: '10px',
-            marginTop: '1rem',
+            borderRadius: '4px',
+            marginBottom: '1.5rem',
             fontSize: '0.9rem',
             fontWeight: '500',
             background: saveStatus.type === 'success' ? '#ecfdf5' : '#fef2f2',
             color: saveStatus.type === 'success' ? '#065f46' : '#991b1b',
-            border: `1px solid ${saveStatus.type === 'success' ? '#a7f3d0' : '#fecaca'}`,
-            boxShadow: '0 2px 4px rgba(0,0,0,0.03)'
+            boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
           }}>
             {saveStatus.type === 'success' ? <ZenvCheckIcon size={18} color="#10b981" /> : <ZenvAlertIcon size={18} color="#ef4444" />}
             <span>{saveStatus.message}</span>
           </div>
         )}
 
-        {configLoading && !config ? <p style={{ marginTop: '1rem' }}>Loading...</p> : config && (
-          <form onSubmit={saveConfig} style={{ marginTop: '1.5rem' }}>
-            <fieldset disabled={!isAdmin} style={{ border: 'none', padding: 0, margin: 0 }}>
-            <div className="form-group">
-              <label className="form-label">Expected Start Time (HH:mm)</label>
-              <input type="time" className="form-control" value={config.expectedStartTime} onChange={e => setConfig({...config, expectedStartTime: e.target.value})} required />
-            </div>
-            <div className="form-group">
-              <label className="form-label">Late Grace Period (minutes)</label>
-              <input type="number" className="form-control" value={config.lateGraceMinutes} onChange={e => setConfig({...config, lateGraceMinutes: e.target.value})} required />
-            </div>
-            <div className="form-group">
-              <label className="form-label">Auto Checkout Time (HH:mm)</label>
-              <input type="time" className="form-control" value={config.autoCheckoutTime} onChange={e => setConfig({...config, autoCheckoutTime: e.target.value})} required />
-            </div>
-            <div className="form-group">
-              <label className="form-label">Working Days (comma separated)</label>
-              <input type="text" className="form-control" value={config.workingDays} onChange={e => setConfig({...config, workingDays: e.target.value})} placeholder="MON,TUE,WED,THU,FRI" required />
-            </div>
-            <div className="form-group">
-              <label className="form-label">Tap Debounce (seconds)</label>
-              <input type="number" className="form-control" value={config.tapDebounceSeconds} onChange={e => setConfig({...config, tapDebounceSeconds: e.target.value})} required />
-            </div>
-            <div className="form-group">
-              <label className="form-label">Minimum Working Hours</label>
-              <input 
-                type="number" 
-                step="0.01"
-                min="0.01"
-                max="24"
-                className="form-control" 
-                value={Number(config.minWorkingMinutes !== undefined ? (config.minWorkingMinutes / 60) : 8).toFixed(2)} 
-                onChange={e => {
-                  const hrs = parseFloat(e.target.value) || 0;
-                  setConfig({...config, minWorkingMinutes: Math.round(hrs * 60)});
-                }} 
-                required 
-              />
-            </div>
-            <div className="form-group">
-              <label className="form-label">Overnight Session Attribution</label>
-              <div style={{ marginTop: '0.5rem' }}>
-                <button
-                  type="button"
-                  className={`btn ${(config.overnightSessionAttribution || 'false') === 'true' ? 'btn-primary' : 'btn-secondary'}`}
-                  style={{ minWidth: '120px', padding: '0.6rem 1.2rem', fontWeight: 600 }}
-                  onClick={() => {
-                    const nextVal = (config.overnightSessionAttribution || 'false') === 'true' ? 'false' : 'true';
-                    setConfig({...config, overnightSessionAttribution: nextVal});
-                  }}
-                >
-                  {(config.overnightSessionAttribution || 'false') === 'true' ? 'ON' : 'OFF'}
-                </button>
+        {configLoading && !config ? (
+          <p style={{ marginTop: '1rem' }}>Loading configurations...</p>
+        ) : config && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
+            <fieldset disabled={!isAdmin} style={{ border: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+              
+              {/* Line 1: Expected Start Time, Late Grace Period, Auto Checkout Time */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem' }}>
+                {/* 1. Expected Start Time */}
+                <div className="form-group" style={{ margin: 0 }}>
+                  <label className="form-label">Expected Start Time (HH:mm)</label>
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <input 
+                      type="time" 
+                      className="form-control" 
+                      value={config.expectedStartTime || '09:30'} 
+                      onChange={e => setConfig({ ...config, expectedStartTime: e.target.value })} 
+                      required 
+                    />
+                    {isAdmin && (
+                      <button 
+                        type="button" 
+                        className="btn btn-primary" 
+                        disabled={savingField === 'expectedStartTime'}
+                        onClick={() => saveField('expectedStartTime', config.expectedStartTime)}
+                        style={{ whiteSpace: 'nowrap', padding: '0.4rem 0.85rem', fontSize: '0.8rem' }}
+                      >
+                        {savingField === 'expectedStartTime' ? 'Saving...' : 'Save'}
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* 2. Late Grace Period */}
+                <div className="form-group" style={{ margin: 0 }}>
+                  <label className="form-label">Late Grace Period (minutes)</label>
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <input 
+                      type="number" 
+                      className="form-control" 
+                      value={config.lateGraceMinutes ?? 15} 
+                      onChange={e => setConfig({ ...config, lateGraceMinutes: e.target.value })} 
+                      required 
+                    />
+                    {isAdmin && (
+                      <button 
+                        type="button" 
+                        className="btn btn-primary" 
+                        disabled={savingField === 'lateGraceMinutes'}
+                        onClick={() => saveField('lateGraceMinutes', config.lateGraceMinutes)}
+                        style={{ whiteSpace: 'nowrap', padding: '0.4rem 0.85rem', fontSize: '0.8rem' }}
+                      >
+                        {savingField === 'lateGraceMinutes' ? 'Saving...' : 'Save'}
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* 3. Auto Checkout Time */}
+                <div className="form-group" style={{ margin: 0 }}>
+                  <label className="form-label">Auto Checkout Time (HH:mm)</label>
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <input 
+                      type="time" 
+                      className="form-control" 
+                      value={config.autoCheckoutTime || '20:00'} 
+                      onChange={e => setConfig({ ...config, autoCheckoutTime: e.target.value })} 
+                      required 
+                    />
+                    {isAdmin && (
+                      <button 
+                        type="button" 
+                        className="btn btn-primary" 
+                        disabled={savingField === 'autoCheckoutTime'}
+                        onClick={() => saveField('autoCheckoutTime', config.autoCheckoutTime)}
+                        style={{ whiteSpace: 'nowrap', padding: '0.4rem 0.85rem', fontSize: '0.8rem' }}
+                      >
+                        {savingField === 'autoCheckoutTime' ? 'Saving...' : 'Save'}
+                      </button>
+                    )}
+                  </div>
+                </div>
               </div>
-            </div>
+
+              {/* Line 2: Working Days, Tap Debounce, Minimum Working Hours */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem' }}>
+                {/* 4. Working Days */}
+                <div className="form-group" style={{ margin: 0 }}>
+                  <label className="form-label">Working Days (comma separated)</label>
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <input 
+                      type="text" 
+                      className="form-control" 
+                      value={config.workingDays || 'MON,TUE,WED,THU,FRI'} 
+                      onChange={e => setConfig({ ...config, workingDays: e.target.value })} 
+                      placeholder="MON,TUE,WED,THU,FRI" 
+                      required 
+                    />
+                    {isAdmin && (
+                      <button 
+                        type="button" 
+                        className="btn btn-primary" 
+                        disabled={savingField === 'workingDays'}
+                        onClick={() => saveField('workingDays', config.workingDays)}
+                        style={{ whiteSpace: 'nowrap', padding: '0.4rem 0.85rem', fontSize: '0.8rem' }}
+                      >
+                        {savingField === 'workingDays' ? 'Saving...' : 'Save'}
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* 5. Tap Debounce */}
+                <div className="form-group" style={{ margin: 0 }}>
+                  <label className="form-label">Tap Debounce (seconds)</label>
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <input 
+                      type="number" 
+                      className="form-control" 
+                      value={config.tapDebounceSeconds ?? 10} 
+                      onChange={e => setConfig({ ...config, tapDebounceSeconds: e.target.value })} 
+                      required 
+                    />
+                    {isAdmin && (
+                      <button 
+                        type="button" 
+                        className="btn btn-primary" 
+                        disabled={savingField === 'tapDebounceSeconds'}
+                        onClick={() => saveField('tapDebounceSeconds', config.tapDebounceSeconds)}
+                        style={{ whiteSpace: 'nowrap', padding: '0.4rem 0.85rem', fontSize: '0.8rem' }}
+                      >
+                        {savingField === 'tapDebounceSeconds' ? 'Saving...' : 'Save'}
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* 6. Minimum Working Hours */}
+                <div className="form-group" style={{ margin: 0 }}>
+                  <label className="form-label">Minimum Working Hours</label>
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <input 
+                      type="number" 
+                      step="0.01"
+                      min="0.01"
+                      max="24"
+                      className="form-control" 
+                      value={Number(config.minWorkingMinutes !== undefined ? (config.minWorkingMinutes / 60) : 8).toFixed(2)} 
+                      onChange={e => {
+                        const hrs = parseFloat(e.target.value) || 0;
+                        setConfig({ ...config, minWorkingMinutes: Math.round(hrs * 60) });
+                      }} 
+                      required 
+                    />
+                    {isAdmin && (
+                      <button 
+                        type="button" 
+                        className="btn btn-primary" 
+                        disabled={savingField === 'minWorkingMinutes'}
+                        onClick={() => saveField('minWorkingMinutes', config.minWorkingMinutes)}
+                        style={{ whiteSpace: 'nowrap', padding: '0.4rem 0.85rem', fontSize: '0.8rem' }}
+                      >
+                        {savingField === 'minWorkingMinutes' ? 'Saving...' : 'Save'}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Line 3: Overnight Session Attribution & Session Timeout */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem' }}>
+                {/* 7. Overnight Session Attribution */}
+                <div className="form-group" style={{ margin: 0 }}>
+                  <label className="form-label">Overnight Session Attribution</label>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '0.25rem' }}>
+                    <button
+                      type="button"
+                      className={`btn ${(config.overnightSessionAttribution || 'false') === 'true' ? 'btn-primary' : 'btn-secondary'}`}
+                      style={{ minWidth: '110px', padding: '0.5rem 1.2rem', fontWeight: 700 }}
+                      disabled={savingField === 'overnightSessionAttribution'}
+                      onClick={() => {
+                        const nextVal = (config.overnightSessionAttribution || 'false') === 'true' ? 'false' : 'true';
+                        setConfig({ ...config, overnightSessionAttribution: nextVal });
+                        saveField('overnightSessionAttribution', nextVal);
+                      }}
+                    >
+                      {(config.overnightSessionAttribution || 'false') === 'true' ? 'ON' : 'OFF'}
+                    </button>
+                    <span className="text-muted" style={{ fontSize: '0.825rem' }}>
+                      {savingField === 'overnightSessionAttribution' ? 'Saving...' : '(Click to toggle and save)'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* 8. Session Timeout */}
+                <div className="form-group" style={{ margin: 0 }}>
+                  <label className="form-label">Session Timeout (minutes)</label>
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <input 
+                      type="number" 
+                      className="form-control" 
+                      value={config.sessionTimeoutMinutes ?? 1440} 
+                      onChange={e => setConfig({ ...config, sessionTimeoutMinutes: e.target.value })} 
+                    />
+                    {isAdmin && (
+                      <button 
+                        type="button" 
+                        className="btn btn-primary" 
+                        disabled={savingField === 'sessionTimeoutMinutes'}
+                        onClick={() => saveField('sessionTimeoutMinutes', config.sessionTimeoutMinutes)}
+                        style={{ whiteSpace: 'nowrap', padding: '0.4rem 0.85rem', fontSize: '0.8rem' }}
+                      >
+                        {savingField === 'sessionTimeoutMinutes' ? 'Saving...' : 'Save'}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+
             </fieldset>
-            {isAdmin && (
-              <button type="submit" className="btn btn-primary" disabled={configLoading} style={{ marginTop: '1rem', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
-                <ZenvCheckIcon size={16} /> Save Configuration
-              </button>
-            )}
-          </form>
+          </div>
         )}
       </div>
 
       {isAdmin && (
-        <div className="card" style={{ maxWidth: '600px', marginTop: '1.5rem', borderColor: '#f87171' }}>
+        <div className="card" style={{ width: '100%', maxWidth: '1100px', marginTop: '1.5rem' }}>
           <h3 style={{ color: '#ef4444' }}>Database Maintenance</h3>
           <p className="text-muted" style={{ fontSize: '0.9rem', marginTop: '0.5rem' }}>
             Purge all test/operational data including People, RFID Cards, Card Mappings, Attendance Sessions, Tap Logs, and Notifications. Staff accounts and system configurations will be preserved.

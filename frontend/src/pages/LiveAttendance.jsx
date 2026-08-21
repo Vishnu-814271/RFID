@@ -52,10 +52,9 @@ export function LiveAttendance() {
           <h1>Live Attendance</h1>
           <p className="text-muted">Real-time view of personnel currently in the office.</p>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'var(--color-bg-subtle)', padding: '0.5rem 1rem', borderRadius: 'var(--border-radius-sm)' }}>
-          <ZenvRfidScanIcon size={20} className="text-success" />
-          <span style={{ fontWeight: 600, fontSize: '1.2rem' }}>{liveData.headcount}</span>
-          <span className="text-muted">Present</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'var(--color-bg-subtle)', padding: '0.5rem 1rem', borderRadius: 'var(--border-radius-sm)', boxShadow: '0 2px 8px rgba(16, 43, 76, 0.06)' }}>
+          <span style={{ fontWeight: 700, fontSize: '1.25rem', color: 'var(--color-primary)' }}>{liveData.headcount}</span>
+          <span className="text-muted" style={{ fontWeight: 600 }}>Present</span>
         </div>
       </div>
 
@@ -92,11 +91,6 @@ export function LiveAttendance() {
                 })}
               </select>
             </div>
-
-            <button className="btn btn-secondary" onClick={fetchLiveData} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
-              <ZenvRefreshIcon size={14} />
-              <span>Refresh</span>
-            </button>
           </div>
         </div>
 

@@ -153,9 +153,8 @@ export function Reports() {
           <h1>Attendance Reports</h1>
           <p className="text-muted">Generate, view, and export attendance data.</p>
         </div>
-        <button className="btn btn-primary" onClick={handleExportCSV} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
-          <ZenvDownloadIcon size={18} />
-          <span>Export CSV</span>
+        <button className="btn btn-primary" onClick={handleExportCSV} style={{ display: 'inline-flex', alignItems: 'center' }}>
+          <span>Export to CSV</span>
         </button>
       </div>
 

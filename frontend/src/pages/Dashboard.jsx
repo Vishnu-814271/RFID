@@ -174,12 +174,9 @@ export function Dashboard() {
         </div>
       </div>
 
-      {/* Metrics Cards Responsive to Filter */}
+      {/* Metrics Cards Responsive to Filter (Clean text only) */}
       <div className="metrics-grid">
         <div className="metric-card fill-zenv-navy" onClick={() => navigate('/people')}>
-          <div className="metric-icon">
-            <ZenvUsersIcon size={24} color="white" />
-          </div>
           <div className="metric-details">
             <span className="metric-title">{selectedType === 'ALL' ? 'Total Persons' : `Total ${selectedType.charAt(0) + selectedType.slice(1).toLowerCase()}s`}</span>
             <span className="metric-value">{effectiveAnalytics.totalPeople}</span>
@@ -187,9 +184,6 @@ export function Dashboard() {
         </div>
 
         <div className="metric-card fill-zenv-teal" onClick={() => navigate('/live')}>
-          <div className="metric-icon">
-            <ZenvRfidScanIcon size={24} color="white" />
-          </div>
           <div className="metric-details">
             <span className="metric-title">Present Today</span>
             <span className="metric-value">{effectiveAnalytics.presentToday}</span>
@@ -197,9 +191,6 @@ export function Dashboard() {
         </div>
 
         <div className="metric-card fill-zenv-taupe" onClick={() => navigate('/reports')}>
-          <div className="metric-icon">
-            <ZenvClockIcon size={24} color="white" />
-          </div>
           <div className="metric-details">
             <span className="metric-title">Late / Absent Today</span>
             <span className="metric-value">{effectiveAnalytics.lateArrivals} / {effectiveAnalytics.absentees}</span>
@@ -207,9 +198,6 @@ export function Dashboard() {
         </div>
 
         <div className="metric-card fill-zenv-darkgreen" onClick={() => navigate('/reports')}>
-          <div className="metric-icon">
-            <ZenvQuantumShieldIcon size={24} color="white" secondaryColor="#ffffff" />
-          </div>
           <div className="metric-details">
             <span className="metric-title">Denied Taps Today</span>
             <span className="metric-value">{effectiveAnalytics.deniedTaps}</span>

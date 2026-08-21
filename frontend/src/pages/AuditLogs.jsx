@@ -40,10 +40,6 @@ export function AuditLogs() {
           <h1>Audit Logs</h1>
           <p className="text-muted">Track system events and administrative actions.</p>
         </div>
-        <button className="btn btn-secondary" onClick={fetchLogs} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
-          <ZenvRefreshIcon size={18} />
-          <span>Refresh</span>
-        </button>
       </div>
 
       <div className="card">
