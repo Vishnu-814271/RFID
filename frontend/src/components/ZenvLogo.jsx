@@ -18,20 +18,23 @@ export function ZenvLogo({
 }) {
   const iconHeights = {
     sm: 20,
-    md: 26,
-    lg: 38
+    md: 32,
+    lg: 120,
+    xl: 100
   };
 
   const fontSizes = {
     sm: '1.05rem',
     md: '1.22rem',
-    lg: '1.60rem'
+    lg: '1.60rem',
+    xl: '4rem'
   };
 
   const subFontSizes = {
     sm: '0.55rem',
     md: '0.62rem',
-    lg: '0.78rem'
+    lg: '0.78rem',
+    xl: '1.8rem'
   };
 
   const h = iconHeights[size] || iconHeights.md;

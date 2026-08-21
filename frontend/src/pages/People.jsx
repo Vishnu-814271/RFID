@@ -1,5 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Plus, Search, Edit, Ban, CheckCircle, CheckCircle2, CreditCard, X, AlertTriangle, UserCheck } from 'lucide-react';
+import { X } from 'lucide-react';
+import { 
+  ZenvPlusIcon, 
+  ZenvSearchIcon, 
+  ZenvEditIcon, 
+  ZenvBanIcon, 
+  ZenvCheckIcon, 
+  ZenvIdCardIcon, 
+  ZenvAlertIcon 
+} from '../components/ZenvIcons';
 import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
@@ -239,8 +248,8 @@ export function People() {
           setFormData({ fullName: '', memberType: 'EMPLOYEE', externalRef: '', groupLabel: '', email: '', phone: '' });
           setError('');
           setShowModal(true);
-        }}>
-          <Plus size={18} />
+        }} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+          <ZenvPlusIcon size={18} />
           <span>Add Person</span>
         </button>
       </div>
@@ -248,7 +257,7 @@ export function People() {
       <div className="card">
         <div className="table-toolbar" style={{ flexWrap: 'wrap', gap: '1rem', justifyContent: 'space-between', marginBottom: '1rem' }}>
           <div className="search-bar table-search" style={{ flex: '1 1 250px' }}>
-            <Search size={18} className="search-icon" />
+            <ZenvSearchIcon size={18} className="search-icon" />
             <input 
               type="text" 
               placeholder="Search by name, student ID, group, email, card..." 
@@ -353,7 +362,7 @@ export function People() {
                     <td>
                       {person.assignedCardUid ? (
                         <div style={{display: 'flex', alignItems: 'center', gap: '4px'}}>
-                          <CreditCard size={14} className="text-muted"/>
+                          <ZenvIdCardIcon size={14} className="text-muted"/>
                           <span style={{fontSize: '0.9rem'}}>{person.assignedCardUid}</span>
                         </div>
                       ) : (
@@ -385,7 +394,7 @@ export function People() {
                               title="Assign Card" 
                               onClick={() => openAssignModal(person)}
                             >
-                              <CreditCard size={16} />
+                              <ZenvIdCardIcon size={16} />
                             </button>
                           ) : (
                             <button 
@@ -394,12 +403,12 @@ export function People() {
                               disabled
                               style={{ opacity: 0.35, cursor: 'not-allowed' }}
                             >
-                              <CreditCard size={16} />
+                              <ZenvIdCardIcon size={16} />
                             </button>
                           )
                         )}
                         <button className="icon-btn-small text-primary" title="Edit" onClick={() => openEditModal(person)}>
-                          <Edit size={16} />
+                          <ZenvEditIcon size={16} />
                         </button>
                         {isManagerOrAdmin && (
                           <>
@@ -410,7 +419,7 @@ export function People() {
                                 onClick={() => handleMarkCompleted(person)}
                                 style={{ color: '#d97706' }}
                               >
-                                <CheckCircle2 size={16} />
+                                <ZenvCheckIcon size={16} />
                               </button>
                             )}
                             {person.status !== 'COMPLETED' && (
@@ -419,7 +428,7 @@ export function People() {
                                 title={person.status === 'ACTIVE' ? 'Deactivate' : 'Activate'}
                                 onClick={() => handleToggleStatus(person.personId, person.status)}
                               >
-                                {person.status === 'ACTIVE' ? <Ban size={16} /> : <CheckCircle size={16} />}
+                                {person.status === 'ACTIVE' ? <ZenvBanIcon size={16} /> : <ZenvCheckIcon size={16} />}
                               </button>
                             )}
                           </>
@@ -716,7 +725,7 @@ export function People() {
                   color: 'var(--color-primary)',
                   flexShrink: 0
                 }}>
-                  <CreditCard size={20} />
+                  <ZenvIdCardIcon size={20} />
                 </div>
                 <div>
                   <h2 className="modal-title" style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--color-primary)', margin: 0 }}>

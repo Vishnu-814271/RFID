@@ -1,7 +1,8 @@
 /* oxlint-disable react/only-export-components */
 /* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useState, useCallback } from 'react';
-import { CheckCircle, AlertCircle, Info, AlertTriangle, X } from 'lucide-react';
+import { X, Info } from 'lucide-react';
+import { ZenvCheckIcon, ZenvBanIcon, ZenvAlertIcon } from '../components/ZenvIcons';
 import './Toast.css';
 
 const ToastContext = createContext(null);
@@ -38,10 +39,10 @@ export function ToastProvider({ children }) {
         {toasts.map(t => (
           <div key={t.id} className={`toast-card toast-${t.type}`}>
             <div className="toast-icon">
-              {t.type === 'success' && <CheckCircle size={20} />}
-              {t.type === 'error' && <AlertCircle size={20} />}
+              {t.type === 'success' && <ZenvCheckIcon size={20} />}
+              {t.type === 'error' && <ZenvBanIcon size={20} />}
               {t.type === 'info' && <Info size={20} />}
-              {t.type === 'warning' && <AlertTriangle size={20} />}
+              {t.type === 'warning' && <ZenvAlertIcon size={20} />}
             </div>
             <div className="toast-content">
               <span className="toast-message">{t.message}</span>

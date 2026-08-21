@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BarChart3 } from 'lucide-react';
+import { ZenvAnalyticsChartIcon } from './ZenvIcons';
 import './DashboardCharts.css';
 
 export function AttendanceBarChart({ analytics, liveData, reportData = [], events = [] }) {
@@ -29,54 +29,52 @@ export function AttendanceBarChart({ analytics, liveData, reportData = [], event
   const distanceToMon = (dayOfWeek + 6) % 7;
   const monday = new Date(now);
   monday.setDate(now.getDate() - distanceToMon);
+  monday.setHours(0, 0, 0, 0);
 
-  const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-  const weekData = days.map((dayLabel, index) => {
-    const targetDate = new Date(monday);
-    targetDate.setDate(monday.getDate() + index);
-    const dateStr = targetDate.toISOString().split('T')[0];
-    const isToday = index === distanceToMon;
+  const weekData = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((dayName, idx) => {
+    const dayDate = new Date(monday);
+    dayDate.setDate(monday.getDate() + idx);
+    const dateStr = `${dayDate.getFullYear()}-${String(dayDate.getMonth() + 1).padStart(2, '0')}-${String(dayDate.getDate()).padStart(2, '0')}`;
+    const isToday = dateStr === `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
-    const daySessions = (reportData || []).filter(r => 
-      r.workDate === dateStr || (r.checkInAt && r.checkInAt.startsWith(dateStr))
-    );
+    // Filter sessions matching this date
+    const daySessions = (reportData || []).filter(r => {
+      const wDate = r.workDate || (r.checkInAt ? r.checkInAt.substring(0, 10) : null);
+      return wDate === dateStr;
+    });
 
-    const presentCount = daySessions.length > 0 ? daySessions.length : (isToday && liveData?.headcount ? liveData.headcount : 0);
+    const presentCount = daySessions.reduce((acc, curr) => acc + (curr.daysPresent || (curr.checkInAt ? 1 : 0)), 0);
     const absentCount = Math.max(0, totalPeople - presentCount);
 
     return {
-      label: dayLabel,
-      subLabel: targetDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-      date: dateStr,
-      present: presentCount,
-      absent: absentCount,
+      label: dayName,
+      subLabel: `${dayDate.getDate()} ${dayDate.toLocaleString('default', { month: 'short' })}`,
+      present: isToday && (liveData?.headcount !== undefined) ? liveData.headcount : presentCount,
+      absent: isToday && (liveData?.headcount !== undefined) ? Math.max(0, totalPeople - liveData.headcount) : absentCount,
       total: totalPeople,
       isCurrent: isToday
     };
   });
 
   // 2. Monthly Comparison Data (Jan - Dec for selectedYear)
-  const monthLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   const monthFullNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
-  const monthsData = monthLabels.map((mLabel, mIdx) => {
-    const monthNum = String(mIdx + 1).padStart(2, '0');
-    const isCurrentMonthOfCurrentYear = (selectedYear === currentYear) && (mIdx === now.getMonth());
-
+  const monthsData = monthNames.map((mLabel, mIdx) => {
+    const isCurrentMonthOfCurrentYear = (mIdx === now.getMonth() && selectedYear === currentYear);
+    
+    // Filter sessions matching month and year
     const monthSessions = (reportData || []).filter(r => {
       const d = r.workDate || (r.checkInAt ? r.checkInAt.substring(0, 10) : null);
       if (!d) return false;
-      return d.startsWith(`${selectedYear}-${monthNum}`);
+      const yr = parseInt(d.substring(0, 4), 10);
+      const mo = parseInt(d.substring(5, 7), 10) - 1;
+      return yr === selectedYear && mo === mIdx;
     });
 
-    const monthEvents = (events || []).filter(e => {
-      if (!e.occurredAt) return false;
-      return e.occurredAt.startsWith(`${selectedYear}-${monthNum}`);
-    });
-
-    const presentCount = monthSessions.length > 0 ? monthSessions.length : (isCurrentMonthOfCurrentYear && liveData?.headcount ? liveData.headcount : monthEvents.length);
+    const presentCount = monthSessions.reduce((acc, curr) => acc + (curr.daysPresent || 1), 0);
     
-    // Only calculate expected attendance based on actual active logged days in that month
+    // Compute total active working days in this month from data
     const distinctDates = new Set(monthSessions.map(r => r.workDate || (r.checkInAt ? r.checkInAt.substring(0, 10) : null)).filter(Boolean));
     const activeDaysInMonth = distinctDates.size;
     const expectedMonthSessions = totalPeople * activeDaysInMonth;
@@ -104,7 +102,7 @@ export function AttendanceBarChart({ analytics, liveData, reportData = [], event
     <div className="chart-container card">
       <div className="chart-header">
         <div className="chart-title">
-          <BarChart3 size={20} className="chart-icon-header" />
+          <ZenvAnalyticsChartIcon size={22} className="chart-icon-header" primaryColor="#102b4d" accentColor="#1e556d" />
           <div>
             <h3>Attendance Overview Trend</h3>
             <span className="chart-subtitle">

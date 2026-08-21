@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
-import { Lock } from 'lucide-react';
+import { ZenvKeyIcon } from './ZenvIcons';
 
 export function ForcePasswordChangeModal() {
   const { user, login } = useAuth();
@@ -40,8 +40,8 @@ export function ForcePasswordChangeModal() {
     <div className="modal-overlay" style={{ backdropFilter: 'blur(10px)', zIndex: 9999 }}>
       <div className="modal">
         <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-          <div style={{ display: 'inline-flex', background: 'var(--color-primary-light)', padding: '1rem', borderRadius: '50%', marginBottom: '1rem' }}>
-            <Lock size={32} color="white" />
+          <div style={{ display: 'inline-flex', background: 'var(--color-primary-light)', padding: '0.85rem', borderRadius: '4px', marginBottom: '1rem' }}>
+            <ZenvKeyIcon size={32} color="white" />
           </div>
           <h2 className="modal-title">Action Required</h2>
           <p className="text-muted" style={{ marginTop: '0.5rem' }}>

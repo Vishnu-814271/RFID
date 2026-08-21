@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { CreditCard, Plus, Search, X, Ban, AlertTriangle } from 'lucide-react';
+import { X } from 'lucide-react';
+import { ZenvIdCardIcon, ZenvPlusIcon, ZenvSearchIcon, ZenvBanIcon, ZenvAlertIcon } from '../components/ZenvIcons';
 import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
@@ -107,8 +108,8 @@ export function Cards() {
           <p className="text-muted">Manage RFID cards and their assignments.</p>
         </div>
         {isManagerOrAdmin && (
-          <button className="btn btn-primary" onClick={() => setShowModal(true)}>
-            <Plus size={18} />
+          <button className="btn btn-primary" onClick={() => setShowModal(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+            <ZenvPlusIcon size={18} />
             <span>Register New Card</span>
           </button>
         )}
@@ -117,7 +118,7 @@ export function Cards() {
       <div className="card">
         <div className="table-toolbar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.25rem' }}>
           <div className="search-bar table-search" style={{ flex: '1 1 240px', minWidth: '200px' }}>
-            <Search size={18} className="search-icon" />
+            <ZenvSearchIcon size={18} className="search-icon" />
             <input 
               type="text" 
               placeholder="Search cards by UID or name..." 
@@ -161,7 +162,7 @@ export function Cards() {
                 {filteredCards.map(c => (
                   <tr key={c.cardId}>
                     <td className="font-medium">{c.cardId}</td>
-                    <td><div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><CreditCard size={16} className="text-muted"/> {c.cardUid}</div></td>
+                    <td><div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><ZenvIdCardIcon size={16} className="text-muted"/> {c.cardUid}</div></td>
                     <td>
                       <span className={`badge badge-${
                         c.status === 'AVAILABLE' ? 'success' : 
@@ -204,14 +205,14 @@ export function Cards() {
                                 title="Mark Lost" 
                                 onClick={() => handleRequestStatusChange(c, 'LOST')}
                               >
-                                <AlertTriangle size={16} />
+                                <ZenvAlertIcon size={16} />
                               </button>
                               <button 
                                 className="icon-btn-small text-danger" 
                                 title="Deactivate" 
                                 onClick={() => handleRequestStatusChange(c, 'DEACTIVATED')}
                               >
-                                <Ban size={16} />
+                                <ZenvBanIcon size={16} />
                               </button>
                             </>
                           )}
@@ -260,9 +261,9 @@ export function Cards() {
                 <input 
                   type="text" 
                   className="form-control" 
+                  placeholder="e.g. 04A1B2C3D4" 
                   value={newCardUid}
-                  onChange={(e) => setNewCardUid(e.target.value)}
-                  placeholder="Scan or enter Card UID..."
+                  onChange={(e) => setNewCardUid(e.target.value.toUpperCase())}
                   required
                 />
               </div>
@@ -292,7 +293,7 @@ export function Cards() {
                   color: cardStatusToUpdate.newStatus === 'LOST' || cardStatusToUpdate.newStatus === 'DEACTIVATED' ? 'var(--color-danger, #ef4444)' : 'var(--color-primary)',
                   flexShrink: 0
                 }}>
-                  {cardStatusToUpdate.newStatus === 'LOST' ? <AlertTriangle size={20} /> : <CreditCard size={20} />}
+                  {cardStatusToUpdate.newStatus === 'LOST' ? <ZenvAlertIcon size={20} /> : <ZenvIdCardIcon size={20} />}
                 </div>
                 <div>
                   <h2 className="modal-title" style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--color-primary)', margin: 0 }}>

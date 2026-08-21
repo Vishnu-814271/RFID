@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import api from '../utils/api';
-import { Lock, X } from 'lucide-react';
+import { X } from 'lucide-react';
+import { ZenvKeyIcon } from './ZenvIcons';
 
 export function ChangePasswordModal({ onClose }) {
   const [oldPassword, setOldPassword] = useState('');
@@ -46,8 +47,8 @@ export function ChangePasswordModal({ onClose }) {
           <X size={20} />
         </button>
         <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-          <div style={{ display: 'inline-flex', background: 'var(--color-primary-light)', padding: '1rem', borderRadius: '50%', marginBottom: '1rem' }}>
-            <Lock size={32} color="white" />
+          <div style={{ display: 'inline-flex', background: 'var(--color-primary-light)', padding: '0.85rem', borderRadius: '4px', marginBottom: '1rem' }}>
+            <ZenvKeyIcon size={32} color="white" />
           </div>
           <h2 className="modal-title">Change Password</h2>
         </div>

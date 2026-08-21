@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Activity, Search } from 'lucide-react';
+import { ZenvRfidScanIcon, ZenvSearchIcon, ZenvRefreshIcon } from '../components/ZenvIcons';
 import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import { useAutoRefresh } from '../context/RefreshContext';
@@ -53,7 +53,7 @@ export function LiveAttendance() {
           <p className="text-muted">Real-time view of personnel currently in the office.</p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'var(--color-bg-subtle)', padding: '0.5rem 1rem', borderRadius: 'var(--border-radius-sm)' }}>
-          <Activity size={20} className="text-success" />
+          <ZenvRfidScanIcon size={20} className="text-success" />
           <span style={{ fontWeight: 600, fontSize: '1.2rem' }}>{liveData.headcount}</span>
           <span className="text-muted">Present</span>
         </div>
@@ -62,7 +62,7 @@ export function LiveAttendance() {
       <div className="card">
         <div className="table-toolbar" style={{ flexWrap: 'wrap', gap: '1rem', justifyContent: 'space-between', marginBottom: '1rem' }}>
           <div className="search-bar table-search" style={{ flex: '1 1 250px' }}>
-            <Search size={18} className="search-icon" />
+            <ZenvSearchIcon size={18} className="search-icon" />
             <input 
               type="text" 
               placeholder="Search by name, student ID, group..." 
@@ -93,7 +93,10 @@ export function LiveAttendance() {
               </select>
             </div>
 
-            <button className="btn btn-secondary" onClick={fetchLiveData}>Refresh</button>
+            <button className="btn btn-secondary" onClick={fetchLiveData} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+              <ZenvRefreshIcon size={14} />
+              <span>Refresh</span>
+            </button>
           </div>
         </div>
 

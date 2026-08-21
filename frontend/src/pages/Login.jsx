@@ -62,46 +62,15 @@ export function Login() {
       {/* Left Brand Showcase Banner */}
       <div className="login-left">
         <div className="login-brand-content">
-          <div className="login-hero-tag">
-            <span className="hero-tag-dot"></span>
-            CONSCIOUS QUANTUM ENGINEERING
+          <div className="project-title-row">
+            <ZenvLogo variant="white" size="xl" subtext="QUANTUM" />
           </div>
 
-          <h1 className="project-title">
-            RFTRACK
-          </h1>
-          <div className="project-brand-lockup">
-            <span className="lockup-brand">ZENV QUANTUM</span>
-            <span className="lockup-sep">|</span>
-            <span className="lockup-sub">SMART FIELD INTELLIGENCE</span>
-          </div>
 
-          <p className="project-tagline">
-            "Think. Adapt. Evolve."
-          </p>
 
-          <div className="brand-features-grid">
-            <div className="brand-feature-item">
-              <ShieldCheck size={20} className="feature-icon" />
-              <div>
-                <strong>Autonomous Security</strong>
-                <span>Real-time RFID edge telemetry & instant access verification</span>
-              </div>
-            </div>
-            <div className="brand-feature-item">
-              <Cpu size={20} className="feature-icon" />
-              <div>
-                <strong>DeepTech Continuum</strong>
-                <span>AI-driven attendance analytics with tamper-evident audit logs</span>
-              </div>
-            </div>
-          </div>
 
-          <div className="login-footer-meta">
-            <span>ZENV QUANTUM PVT. LTD.</span>
-            <span>•</span>
-            <span>HYDERABAD, INDIA</span>
-          </div>
+
+
         </div>
       </div>
 
@@ -112,8 +81,8 @@ export function Login() {
             <div className="login-logo-wrapper">
               <ZenvLogo variant="horizontal" size="md" />
             </div>
-            <h2>Portal Authentication</h2>
-            <p className="text-muted">Enter authorized credentials to access system telemetry</p>
+            <h2>SIGN IN</h2>
+
           </div>
 
           {error && <div className="login-error">{error}</div>}
@@ -164,10 +133,10 @@ export function Login() {
 
               <button type="submit" className="btn btn-primary login-btn" disabled={loading}>
                 {loading ? (
-                  <span>Authenticating...</span>
+                  <span>SIGN IN...</span>
                 ) : (
                   <>
-                    <span>Authenticate & Access</span>
+                    <span>SIGN IN</span>
                     <ArrowRight size={16} />
                   </>
                 )}
@@ -205,7 +174,7 @@ export function Login() {
           )}
 
           <div className="login-card-footer">
-            <span>Protected by Post-Quantum Cryptographic & Edge Security</span>
+
           </div>
         </div>
       </div>

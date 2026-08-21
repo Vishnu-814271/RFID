@@ -3,7 +3,7 @@ import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { useAutoRefresh } from '../context/RefreshContext';
-import { Plus, ShieldAlert, Trash2 } from 'lucide-react';
+import { ZenvPlusIcon, ZenvQuantumShieldIcon, ZenvTrashIcon } from '../components/ZenvIcons';
 
 export function StaffUsers() {
   const { user } = useAuth();
@@ -83,8 +83,8 @@ export function StaffUsers() {
       <div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
           <h3>Staff Access Management</h3>
-          <button className="btn btn-primary" onClick={() => setShowNewUserForm(!showNewUserForm)}>
-            <Plus size={16} /> Add Staff User
+          <button className="btn btn-primary" onClick={() => setShowNewUserForm(!showNewUserForm)} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+            <ZenvPlusIcon size={16} /> Add Staff User
           </button>
         </div>
         
@@ -109,7 +109,7 @@ export function StaffUsers() {
             
             {tempPassword && (
               <div style={{ marginTop: '1.5rem', padding: '1rem', background: 'var(--color-warning-light)', color: 'var(--color-warning-dark)', borderRadius: 'var(--border-radius)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <ShieldAlert size={20} />
+                <ZenvQuantumShieldIcon size={20} />
                 <div>
                   <strong>Important:</strong> User created successfully. Their temporary password is <code>{tempPassword}</code>. They must change it upon login.
                 </div>
@@ -189,7 +189,7 @@ export function StaffUsers() {
                           title="Delete User"
                           onClick={() => deleteUser(u.userId, u.email)}
                         >
-                          <Trash2 size={16} />
+                          <ZenvTrashIcon size={16} />
                         </button>
                       </div>
                     )}

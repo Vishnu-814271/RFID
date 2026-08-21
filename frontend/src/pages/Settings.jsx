@@ -3,7 +3,7 @@ import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { useRefresh, useAutoRefresh } from '../context/RefreshContext';
-import { Save, Trash2, CheckCircle, AlertCircle } from 'lucide-react';
+import { ZenvCheckIcon, ZenvAlertIcon, ZenvTrashIcon } from '../components/ZenvIcons';
 
 export function Settings() {
   const { user } = useAuth();
@@ -106,7 +106,7 @@ export function Settings() {
             border: `1px solid ${saveStatus.type === 'success' ? '#a7f3d0' : '#fecaca'}`,
             boxShadow: '0 2px 4px rgba(0,0,0,0.03)'
           }}>
-            {saveStatus.type === 'success' ? <CheckCircle size={18} color="#10b981" /> : <AlertCircle size={18} color="#ef4444" />}
+            {saveStatus.type === 'success' ? <ZenvCheckIcon size={18} color="#10b981" /> : <ZenvAlertIcon size={18} color="#ef4444" />}
             <span>{saveStatus.message}</span>
           </div>
         )}
@@ -168,8 +168,8 @@ export function Settings() {
             </div>
             </fieldset>
             {isAdmin && (
-              <button type="submit" className="btn btn-primary" disabled={configLoading} style={{ marginTop: '1rem' }}>
-                <Save size={16} /> Save Configuration
+              <button type="submit" className="btn btn-primary" disabled={configLoading} style={{ marginTop: '1rem', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+                <ZenvCheckIcon size={16} /> Save Configuration
               </button>
             )}
           </form>
@@ -189,7 +189,7 @@ export function Settings() {
             disabled={configLoading}
             onClick={handlePurgeData}
           >
-            <Trash2 size={16} /> Purge System Test Data
+            <ZenvTrashIcon size={16} /> Purge System Test Data
           </button>
         </div>
       )}

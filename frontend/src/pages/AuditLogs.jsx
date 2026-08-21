@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { RefreshCw, Search } from 'lucide-react';
+import { ZenvRefreshIcon, ZenvSearchIcon } from '../components/ZenvIcons';
 import api from '../utils/api';
 import { useAutoRefresh } from '../context/RefreshContext';
 import { formatDateTime } from '../utils/dateUtils';
@@ -40,8 +40,8 @@ export function AuditLogs() {
           <h1>Audit Logs</h1>
           <p className="text-muted">Track system events and administrative actions.</p>
         </div>
-        <button className="btn btn-secondary" onClick={fetchLogs}>
-          <RefreshCw size={18} />
+        <button className="btn btn-secondary" onClick={fetchLogs} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+          <ZenvRefreshIcon size={18} />
           <span>Refresh</span>
         </button>
       </div>
@@ -49,7 +49,7 @@ export function AuditLogs() {
       <div className="card">
         <div className="table-toolbar">
           <div className="search-bar table-search">
-            <Search size={18} className="search-icon" />
+            <ZenvSearchIcon size={18} className="search-icon" />
             <input 
               type="text" 
               placeholder="Search logs by action, user, or details..." 

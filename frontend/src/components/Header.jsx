@@ -1,17 +1,16 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { LogOut, Bell, Lock, ShieldCheck } from 'lucide-react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { ZenvBellIcon } from './ZenvIcons';
 import api from '../utils/api';
 import { useAutoRefresh } from '../context/RefreshContext';
 import { formatDateTime } from '../utils/dateUtils';
-import { ChangePasswordModal } from './ChangePasswordModal';
 import './Header.css';
 
 export function Header() {
-  const { logout, user } = useAuth();
-  const [showChangePassword, setShowChangePassword] = useState(false);
+  const { user } = useAuth();
   const [notifications, setNotifications] = useState([]);
   const [showNotifications, setShowNotifications] = useState(false);
+  const notifMenuRef = useRef(null);
 
   const fetchNotifications = useCallback(async () => {
     if (user?.role !== 'ADMIN' && user?.role !== 'MANAGER') return;
@@ -25,6 +24,17 @@ export function Header() {
 
   useAutoRefresh(fetchNotifications, { intervalMs: 10000 });
 
+  // Close notifications when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (notifMenuRef.current && !notifMenuRef.current.contains(event.target)) {
+        setShowNotifications(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   const markAsRead = async (id) => {
     try {
       await api.post(`/notifications/${id}/read`);
@@ -37,29 +47,29 @@ export function Header() {
   const unreadCount = notifications.filter(n => !n.read).length;
 
   return (
-    <header className="header" style={{ position: 'relative' }}>
+    <header className="header">
       <div className="header-left">
       </div>
 
-      <div className="header-center" style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
-        <span style={{ fontFamily: 'var(--font-family-display, var(--font-family))', fontWeight: '700', fontSize: '1.5rem', color: 'var(--color-primary-light)', letterSpacing: '0.02em', whiteSpace: 'nowrap' }}>
-          Rftrack Access & Attendance Track
+      <div className="header-center">
+        <span className="header-brand-title">
+          RFTRACK
         </span>
       </div>
 
-      <div className="header-right" style={{ marginLeft: 'auto' }}>
+      <div className="header-right">
         {(user?.role === 'ADMIN' || user?.role === 'MANAGER') && (
-          <div style={{ position: 'relative' }}>
+          <div style={{ position: 'relative' }} ref={notifMenuRef}>
             <button className="icon-btn" aria-label="Notifications" onClick={() => setShowNotifications(!showNotifications)}>
-              <Bell size={20} />
+              <ZenvBellIcon size={20} />
               {unreadCount > 0 && <span className="notification-dot"></span>}
             </button>
             {showNotifications && (
               <div style={{
-                position: 'absolute', right: 0, top: '100%',
+                position: 'absolute', right: 0, top: 'calc(100% + 8px)',
                 backgroundColor: 'var(--color-bg-surface)',
                 border: '1px solid var(--color-border)',
-                borderRadius: '2px', width: '320px',
+                borderRadius: '4px', width: '320px',
                 maxHeight: '400px', overflowY: 'auto',
                 zIndex: 1000, boxShadow: 'var(--shadow-lg)'
               }}>
@@ -93,19 +103,7 @@ export function Header() {
             )}
           </div>
         )}
-        <div className="header-divider"></div>
-        <button className="btn btn-secondary" onClick={() => setShowChangePassword(true)} style={{ padding: '0.5rem' }} title="Change Password">
-          <Lock size={16} />
-        </button>
-        <button className="btn btn-secondary btn-logout" onClick={logout}>
-          <LogOut size={16} />
-          <span>Logout</span>
-        </button>
       </div>
-
-      {showChangePassword && (
-        <ChangePasswordModal onClose={() => setShowChangePassword(false)} />
-      )}
     </header>
   );
 }

@@ -1,5 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Download, Search, Calendar, FileText, Edit, X } from 'lucide-react';
+import { X } from 'lucide-react';
+import { 
+  ZenvDownloadIcon, 
+  ZenvSearchIcon, 
+  ZenvCalendarIcon, 
+  ZenvReportIcon, 
+  ZenvEditIcon 
+} from '../components/ZenvIcons';
 import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
@@ -146,8 +153,8 @@ export function Reports() {
           <h1>Attendance Reports</h1>
           <p className="text-muted">Generate, view, and export attendance data.</p>
         </div>
-        <button className="btn btn-primary" onClick={handleExportCSV}>
-          <Download size={18} />
+        <button className="btn btn-primary" onClick={handleExportCSV} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+          <ZenvDownloadIcon size={18} />
           <span>Export CSV</span>
         </button>
       </div>
@@ -155,7 +162,7 @@ export function Reports() {
       <div className="card">
         <div className="table-toolbar" style={{ flexWrap: 'wrap', gap: '1rem' }}>
           <div className="search-bar table-search" style={{ flex: '1 1 200px', marginBottom: 0 }}>
-            <Search size={18} className="search-icon" />
+            <ZenvSearchIcon size={18} className="search-icon" />
             <input 
               type="text" 
               placeholder="Search by name or group..." 
@@ -213,7 +220,7 @@ export function Reports() {
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <Calendar size={16} className="text-muted" />
+              <ZenvCalendarIcon size={16} className="text-muted" />
               <input 
                 type="date" 
                 className="form-control" 
@@ -224,7 +231,7 @@ export function Reports() {
             </div>
             <span className="text-muted">to</span>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <Calendar size={16} className="text-muted" />
+              <ZenvCalendarIcon size={16} className="text-muted" />
               <input 
                 type="date" 
                 className="form-control" 
@@ -336,15 +343,15 @@ export function Reports() {
                     </td>
                     <td>{formatHours(row.totalHours)}</td>
                     <td>
-                      <button className="btn btn-secondary" style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem' }} onClick={() => openSessionsModal(row)}>
-                        <FileText size={14} style={{ marginRight: '4px' }}/> Sessions
+                      <button className="btn btn-secondary" style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center' }} onClick={() => openSessionsModal(row)}>
+                        <ZenvReportIcon size={14} style={{ marginRight: '4px' }}/> Sessions
                       </button>
                     </td>
                   </tr>
                 ))}
                 {filteredData.length === 0 && (
                   <tr>
-                    <td colSpan="11" style={{textAlign: 'center'}} className="text-muted">No report data found.</td>
+                    <td colSpan="11" style={{ textAlign: 'center' }} className="text-muted">No attendance data found.</td>
                   </tr>
                 )}
               </tbody>
@@ -353,29 +360,33 @@ export function Reports() {
         </div>
       </div>
 
-      {showSessionsModal && (
+      {showSessionsModal && selectedPerson && (
         <div className="modal-overlay">
           <div className="modal" style={{ maxWidth: '800px', width: '90%' }}>
             <div className="modal-header">
               <h2 className="modal-title">
-                Attendance Sessions: {selectedPerson?.fullName} {selectedPerson?.externalRef ? `(${selectedPerson.externalRef})` : ''}
+                Attendance Details: {selectedPerson.fullName} {selectedPerson.externalRef ? `(${selectedPerson.externalRef})` : ''}
               </h2>
               <button className="modal-close" onClick={() => setShowSessionsModal(false)}><X size={20} /></button>
             </div>
             
+            <div style={{ marginBottom: '1rem', color: 'var(--color-text-muted)', fontSize: '0.9rem' }}>
+              Showing all recorded sessions for the selected date range ({startDate} to {endDate}).
+            </div>
+
             {sessionsLoading ? (
               <div style={{ padding: '2rem', textAlign: 'center' }}>Loading sessions...</div>
             ) : (
-              <div className="data-table-container" style={{ maxHeight: '400px', overflowY: 'auto' }}>
+              <div className="data-table-container" style={{ maxHeight: '350px', overflowY: 'auto' }}>
                 <table className="data-table">
                   <thead>
                     <tr>
                       <th>Date</th>
-                      <th>Check-In</th>
-                      <th>Check-Out</th>
+                      <th>Check In</th>
+                      <th>Check Out</th>
                       <th>Duration</th>
                       <th>Status</th>
-                      <th>Actions</th>
+                      <th>Action</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -403,7 +414,7 @@ export function Reports() {
                                 });
                               }}
                             >
-                              <Edit size={16} />
+                              <ZenvEditIcon size={16} />
                             </button>
                           )}
                         </td>

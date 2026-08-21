@@ -1,5 +1,11 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
-import { Users, Activity, ShieldAlert, Clock, Filter } from 'lucide-react';
+import { 
+  ZenvRfidScanIcon, 
+  ZenvQuantumShieldIcon, 
+  ZenvUsersIcon, 
+  ZenvClockIcon, 
+  ZenvFilterIcon 
+} from '../components/ZenvIcons';
 import { useNavigate } from 'react-router-dom';
 import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
@@ -64,77 +70,60 @@ export function Dashboard() {
     return new Set(filteredPeople.map(p => p.personId));
   }, [filteredPeople]);
 
-  // 3. Filtered Live Attendance
-  const filteredPresentCount = useMemo(() => {
-    if (!liveData?.presentMembers) {
-      return selectedType === 'ALL' ? (liveData?.headcount || 0) : 0;
-    }
-    if (selectedType === 'ALL') {
-      return liveData.presentMembers.length > 0 ? liveData.presentMembers.length : (liveData.headcount || 0);
-    }
-    return liveData.presentMembers.filter(m => m.memberType === selectedType).length;
-  }, [liveData, selectedType]);
+  // 3. Filtered Live Data
+  const effectiveLiveData = useMemo(() => {
+    if (!liveData) return { headcount: 0, presentMembers: [] };
+    if (selectedType === 'ALL') return liveData;
+    
+    const presentMembers = (liveData.presentMembers || []).filter(m => 
+      filteredPersonIds.has(m.personId) || m.memberType === selectedType
+    );
+    return {
+      headcount: presentMembers.length,
+      presentMembers
+    };
+  }, [liveData, selectedType, filteredPersonIds]);
 
-  // 4. Filtered Report Data (Sessions)
-  const filteredReportData = useMemo(() => {
-    if (selectedType === 'ALL') return reportData;
-    return (reportData || []).filter(r => {
-      if (r.person?.personId && filteredPersonIds.has(r.person.personId)) return true;
-      if (r.personId && filteredPersonIds.has(r.personId)) return true;
-      if (r.memberType === selectedType) return true;
-      return false;
-    });
-  }, [reportData, selectedType, filteredPersonIds]);
-
-  // 5. Filtered Access Events
+  // 4. Filtered Events
   const filteredEvents = useMemo(() => {
+    if (!events) return [];
     if (selectedType === 'ALL') return events;
-    return (events || []).filter(ev => {
-      if (ev.person?.personId && filteredPersonIds.has(ev.person.personId)) return true;
-      if (ev.person?.memberType === selectedType) return true;
+    return events.filter(e => {
+      if (e.person?.personId) return filteredPersonIds.has(e.person.personId);
+      if (e.person?.memberType) return e.person.memberType === selectedType;
       return false;
     });
   }, [events, selectedType, filteredPersonIds]);
 
-  // 6. Compute Effective Metrics based on Type Filter
-  const now = new Date();
-  const todayDateStr = now.toISOString().split('T')[0];
-  const todaySessions = useMemo(() => {
-    return (filteredReportData || []).filter(r => 
-      r.workDate === todayDateStr || (r.checkInAt && r.checkInAt.startsWith(todayDateStr))
-    );
-  }, [filteredReportData, todayDateStr]);
+  // 5. Filtered Report Data (for Under-Hours, Absent, Total calculations)
+  const filteredReportData = useMemo(() => {
+    if (!reportData) return [];
+    if (selectedType === 'ALL') return reportData;
+    return reportData.filter(r => filteredPersonIds.has(r.personId) || r.memberType === selectedType);
+  }, [reportData, selectedType, filteredPersonIds]);
 
-  const lateCount = useMemo(() => {
-    if (selectedType === 'ALL' && analytics?.lateArrivals !== undefined) {
-      return analytics.lateArrivals;
-    }
-    return todaySessions.filter(s => s.isLate).length;
-  }, [selectedType, analytics, todaySessions]);
+  // 6. Effective Analytics Metrics for the 4 Cards
+  const effectiveAnalytics = useMemo(() => {
+    const totalPeople = filteredPeople.length;
+    const presentToday = effectiveLiveData.headcount;
 
-  const absenteeCount = useMemo(() => {
-    return Math.max(0, filteredPeople.length - filteredPresentCount);
-  }, [filteredPeople.length, filteredPresentCount]);
+    // Filtered Denied Events
+    const deniedTaps = filteredEvents.filter(e => e.decision === 'DENIED').length;
 
-  const deniedCount = useMemo(() => {
-    if (selectedType === 'ALL' && analytics?.deniedTaps !== undefined) {
-      return analytics.deniedTaps;
-    }
-    return filteredEvents.filter(e => e.decision === 'DENIED').length;
-  }, [selectedType, analytics, filteredEvents]);
+    // Calculate dynamic late arrivals today from live data
+    const lateArrivals = (effectiveLiveData.presentMembers || []).filter(m => m.isLate).length;
 
-  const effectiveAnalytics = useMemo(() => ({
-    totalPeople: filteredPeople.length,
-    presentToday: filteredPresentCount,
-    lateArrivals: lateCount,
-    absentees: absenteeCount,
-    deniedTaps: deniedCount
-  }), [filteredPeople.length, filteredPresentCount, lateCount, absenteeCount, deniedCount]);
+    // Absentees for today = total filtered people minus present count
+    const absentees = Math.max(0, totalPeople - presentToday);
 
-  const effectiveLiveData = useMemo(() => ({
-    ...liveData,
-    headcount: filteredPresentCount
-  }), [liveData, filteredPresentCount]);
+    return {
+      totalPeople,
+      presentToday,
+      lateArrivals,
+      absentees,
+      deniedTaps
+    };
+  }, [filteredPeople, effectiveLiveData, filteredEvents]);
 
   if (loading) {
     return <div className="p-4">Loading dashboard...</div>;
@@ -150,14 +139,25 @@ export function Dashboard() {
           <p className="text-muted">Welcome to the RFID Management System</p>
         </div>
 
-        {/* Right Side Type Filter */}
-        <div className="type-filter-badge-wrapper" style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)', padding: '0.45rem 0.85rem', borderRadius: 'var(--border-radius-sm)', boxShadow: 'var(--shadow-sm)' }}>
-          <Filter size={16} className="text-muted" />
+        {/* Right Side Type Filter without background color */}
+        <div className="type-filter-badge-wrapper" style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', background: 'transparent', border: 'none', padding: 0, boxShadow: 'none' }}>
+          <ZenvFilterIcon size={16} className="text-muted" />
           <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-text-muted)' }}>Type:</span>
           <select
             id="dashboard-type-select"
             className="form-control"
-            style={{ padding: '0.35rem 0.65rem', fontSize: '0.85rem', minWidth: '150px', border: '1px solid var(--color-border)', borderRadius: '4px', background: 'transparent', cursor: 'pointer', fontWeight: 500 }}
+            style={{ 
+              padding: '0.35rem 0.65rem', 
+              fontSize: '0.85rem', 
+              minWidth: '150px', 
+              border: '1px solid var(--color-border)', 
+              borderRadius: '4px', 
+              background: 'transparent', 
+              backgroundColor: 'transparent', 
+              cursor: 'pointer', 
+              fontWeight: 500,
+              color: 'var(--color-text-main)'
+            }}
             value={selectedType}
             onChange={(e) => setSelectedType(e.target.value)}
           >
@@ -178,7 +178,7 @@ export function Dashboard() {
       <div className="metrics-grid">
         <div className="metric-card fill-zenv-navy" onClick={() => navigate('/people')}>
           <div className="metric-icon">
-            <Users size={24} color="white" />
+            <ZenvUsersIcon size={24} color="white" />
           </div>
           <div className="metric-details">
             <span className="metric-title">{selectedType === 'ALL' ? 'Total Persons' : `Total ${selectedType.charAt(0) + selectedType.slice(1).toLowerCase()}s`}</span>
@@ -188,7 +188,7 @@ export function Dashboard() {
 
         <div className="metric-card fill-zenv-teal" onClick={() => navigate('/live')}>
           <div className="metric-icon">
-            <Activity size={24} color="white" />
+            <ZenvRfidScanIcon size={24} color="white" />
           </div>
           <div className="metric-details">
             <span className="metric-title">Present Today</span>
@@ -198,7 +198,7 @@ export function Dashboard() {
 
         <div className="metric-card fill-zenv-taupe" onClick={() => navigate('/reports')}>
           <div className="metric-icon">
-            <Clock size={24} color="white" />
+            <ZenvClockIcon size={24} color="white" />
           </div>
           <div className="metric-details">
             <span className="metric-title">Late / Absent Today</span>
@@ -208,7 +208,7 @@ export function Dashboard() {
 
         <div className="metric-card fill-zenv-darkgreen" onClick={() => navigate('/reports')}>
           <div className="metric-icon">
-            <ShieldAlert size={24} color="white" />
+            <ZenvQuantumShieldIcon size={24} color="white" secondaryColor="#ffffff" />
           </div>
           <div className="metric-details">
             <span className="metric-title">Denied Taps Today</span>
