@@ -2,6 +2,7 @@
   display: flex;
   min-height: 100vh;
   width: 100%;
+  position: relative;
 }
 
 .layout-main {
@@ -10,10 +11,58 @@
   flex-direction: column;
   margin-left: var(--sidebar-width);
   min-width: 0;
+  width: calc(100% - var(--sidebar-width));
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.layout.sidebar-collapsed .layout-main {
+  margin-left: 72px;
+  width: calc(100% - 72px);
 }
 
 .layout-content {
   flex: 1;
   padding: 2rem;
   overflow-y: auto;
+  min-width: 0;
+}
+
+.sidebar-backdrop {
+  display: none;
+}
+
+/* Tablet & Mobile Breakpoints */
+@media (max-width: 1024px) {
+  .layout-main {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .layout-content {
+    padding: 1.25rem 1rem;
+  }
+
+  .sidebar-backdrop {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(16, 43, 76, 0.45);
+    backdrop-filter: blur(2px);
+    z-index: 99;
+    animation: backdropFadeIn 0.25s ease;
+  }
+
+  @keyframes backdropFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+}
+
+@media (max-width: 480px) {
+  .layout-content {
+    padding: 1rem 0.75rem;
+  }
 }

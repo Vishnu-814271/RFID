@@ -155,7 +155,6 @@ public class DTOs {
         private String autoCheckoutTime;
         private String workingDays;
         private Integer tapDebounceSeconds;
-        private Integer sessionTimeoutMinutes;
         private Integer minWorkingMinutes;
         private String overnightSessionAttribution;
 
@@ -171,8 +170,6 @@ public class DTOs {
         public void setWorkingDays(String workingDays) { this.workingDays = workingDays; }
         public Integer getTapDebounceSeconds() { return tapDebounceSeconds; }
         public void setTapDebounceSeconds(Integer tapDebounceSeconds) { this.tapDebounceSeconds = tapDebounceSeconds; }
-        public Integer getSessionTimeoutMinutes() { return sessionTimeoutMinutes; }
-        public void setSessionTimeoutMinutes(Integer sessionTimeoutMinutes) { this.sessionTimeoutMinutes = sessionTimeoutMinutes; }
         public Integer getMinWorkingMinutes() { return minWorkingMinutes; }
         public void setMinWorkingMinutes(Integer minWorkingMinutes) { this.minWorkingMinutes = minWorkingMinutes; }
         public String getOvernightSessionAttribution() { return overnightSessionAttribution; }

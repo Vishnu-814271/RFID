@@ -6,7 +6,6 @@ import {
   ZenvEditIcon, 
   ZenvBanIcon, 
   ZenvCheckIcon, 
-  ZenvIdCardIcon, 
   ZenvAlertIcon 
 } from '../components/ZenvIcons';
 import api from '../utils/api';
@@ -361,10 +360,7 @@ export function People() {
                     </td>
                     <td>
                       {person.assignedCardUid ? (
-                        <div style={{display: 'flex', alignItems: 'center', gap: '4px'}}>
-                          <ZenvIdCardIcon size={14} className="text-muted"/>
-                          <span style={{fontSize: '0.9rem'}}>{person.assignedCardUid}</span>
-                        </div>
+                        <span style={{ fontSize: '0.9rem' }}>{person.assignedCardUid}</span>
                       ) : (
                         <span className="text-muted">-</span>
                       )}

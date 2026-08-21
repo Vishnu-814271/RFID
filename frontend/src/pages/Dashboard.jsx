@@ -1,10 +1,10 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
-import { 
-  ZenvRfidScanIcon, 
-  ZenvQuantumShieldIcon, 
-  ZenvUsersIcon, 
-  ZenvClockIcon, 
-  ZenvFilterIcon 
+import {
+  ZenvRfidScanIcon,
+  ZenvQuantumShieldIcon,
+  ZenvUsersIcon,
+  ZenvClockIcon,
+  ZenvFilterIcon
 } from '../components/ZenvIcons';
 import { useNavigate } from 'react-router-dom';
 import api from '../utils/api';
@@ -74,8 +74,8 @@ export function Dashboard() {
   const effectiveLiveData = useMemo(() => {
     if (!liveData) return { headcount: 0, presentMembers: [] };
     if (selectedType === 'ALL') return liveData;
-    
-    const presentMembers = (liveData.presentMembers || []).filter(m => 
+
+    const presentMembers = (liveData.presentMembers || []).filter(m =>
       filteredPersonIds.has(m.personId) || m.memberType === selectedType
     );
     return {
@@ -135,8 +135,8 @@ export function Dashboard() {
     <div className="dashboard">
       <div className="dashboard-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
-          <h1>Dashboard Overview</h1>
-          <p className="text-muted">Welcome to the RFID Management System</p>
+          <h1>RFTRACK</h1>
+          <p className="text-muted" style={{ fontSize: '0.925rem', fontWeight: 600, color: 'var(--color-primary-light)', margin: 0 }}>Dashboard Overview</p>
         </div>
 
         {/* Right Side Type Filter without background color */}
@@ -146,15 +146,15 @@ export function Dashboard() {
           <select
             id="dashboard-type-select"
             className="form-control"
-            style={{ 
-              padding: '0.35rem 0.65rem', 
-              fontSize: '0.85rem', 
-              minWidth: '150px', 
-              border: '1px solid var(--color-border)', 
-              borderRadius: '4px', 
-              background: 'transparent', 
-              backgroundColor: 'transparent', 
-              cursor: 'pointer', 
+            style={{
+              padding: '0.35rem 0.65rem',
+              fontSize: '0.85rem',
+              minWidth: '150px',
+              border: '1px solid var(--color-border)',
+              borderRadius: '4px',
+              background: 'transparent',
+              backgroundColor: 'transparent',
+              cursor: 'pointer',
               fontWeight: 500,
               color: 'var(--color-text-main)'
             }}
@@ -174,44 +174,44 @@ export function Dashboard() {
         </div>
       </div>
 
-      {/* Metrics Cards Responsive to Filter (Clean text only) */}
+      {/* Metrics Cards Responsive to Filter (Centered with Suffix Name) */}
       <div className="metrics-grid">
         <div className="metric-card fill-zenv-navy" onClick={() => navigate('/people')}>
           <div className="metric-details">
-            <span className="metric-title">{selectedType === 'ALL' ? 'Total Persons' : `Total ${selectedType.charAt(0) + selectedType.slice(1).toLowerCase()}s`}</span>
             <span className="metric-value">{effectiveAnalytics.totalPeople}</span>
+            <span className="metric-title">{selectedType === 'ALL' ? 'Total Persons' : `Total ${selectedType.charAt(0) + selectedType.slice(1).toLowerCase()}s`}</span>
           </div>
         </div>
 
         <div className="metric-card fill-zenv-teal" onClick={() => navigate('/live')}>
           <div className="metric-details">
-            <span className="metric-title">Present Today</span>
             <span className="metric-value">{effectiveAnalytics.presentToday}</span>
+            <span className="metric-title">Present Today</span>
           </div>
         </div>
 
         <div className="metric-card fill-zenv-taupe" onClick={() => navigate('/reports')}>
           <div className="metric-details">
-            <span className="metric-title">Late / Absent Today</span>
             <span className="metric-value">{effectiveAnalytics.lateArrivals} / {effectiveAnalytics.absentees}</span>
+            <span className="metric-title">Late / Absent Today</span>
           </div>
         </div>
 
-        <div className="metric-card fill-zenv-darkgreen" onClick={() => navigate('/reports')}>
+        <div className="metric-card fill-zenv-darkgreen" onClick={() => navigate('/access-logs', { state: { decision: 'DENIED' } })}>
           <div className="metric-details">
-            <span className="metric-title">Denied Taps Today</span>
             <span className="metric-value">{effectiveAnalytics.deniedTaps}</span>
+            <span className="metric-title">Denied Taps Today</span>
           </div>
         </div>
       </div>
 
       {/* Visual Analytics Chart (Comparison Bar Chart Filtered by Type) */}
       <div className="charts-grid single-chart">
-        <AttendanceBarChart 
-          analytics={effectiveAnalytics} 
-          liveData={effectiveLiveData} 
-          reportData={filteredReportData} 
-          events={filteredEvents} 
+        <AttendanceBarChart
+          analytics={effectiveAnalytics}
+          liveData={effectiveLiveData}
+          reportData={filteredReportData}
+          events={filteredEvents}
         />
       </div>
 
@@ -222,8 +222,8 @@ export function Dashboard() {
             <h3 style={{ margin: 0 }}>
               Recent Access Events {selectedType !== 'ALL' && <span className="badge badge-info" style={{ marginLeft: '0.5rem', fontSize: '0.75rem' }}>{selectedType}</span>}
             </h3>
-            <button 
-              className="btn btn-secondary" 
+            <button
+              className="btn btn-secondary"
               style={{ fontSize: '0.85rem', padding: '0.35rem 0.75rem' }}
               onClick={() => navigate('/access-logs')}
             >

@@ -104,6 +104,48 @@ class MqttIntegrationTests {
     }
 
     @Test
+    void testStructuredEventTapMessageProcessesSuccessfully() {
+        Person person = new Person("Struct User", MemberType.EMPLOYEE, "EMP-STRUCT", "Engineering", "struct@example.com", "9991112233");
+        person.setStatus(PersonStatus.ACTIVE);
+        person = personRepository.save(person);
+
+        RfidCard card = new RfidCard();
+        card.setCardUid("UID_A1B2C3D4");
+        card.setStatus(CardStatus.AVAILABLE);
+        card = cardRepository.save(card);
+
+        CardMapping mapping = new CardMapping(card, person);
+        mapping.setStatus(MappingStatus.ACTIVE);
+        mappingRepository.save(mapping);
+
+        String jsonPayload = """
+            {
+              "timestamp": 1787339280,
+              "event": {
+                "status": "assigned",
+                "counts": {
+                  "assigned": 5,
+                  "unassigned": 3,
+                  "total_events": 8
+                },
+                "cards": [
+                  { "card_uid": "UID_A1B2C3D4" }
+                ],
+                "active_card_counts": {
+                  "assigned_count": 2,
+                  "total_active": 2
+                }
+              }
+            }
+        """;
+
+        subscriber.handleMessage(new GenericMessage<>(jsonPayload));
+
+        // Verify feedback sent
+        verify(mockPublisherService).sendFeedback(eq("READER_IN"), any(TapResponse.class));
+    }
+
+    @Test
     void testMalformedMqttPayloadHandledGracefully() {
         assertDoesNotThrow(() -> subscriber.handleMessage(new GenericMessage<>("INVALID_NON_JSON_PAYLOAD")));
     }

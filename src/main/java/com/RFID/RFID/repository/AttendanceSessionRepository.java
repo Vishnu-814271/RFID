@@ -19,6 +19,7 @@ public interface AttendanceSessionRepository extends JpaRepository<AttendanceSes
     List<AttendanceSession> findByPersonAndWorkDate(Person person, LocalDate workDate);
     List<AttendanceSession> findByStatus(SessionStatus status);
     List<AttendanceSession> findByStatusAndWorkDate(SessionStatus status, LocalDate workDate);
+    List<AttendanceSession> findByWorkDate(LocalDate workDate);
     List<AttendanceSession> findByWorkDateBetween(LocalDate start, LocalDate end);
     List<AttendanceSession> findByPersonAndWorkDateBetween(Person person, LocalDate start, LocalDate end);
 

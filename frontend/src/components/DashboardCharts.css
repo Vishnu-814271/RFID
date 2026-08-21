@@ -205,36 +205,49 @@
   justify-content: center;
 }
 
-/* Present Bar: ZENV Navy to ZENV Teal Blue */
+/* Present Bar: ZENV Teal Blue to ZENV Navy */
 .bar-present {
   background: linear-gradient(180deg, var(--color-primary-light) 0%, var(--color-primary) 100%);
 }
 
-/* Absentees Bar: ZENV Silver to ZENV Taupe */
+/* Absentees Bar: Matching Late / Absent Today Card (#979085) */
 .bar-absent {
-  background: linear-gradient(180deg, var(--color-secondary-light) 0%, var(--color-secondary) 100%);
+  background: linear-gradient(180deg, #b8b3ab 0%, var(--color-secondary) 100%);
 }
 
 .bar-fill-zero {
   width: 100%;
   height: 2px;
   background-color: var(--color-border);
-  font-size: 0.55rem;
-  color: var(--color-text-muted);
-  text-align: center;
+  position: relative;
   margin-top: auto;
 }
 
 .bar-mini-val {
-  font-size: 0.6rem;
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-bottom: 3px;
+  font-size: 0.68rem;
   font-weight: 700;
-  color: #ffffff;
-  margin-top: 2px;
+  white-space: nowrap;
+  pointer-events: none;
   font-family: var(--font-family);
+  line-height: 1;
 }
 
-.bar-absent .bar-mini-val {
+.bar-mini-val.val-present {
   color: var(--color-primary);
+}
+
+.bar-mini-val.val-absent {
+  color: var(--color-secondary);
+}
+
+.bar-mini-val.zero-val {
+  color: var(--color-text-muted);
+  font-weight: 600;
 }
 
 .bar-label {
@@ -253,30 +266,35 @@
   font-weight: 700;
 }
 
-/* Tooltip (ZENV Dark Blue Background & Taupe Border) */
-.chart-tooltip.comparison-tooltip {
+/* Tooltip on hover */
+.chart-tooltip {
   position: absolute;
-  top: -95px;
+  top: -85px;
   left: 50%;
   transform: translateX(-50%);
-  background: var(--color-primary);
+  background-color: var(--color-primary);
   color: #ffffff;
-  padding: 0.6rem 0.85rem;
+  padding: 8px 12px;
   border-radius: var(--border-radius-sm);
   font-size: 0.75rem;
-  white-space: nowrap;
-  box-shadow: var(--shadow-md);
-  z-index: 20;
+  box-shadow: 0 4px 14px rgba(16, 43, 76, 0.25);
+  z-index: 100;
   pointer-events: none;
-  border: 1px solid var(--color-secondary);
-  min-width: 140px;
-  font-family: var(--font-family);
+  min-width: 130px;
+  white-space: nowrap;
+  animation: tooltipFadeIn 0.15s ease-out;
+  border: none;
+}
+
+@keyframes tooltipFadeIn {
+  from { opacity: 0; transform: translate(-50%, 5px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
 }
 
 .chart-tooltip::after {
   content: '';
   position: absolute;
-  bottom: -6px;
+  top: 100%;
   left: 50%;
   transform: translateX(-50%);
   border-width: 6px 6px 0 6px;
@@ -298,7 +316,7 @@
   margin-bottom: 2px;
 }
 
-.tooltip-row.present-row strong { color: var(--color-secondary-light); }
+.tooltip-row.present-row strong { color: var(--color-primary-light); }
 .tooltip-row.absent-row strong { color: var(--color-secondary); }
 .tooltip-row.total-row strong { color: #ffffff; }
 
@@ -308,13 +326,16 @@
   margin: 4px 0;
 }
 
-/* Legend (ZENV Brand Guidelines Colors) */
+/* Legend Placed on the Right Side */
 .chart-legend.comparison-legend {
   display: flex;
-  gap: 1.75rem;
-  justify-content: center;
-  margin-top: 1.25rem;
+  gap: 1.5rem;
+  justify-content: flex-end;
+  align-items: center;
+  margin-top: 1rem;
+  padding-right: 0.5rem;
   font-size: 0.8rem;
+  font-weight: 600;
   color: var(--color-text-muted);
   flex-wrap: wrap;
   font-family: var(--font-family);
@@ -323,14 +344,19 @@
 .legend-item {
   display: flex;
   align-items: center;
-  gap: 0.45rem;
+  gap: 0.5rem;
 }
 
 .legend-color {
-  width: 12px;
-  height: 12px;
+  width: 14px;
+  height: 14px;
   border-radius: var(--border-radius-sm);
 }
 
-.legend-color.legend-present { background-color: var(--color-primary); }
-.legend-color.legend-absent { background-color: var(--color-secondary); }
+.legend-color.legend-present { 
+  background: linear-gradient(180deg, var(--color-primary-light) 0%, var(--color-primary) 100%); 
+}
+
+.legend-color.legend-absent { 
+  background: linear-gradient(180deg, #b8b3ab 0%, var(--color-secondary) 100%); 
+}

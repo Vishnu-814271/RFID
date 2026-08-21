@@ -14,10 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @RestController
 @RequestMapping("/api")
@@ -45,10 +42,23 @@ public class ReportController {
     @GetMapping("/attendance/live")
     public Envelope getLiveBoard() {
         autoCheckoutScheduler.checkAndRunAutoCheckout();
-        List<AttendanceSession> openSessions = sessionRepository.findByStatusAndWorkDate(SessionStatus.OPEN, LocalDate.now());
-        List<Map<String, Object>> presentList = new ArrayList<>();
+        List<AttendanceSession> todaySessions = sessionRepository.findByWorkDate(LocalDate.now());
+        
+        // Sort: OPEN sessions first, CLOSED / AUTO_CLOSED sessions placed at the bottom
+        todaySessions.sort(Comparator
+                .comparing((AttendanceSession s) -> s.getStatus() == SessionStatus.OPEN ? 0 : 1)
+                .thenComparing(AttendanceSession::getCheckInAt, Comparator.nullsLast(Comparator.reverseOrder())));
 
-        for (AttendanceSession session : openSessions) {
+        List<Map<String, Object>> attendanceList = new ArrayList<>();
+        Set<Long> uniquePersonIds = new HashSet<>();
+        long currentlyInside = 0;
+
+        for (AttendanceSession session : todaySessions) {
+            uniquePersonIds.add(session.getPerson().getPersonId());
+            if (session.getStatus() == SessionStatus.OPEN) {
+                currentlyInside++;
+            }
+
             Map<String, Object> map = new HashMap<>();
             map.put("sessionId", session.getSessionId());
             map.put("personId", session.getPerson().getPersonId());
@@ -60,12 +70,18 @@ public class ReportController {
             map.put("memberType", session.getPerson().getMemberType());
             map.put("groupLabel", session.getPerson().getGroupLabel());
             map.put("checkInAt", session.getCheckInAt());
-            presentList.add(map);
+            map.put("checkOutAt", session.getCheckOutAt());
+            map.put("status", session.getStatus().name());
+            map.put("isCheckedOut", session.getStatus() != SessionStatus.OPEN);
+            map.put("durationMinutes", session.getDurationMinutes());
+            map.put("isLate", session.isLate());
+            attendanceList.add(map);
         }
 
         Map<String, Object> data = new HashMap<>();
-        data.put("headcount", presentList.size());
-        data.put("presentMembers", presentList);
+        data.put("headcount", uniquePersonIds.size()); // Total unique present today — does not decrease upon checkout
+        data.put("currentlyInside", currentlyInside);
+        data.put("presentMembers", attendanceList);
 
         return Envelope.ok(data);
     }

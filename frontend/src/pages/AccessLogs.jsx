@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useLocation } from 'react-router-dom';
 import { 
   ZenvQuantumShieldIcon, 
   ZenvCheckIcon, 
@@ -14,10 +15,11 @@ import { formatDateTime } from '../utils/dateUtils';
 
 export function AccessLogs() {
   const { user } = useAuth();
+  const location = useLocation();
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedDecision, setSelectedDecision] = useState('ALL');
+  const [selectedDecision, setSelectedDecision] = useState(location.state?.decision || 'ALL');
   const [selectedEventType, setSelectedEventType] = useState('ALL');
   const [selectedMemberType, setSelectedMemberType] = useState('ALL');
   const [startDate, setStartDate] = useState('');
@@ -74,46 +76,36 @@ export function AccessLogs() {
       </div>
 
       <div className="metrics-grid mb-4">
-        <div className="metric-card fill-primary">
-          <div className="metric-icon">
-            <ZenvQuantumShieldIcon size={24} color="white" secondaryColor="#ffffff" />
-          </div>
+        <div className="metric-card fill-zenv-navy">
           <div className="metric-details">
-            <span className="metric-title">Total Logged Events</span>
             <span className="metric-value">{totalEvents}</span>
+            <span className="metric-title">Total Logged Events</span>
           </div>
         </div>
 
-        <div className="metric-card fill-success">
-          <div className="metric-icon">
-            <ZenvCheckIcon size={24} color="white" />
-          </div>
+        <div className="metric-card fill-zenv-teal">
           <div className="metric-details">
-            <span className="metric-title">Access Granted</span>
             <span className="metric-value">{grantedCount}</span>
+            <span className="metric-title">Access Granted</span>
           </div>
         </div>
 
-        <div className="metric-card fill-danger">
-          <div className="metric-icon">
-            <ZenvBanIcon size={24} color="white" />
-          </div>
+        <div className="metric-card fill-zenv-darkgreen">
           <div className="metric-details">
-            <span className="metric-title">Access Denied</span>
             <span className="metric-value">{deniedCount}</span>
+            <span className="metric-title">Access Denied</span>
           </div>
         </div>
       </div>
 
       <div className="card">
         <div className="filters-bar" style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', alignItems: 'center', marginBottom: '1.5rem' }}>
-          <div className="search-box" style={{ position: 'relative', minWidth: '240px', flex: 1 }}>
-            <ZenvSearchIcon size={18} className="search-icon text-muted" style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)' }} />
+          <div className="search-bar table-search" style={{ flex: '1 1 260px', minWidth: '220px' }}>
+            <ZenvSearchIcon size={18} className="search-icon" />
             <input
               type="text"
               placeholder="Search by Name, ID, Card UID..."
-              className="form-control search-input"
-              style={{ paddingLeft: '2.2rem', width: '100%' }}
+              className="search-input"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />

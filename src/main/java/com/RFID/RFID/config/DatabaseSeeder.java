@@ -75,7 +75,6 @@ public class DatabaseSeeder implements CommandLineRunner {
         defaultConfigs.put("auto_checkout_time", "20:00");
         defaultConfigs.put("working_days", "MON,TUE,WED,THU,FRI");
         defaultConfigs.put("tap_debounce_seconds", "10");
-        defaultConfigs.put("session_timeout_minutes", "1440");
         defaultConfigs.put("overnight_session_attribution", "false");
 
         for (Map.Entry<String, String> entry : defaultConfigs.entrySet()) {

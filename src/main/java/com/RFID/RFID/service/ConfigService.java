@@ -60,11 +60,6 @@ public class ConfigService {
         return Integer.parseInt(val);
     }
 
-    public int getSessionTimeoutMinutes() {
-        String val = getValue("session_timeout_minutes", "1440"); // 24 hours (1440 minutes)
-        return Integer.parseInt(val);
-    }
-
     public int getMinWorkingMinutes() {
         String val = getValue("min_working_minutes", "480");
         return Integer.parseInt(val);

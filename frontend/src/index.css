@@ -13,7 +13,7 @@
   
   --color-success: #1e556d;      /* ZENV Teal */
   --color-warning: #979085;      /* ZENV Taupe */
-  --color-danger: #d93838;
+  --color-danger: #D45529;       /* Terracotta Orange (CREATE DEFECT color) */
   --color-info: #193e65;
 
   /* Neutrals & Background Canvas (Page 23-24) */
@@ -30,33 +30,18 @@
   --color-border: #d1d1d1;       /* American Silver */
   --color-border-hover: #979085;
 
-  /* ==========================================================================
-     ZENV OFFICIAL BRAND TYPOGRAPHY SPECIFICATION (Pages 30-34 & Page 41)
-     --------------------------------------------------------------------------
-     | Font          | Weight         | Intended use                          |
-     | ------------- | -------------- | ------------------------------------- |
-     | Stem          | Medium (500)   | Headers and sub-headers               |
-     | Vision        | Light (300)    | Body copy                             |
-     | Stem          | ExtraLight(200)| Primary lockup/entity names           |
-     | Noto Sans     | Regular/family | Google Docs / universal compatibility |
-     | Segoe UI      | Regular/family | Windows / Microsoft compatibility     |
-     ========================================================================== */
-
-  /* 1. Stem Medium: Headers and Sub-headers */
-  --font-family-header: 'Stem', 'Stem-Medium', 'Noto Sans', 'Segoe UI', sans-serif;
-  --font-weight-header: 500;
+  /* Typography (Noto Sans for entire application) */
+  --font-family-header: 'Noto Sans', sans-serif;
+  --font-weight-header: 600;
   
-  /* 2. Vision Light: Body Copy */
-  --font-family-body: 'Vision', 'Vision-Light', 'Noto Sans', 'Segoe UI', sans-serif;
-  --font-weight-body: 300;
+  --font-family-body: 'Noto Sans', sans-serif;
+  --font-weight-body: 400;
 
-  /* 3. Stem ExtraLight: Primary Lockups & Entity Names */
-  --font-family-lockup: 'Stem', 'Stem-ExtraLight', 'Noto Sans', 'Segoe UI', sans-serif;
-  --font-weight-lockup: 200;
+  --font-family-lockup: 'Noto Sans', sans-serif;
+  --font-weight-lockup: 400;
 
-  /* 4. Compatibility Fallbacks & System Defaults */
-  --font-family: var(--font-family-body);
-  --font-family-display: var(--font-family-header);
+  --font-family: 'Noto Sans', sans-serif;
+  --font-family-display: 'Noto Sans', sans-serif;
 
   --font-size-base: 14.5px;
   --line-height: 1.5;
@@ -103,7 +88,29 @@ h1, h2, h3, h4, h5, h6 {
   font-weight: var(--font-weight-header);
   color: var(--color-text-main);
   letter-spacing: -0.01em;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+h1,
+.page-header h1,
+.dashboard-header h1 {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+  margin-bottom: 0.25rem;
+}
+
+.page-pretitle {
+  font-size: 0.725rem;
+  font-weight: 700;
+  color: var(--color-primary-light);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  margin-bottom: 0.2rem;
+  display: block;
+  user-select: none;
 }
 
 button, input, select, textarea, optgroup {
@@ -376,5 +383,74 @@ a:hover {
   box-shadow: 0 1px 4px rgba(16, 43, 76, 0.08);
   display: inline-block;
   letter-spacing: 0.5px;
+}
+
+/* Global Responsive Rules */
+.data-table-container {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.data-table {
+  min-width: 600px;
+}
+
+@media (max-width: 768px) {
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start !important;
+    gap: 1rem;
+  }
+
+  .page-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .card {
+    padding: 1.15rem 1rem;
+  }
+
+  .modal {
+    max-width: 92vw;
+    padding: 1.25rem;
+    margin: 0 1rem;
+  }
+
+  .modal-actions {
+    flex-direction: column-reverse;
+    gap: 0.5rem;
+  }
+
+  .modal-actions .btn {
+    width: 100%;
+  }
+
+  .filters-bar, 
+  .table-toolbar {
+    flex-direction: column;
+    align-items: stretch !important;
+    gap: 0.75rem !important;
+  }
+
+  .search-box, 
+  .search-bar {
+    width: 100% !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .page-header h1 {
+    font-size: 1.35rem;
+  }
+
+  .btn {
+    padding: 0.45rem 0.85rem;
+    font-size: 0.825rem;
+  }
+
+  .card {
+    padding: 1rem 0.85rem;
+  }
 }
 

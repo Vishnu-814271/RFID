@@ -6,7 +6,7 @@ import { useAutoRefresh } from '../context/RefreshContext';
 import { formatDateTime } from '../utils/dateUtils';
 import './Header.css';
 
-export function Header() {
+export function Header({ onToggleSidebar }) {
   const { user } = useAuth();
   const [notifications, setNotifications] = useState([]);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -49,12 +49,17 @@ export function Header() {
   return (
     <header className="header">
       <div className="header-left">
-      </div>
-
-      <div className="header-center">
-        <span className="header-brand-title">
-          RFTRACK
-        </span>
+        <button 
+          className="mobile-menu-btn" 
+          aria-label="Toggle Navigation Menu" 
+          onClick={onToggleSidebar}
+        >
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+        </button>
       </div>
 
       <div className="header-right">

@@ -14,23 +14,12 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  background: radial-gradient(ellipse at 60% 40%, #0e2a45 0%, #081828 60%, #060f1a 100%);
+  background-color: var(--color-primary);
   color: white;
   padding: 4rem;
   position: relative;
   overflow: hidden;
   font-family: var(--font-family-body);
-}
-
-.login-left::after {
-  content: '';
-  position: absolute;
-  bottom: -80px;
-  right: -80px;
-  width: 320px;
-  height: 320px;
-  background: radial-gradient(circle, rgba(30, 85, 109, 0.4) 0%, transparent 70%);
-  pointer-events: none;
 }
 
 .login-brand-content {

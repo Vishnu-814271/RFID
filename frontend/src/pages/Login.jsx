@@ -95,7 +95,7 @@ export function Login() {
                 }} 
               />
             </div>
-            <h2>SIGN IN</h2>
+            <h2>{showForgotPassword ? 'Forgot Password' : 'SIGN IN'}</h2>
           </div>
 
           {error && <div className="login-error">{error}</div>}
@@ -171,7 +171,7 @@ export function Login() {
               </div>
 
               <button type="submit" className="btn btn-primary login-btn" disabled={loading}>
-                {loading ? 'Dispatching Token...' : 'Send Temporary Password'}
+                {loading ? 'Dispatching Token...' : 'Send Password'}
               </button>
 
               <div style={{ textAlign: 'center', marginTop: '1.25rem' }}>

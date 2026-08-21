@@ -57,7 +57,6 @@ public class ConfigController {
         configMap.put("autoCheckoutTime", configService.getAutoCheckoutTime().toString());
         configMap.put("workingDays", String.join(",", configService.getWorkingDays()));
         configMap.put("tapDebounceSeconds", configService.getTapDebounceSeconds());
-        configMap.put("sessionTimeoutMinutes", configService.getSessionTimeoutMinutes());
         configMap.put("minWorkingMinutes", configService.getMinWorkingMinutes());
         configMap.put("overnightSessionAttribution", String.valueOf(configService.getOvernightSessionAttribution()));
 
@@ -81,9 +80,6 @@ public class ConfigController {
         }
         if (request.getTapDebounceSeconds() != null) {
             configService.updateConfig("tap_debounce_seconds", request.getTapDebounceSeconds().toString());
-        }
-        if (request.getSessionTimeoutMinutes() != null) {
-            configService.updateConfig("session_timeout_minutes", request.getSessionTimeoutMinutes().toString());
         }
         if (request.getMinWorkingMinutes() != null) {
             configService.updateConfig("min_working_minutes", request.getMinWorkingMinutes().toString());

@@ -307,6 +307,7 @@ public class ReportingService {
         Map<String, Object> stats = new HashMap<>();
         stats.put("totalPeople", activePeople.size());
         stats.put("activeCards", activeCards);
+        stats.put("presentToday", distinctPresent);
         stats.put("currentlyPresent", liveHeadcount);
         stats.put("attendanceRate", Math.round(attendanceRate * 10000.0) / 100.0);
         stats.put("averageHours", Math.round(avgHours * 100.0) / 100.0);

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { X } from 'lucide-react';
-import { ZenvIdCardIcon, ZenvPlusIcon, ZenvSearchIcon, ZenvBanIcon, ZenvAlertIcon } from '../components/ZenvIcons';
+import { ZenvPlusIcon, ZenvSearchIcon, ZenvBanIcon, ZenvAlertIcon } from '../components/ZenvIcons';
 import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
@@ -162,7 +162,7 @@ export function Cards() {
                 {filteredCards.map(c => (
                   <tr key={c.cardId}>
                     <td className="font-medium">{c.cardId}</td>
-                    <td><div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><ZenvIdCardIcon size={16} className="text-muted"/> {c.cardUid}</div></td>
+                    <td><span style={{ fontSize: '0.9rem' }}>{c.cardUid}</span></td>
                     <td>
                       <span className={`badge badge-${
                         c.status === 'AVAILABLE' ? 'success' : 

@@ -154,8 +154,8 @@ export function AttendanceBarChart({ analytics, liveData, reportData = [], event
           {currentDataset.map((item, idx) => {
             const isHovered = hoveredGroup === idx;
 
-            const presentHeight = maxVal > 0 && item.present > 0 ? Math.min(100, Math.max(8, Math.round((item.present / maxVal) * 85))) : 0;
-            const absentHeight = maxVal > 0 && item.absent > 0 ? Math.min(100, Math.max(8, Math.round((item.absent / maxVal) * 85))) : 0;
+            const presentHeight = maxVal > 0 && item.present > 0 ? Math.min(88, Math.max(6, Math.round((item.present / maxVal) * 78))) : 0;
+            const absentHeight = maxVal > 0 && item.absent > 0 ? Math.min(88, Math.max(6, Math.round((item.absent / maxVal) * 78))) : 0;
 
             return (
               <div 
@@ -193,10 +193,12 @@ export function AttendanceBarChart({ analytics, liveData, reportData = [], event
                         className="bar-fill bar-present" 
                         style={{ height: `${presentHeight}%` }}
                       >
-                        <span className="bar-mini-val">{item.present}</span>
+                        <span className="bar-mini-val val-present">{item.present}</span>
                       </div>
                     ) : (
-                      <div className="bar-fill-zero">0</div>
+                      <div className="bar-fill-zero">
+                        <span className="bar-mini-val val-present zero-val">0</span>
+                      </div>
                     )}
                   </div>
 
@@ -207,10 +209,12 @@ export function AttendanceBarChart({ analytics, liveData, reportData = [], event
                         className="bar-fill bar-absent" 
                         style={{ height: `${absentHeight}%` }}
                       >
-                        <span className="bar-mini-val">{item.absent}</span>
+                        <span className="bar-mini-val val-absent">{item.absent}</span>
                       </div>
                     ) : (
-                      <div className="bar-fill-zero">0</div>
+                      <div className="bar-fill-zero">
+                        <span className="bar-mini-val val-absent zero-val">0</span>
+                      </div>
                     )}
                   </div>
                 </div>

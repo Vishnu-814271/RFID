@@ -120,8 +120,9 @@ public class TapService {
         if (openSessionOpt.isEmpty() && configService.getOvernightSessionAttribution()) {
             openSessionOpt = sessionRepository.findByPersonAndStatusAndWorkDate(person, SessionStatus.OPEN, workDate.minusDays(1));
         }
-        boolean isCheckInReader = "READER_IN".equalsIgnoreCase(readerId);
-        boolean isCheckOutReader = "READER_OUT".equalsIgnoreCase(readerId);
+        boolean isAutoReader = readerId == null || "AUTO".equalsIgnoreCase(readerId) || "READER_TOGGLE".equalsIgnoreCase(readerId) || "MANUAL_WEB_READER".equalsIgnoreCase(readerId);
+        boolean isCheckInReader = "READER_IN".equalsIgnoreCase(readerId) || (isAutoReader && openSessionOpt.isEmpty());
+        boolean isCheckOutReader = "READER_OUT".equalsIgnoreCase(readerId) || (isAutoReader && openSessionOpt.isPresent());
 
         if (isCheckInReader) {
             if (openSessionOpt.isPresent()) {
