@@ -20,8 +20,8 @@
   padding: 0.9rem 1.1rem;
   border-radius: 12px;
   background: #ffffff;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
-  border: 1px solid rgba(226, 232, 240, 0.8);
+  box-shadow: 0 12px 32px rgba(16, 43, 76, 0.16), 0 4px 10px rgba(16, 43, 76, 0.06);
+  border: none;
   overflow: hidden;
   animation: toastSlideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   transition: all 0.25s ease;

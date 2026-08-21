@@ -19,21 +19,21 @@
 
 .metric-card {
   background: var(--color-bg-surface);
-  border: 1px solid var(--color-border);
+  border: none;
   border-radius: var(--border-radius-sm);
   padding: 1.25rem 1.5rem;
   display: flex;
   align-items: center;
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 4px 16px rgba(16, 43, 76, 0.08);
   cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
   position: relative;
   overflow: hidden;
 }
 
 .metric-card:hover {
   transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
+  box-shadow: 0 8px 24px rgba(16, 43, 76, 0.12);
 }
 
 .metric-icon {
@@ -51,32 +51,32 @@
 .metric-card.fill-zenv-navy,
 .metric-card.fill-primary { 
   background-color: var(--color-primary); /* Dark Blue #102b4d (Pantone 2767 C) */
-  border-color: var(--color-primary); 
+  border: none; 
 }
 
 .metric-card.fill-zenv-teal,
 .metric-card.fill-success { 
   background-color: var(--color-primary-light); /* Teal Blue #1e556d (Pantone 3025 U) */
-  border-color: var(--color-primary-light); 
+  border: none; 
 }
 
 .metric-card.fill-zenv-taupe,
 .metric-card.fill-warning { 
   background-color: var(--color-secondary); /* Taupe #979085 (Pantone 403 U) */
-  border-color: var(--color-secondary); 
+  border: none; 
 }
 
 .metric-card.fill-zenv-blue,
 .metric-card.fill-info { 
   background-color: var(--color-accent); /* Accent Blue #193e65 (Pantone 302 C) */
-  border-color: var(--color-accent); 
+  border: none; 
 }
 
 .metric-card.fill-zenv-darkgreen,
 .metric-card.fill-danger,
 .metric-card.fill-purple { 
   background-color: var(--color-primary-dark); /* Dark Green #1d4150 (Pantone 309 C) */
-  border-color: var(--color-primary-dark); 
+  border: none; 
 }
 
 .metric-card[class*="fill-"] .metric-title {
@@ -95,7 +95,8 @@
 
 .metric-card[class*="fill-"] .metric-icon {
   background-color: rgba(255, 255, 255, 0.18);
-  border: 1px solid rgba(255, 255, 255, 0.25);
+  border: none;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
   color: #ffffff;
 }
 
@@ -124,10 +125,10 @@
 }
 
 .chart-card {
-  border: 1px solid var(--color-border);
+  border: none;
   border-radius: var(--border-radius-sm);
   background: var(--color-bg-surface);
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 4px 18px rgba(16, 43, 76, 0.07);
 }
 
 .mt-4 {

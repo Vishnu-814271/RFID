@@ -132,9 +132,9 @@ a:hover {
 /* Common Components (ZENV Sharp Rectangular Cards) */
 .card {
   background-color: var(--color-bg-surface);
-  border: 1px solid var(--color-border);
+  border: none;
   border-radius: var(--border-radius-md);
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 4px 18px rgba(16, 43, 76, 0.08), 0 1px 3px rgba(16, 43, 76, 0.04);
   padding: 1.5rem;
 }
 
@@ -230,8 +230,9 @@ a:hover {
   max-height: calc(100vh - 260px);
   min-height: 200px;
   background: var(--color-bg-surface);
-  border: 1px solid var(--color-border);
+  border: none;
   border-radius: var(--border-radius-md);
+  box-shadow: 0 4px 18px rgba(16, 43, 76, 0.08), 0 1px 3px rgba(16, 43, 76, 0.04);
   position: relative;
 }
 
@@ -312,14 +313,14 @@ a:hover {
 }
 
 .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(16, 43, 76, 0.6); display: flex; align-items: center; justify-content: center; z-index: 1000; }
-.modal { background: var(--color-bg-surface); padding: 2rem; border-radius: var(--border-radius-sm); width: 100%; max-width: 500px; box-shadow: var(--shadow-lg); border: 1px solid var(--color-border); }
+.modal { background: var(--color-bg-surface); padding: 2rem; border-radius: var(--border-radius-sm); width: 100%; max-width: 500px; box-shadow: 0 16px 40px rgba(16, 43, 76, 0.20), 0 4px 12px rgba(16, 43, 76, 0.08); border: none; }
 .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
 .modal-title { font-size: 1.25rem; font-weight: 700; color: var(--color-primary); margin: 0; }
 .modal-close { background: none; border: none; cursor: pointer; color: var(--color-text-muted); }
 .modal-actions { display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem; }
 
 .topbar { background: var(--color-bg-surface); padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: none; box-shadow: 0 3px 14px rgba(16, 43, 76, 0.08), 0 1px 3px rgba(16, 43, 76, 0.04); }
-.tap-simulator { display: flex; gap: 0.5rem; align-items: center; background: var(--color-bg-subtle); padding: 0.4rem 0.85rem; border-radius: var(--border-radius-sm); border: 1px solid var(--color-border); }
+.tap-simulator { display: flex; gap: 0.5rem; align-items: center; background: var(--color-bg-subtle); padding: 0.4rem 0.85rem; border-radius: var(--border-radius-sm); border: none; box-shadow: 0 2px 8px rgba(16, 43, 76, 0.06); }
 .tap-simulator input { background: transparent; border: none; outline: none; width: 150px; }
 .tap-btn { background: var(--color-primary); color: white; border: none; border-radius: var(--border-radius-sm); padding: 0.3rem 0.75rem; font-size: 0.8rem; font-weight: 700; cursor: pointer; transition: background 0.2s ease; }
 .tap-btn:hover { background: var(--color-primary-light); }
@@ -333,7 +334,8 @@ a:hover {
   color: var(--color-primary);
   padding: 2px 8px;
   border-radius: var(--border-radius-sm);
-  border: 1px solid var(--color-border);
+  border: none;
+  box-shadow: 0 1px 4px rgba(16, 43, 76, 0.08);
   display: inline-block;
   letter-spacing: 0.5px;
 }

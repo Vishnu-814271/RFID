@@ -23,8 +23,9 @@
 
 .table-search {
   width: 320px;
-  background-color: var(--color-bg-body);
-  border: 1px solid var(--color-border);
+  background-color: var(--color-bg-surface);
+  border: none;
+  box-shadow: 0 2px 8px rgba(16, 43, 76, 0.06);
 }
 
 .person-name-cell {

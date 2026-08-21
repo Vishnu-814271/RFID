@@ -26,8 +26,8 @@
   background: var(--color-bg-surface);
   border-radius: var(--border-radius-sm);
   padding: 1.5rem;
-  box-shadow: var(--shadow-sm);
-  border: 1px solid var(--color-border);
+  box-shadow: 0 4px 18px rgba(16, 43, 76, 0.07);
+  border: none;
 }
 
 .chart-header {

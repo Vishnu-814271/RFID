@@ -68,12 +68,12 @@ export function Header() {
               <div style={{
                 position: 'absolute', right: 0, top: 'calc(100% + 8px)',
                 backgroundColor: 'var(--color-bg-surface)',
-                border: '1px solid var(--color-border)',
+                border: 'none',
                 borderRadius: '4px', width: '320px',
                 maxHeight: '400px', overflowY: 'auto',
-                zIndex: 1000, boxShadow: 'var(--shadow-lg)'
+                zIndex: 1000, boxShadow: '0 14px 36px rgba(16, 43, 76, 0.18), 0 3px 10px rgba(16, 43, 76, 0.08)'
               }}>
-                <div style={{ padding: '1rem', borderBottom: '1px solid var(--color-border)', fontWeight: 'bold' }}>
+                <div style={{ padding: '1rem', borderBottom: 'none', boxShadow: '0 2px 6px rgba(16, 43, 76, 0.05)', fontWeight: 'bold' }}>
                   Notifications
                 </div>
                 {notifications.length === 0 ? (
@@ -86,7 +86,7 @@ export function Header() {
                       key={n.id}
                       style={{
                         padding: '1rem',
-                        borderBottom: '1px solid var(--color-border)',
+                        borderBottom: 'none',
                         backgroundColor: n.read ? 'transparent' : 'rgba(16, 43, 76, 0.05)',
                         cursor: n.read ? 'default' : 'pointer'
                       }}
