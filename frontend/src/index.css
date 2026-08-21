@@ -28,9 +28,9 @@
   --color-border: #d1d1d1;       /* American Silver */
   --color-border-hover: #979085;
 
-  /* Typography Settings (Stem Medium / Segoe UI / Noto Sans / Vision Light per Pages 30-34) */
-  --font-family: 'Noto Sans', 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
-  --font-family-display: 'Outfit', 'Space Grotesk', 'Noto Sans', 'Segoe UI', sans-serif;
+  /* Typography Settings (Noto Sans for both headers and body copy per Page 33 of Brand Guidelines) */
+  --font-family: 'Noto Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-family-display: 'Noto Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-size-base: 14.5px;
   --line-height: 1.5;
 
@@ -72,7 +72,7 @@ body {
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-family-display);
   color: var(--color-text-main);
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: -0.01em;
   margin-bottom: 0.5rem;
 }
