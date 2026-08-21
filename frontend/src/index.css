@@ -28,9 +28,22 @@
   --color-border: #d1d1d1;       /* American Silver */
   --color-border-hover: #979085;
 
-  /* Typography Settings (Noto Sans for both headers and body copy per Page 33 of Brand Guidelines) */
-  --font-family: 'Noto Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-family-display: 'Noto Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  /* ZENV Brand Typography Hierarchy (Brand Guidelines Pages 30-34 & Page 41) */
+  /* 1. Stem Medium: Headers and Sub-headers */
+  --font-family-header: 'Stem', 'Stem-Medium', 'Noto Sans', 'Segoe UI', sans-serif;
+  --font-weight-header: 500;
+  
+  /* 2. Vision Light: Body Copy */
+  --font-family-body: 'Vision', 'Vision-Light', 'Noto Sans', 'Segoe UI', sans-serif;
+  --font-weight-body: 300;
+
+  /* 3. Stem ExtraLight: Primary Lockups & Entity Names */
+  --font-family-lockup: 'Stem', 'Stem-ExtraLight', 'Noto Sans', 'Segoe UI', sans-serif;
+  --font-weight-lockup: 200;
+
+  /* General Fallbacks */
+  --font-family: var(--font-family-body);
+  --font-family-display: var(--font-family-header);
   --font-size-base: 14.5px;
   --line-height: 1.5;
 
@@ -60,7 +73,8 @@ html {
 }
 
 body {
-  font-family: var(--font-family);
+  font-family: var(--font-family-body);
+  font-weight: var(--font-weight-body);
   font-size: var(--font-size-base);
   line-height: var(--line-height);
   color: var(--color-text-main);
@@ -70,9 +84,9 @@ body {
 }
 
 h1, h2, h3, h4, h5, h6 {
-  font-family: var(--font-family-display);
+  font-family: var(--font-family-header);
+  font-weight: var(--font-weight-header);
   color: var(--color-text-main);
-  font-weight: 700;
   letter-spacing: -0.01em;
   margin-bottom: 0.5rem;
 }

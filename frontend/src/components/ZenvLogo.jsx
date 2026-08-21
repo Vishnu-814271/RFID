@@ -103,8 +103,8 @@ export function ZenvLogo({
             display: 'inline-block'
           }} />
           <span style={{
-            fontFamily: 'var(--font-family-display, var(--font-family))',
-            fontWeight: '400',
+            fontFamily: 'var(--font-family-lockup, var(--font-family-header))',
+            fontWeight: '200',
             fontSize: fontSizes[size] || fontSizes.md,
             letterSpacing: '0.24em',
             textTransform: 'uppercase',
