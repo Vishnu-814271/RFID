@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Eye, EyeOff } from 'lucide-react';
 import zenvQuantumLogo from '../assets/zenv-quantum-logo.png';
 import api from '../utils/api';
 import './Login.css';
@@ -9,6 +9,7 @@ import './Login.css';
 export function Login() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -116,7 +117,7 @@ export function Login() {
                   className="form-control"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  placeholder="admin@zenv.ai"
+                  placeholder="Enter username or email"
                   autoComplete="username"
                   required
                 />
@@ -133,16 +134,28 @@ export function Login() {
                     Forgot Password?
                   </button>
                 </div>
-                <input
-                  id="password"
-                  type="password"
-                  className="form-control"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  autoComplete="current-password"
-                  required
-                />
+                <div className="password-input-wrapper" style={{ position: 'relative' }}>
+                  <input
+                    id="password"
+                    type={showPassword ? 'text' : 'password'}
+                    className="form-control"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    autoComplete="current-password"
+                    style={{ paddingRight: '2.5rem' }}
+                    required
+                  />
+                  <button
+                    type="button"
+                    className="password-toggle-btn"
+                    onClick={() => setShowPassword(!showPassword)}
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#666' }}
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
               </div>
 
               <button type="submit" className="btn btn-primary login-btn" disabled={loading}>
@@ -172,7 +185,7 @@ export function Login() {
               </div>
 
               <button type="submit" className="btn btn-primary login-btn" disabled={loading}>
-                {loading ? 'Dispatching Token...' : 'Send Password'}
+                {loading ? 'Sending...' : 'Send Password'}
               </button>
 
               <div style={{ textAlign: 'center', marginTop: '1.25rem' }}>

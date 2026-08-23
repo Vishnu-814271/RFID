@@ -13,7 +13,6 @@ import com.RFID.RFID.service.EmailService;
 import com.RFID.RFID.security.TokenBlacklistService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import java.util.Optional;
 
@@ -39,29 +38,39 @@ public class AuthController {
 
     @PostMapping("/login")
     public Envelope login(@RequestBody LoginRequest request) {
-        Optional<StaffUser> userOpt = staffUserRepository.findByEmail(request.getEmail());
+        String email = (request != null && request.getEmail() != null) ? request.getEmail().trim() : "";
+        String password = (request != null && request.getPassword() != null) ? request.getPassword().trim() : "";
+
+        System.out.println("[AUTH LOGIN] Attempt for: '" + email + "'");
+        Optional<StaffUser> userOpt = staffUserRepository.findByEmailIgnoreCase(email);
 
         if (userOpt.isEmpty()) {
-            auditService.logSystemAction("LOGIN_FAILED", "USER", request.getEmail());
-            throw new RuntimeException("invalid mail doesn't exist");
+            auditService.logSystemAction("LOGIN_FAILED", "USER", email);
+            System.err.println("[AUTH LOGIN] User not found: " + email);
+            throw new RuntimeException("Invalid email or password.");
         }
 
         StaffUser user = userOpt.get();
         
         if (!user.isActive()) {
-            auditService.logSystemAction("LOGIN_FAILED", "USER", request.getEmail());
-            throw new RuntimeException("User is inactive.");
+            auditService.logSystemAction("LOGIN_FAILED", "USER", email);
+            throw new RuntimeException("User account is inactive.");
         }
         
-        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-            auditService.logSystemAction("LOGIN_FAILED", "USER", request.getEmail());
-            throw new RuntimeException("invalid pasword");
+        boolean matches = passwordEncoder.matches(password, user.getPassword()) || 
+                          passwordEncoder.matches(request.getPassword(), user.getPassword());
+
+        if (!matches) {
+            auditService.logSystemAction("LOGIN_FAILED", "USER", email);
+            System.err.println("[AUTH LOGIN] Password mismatch for: " + email);
+            throw new RuntimeException("Invalid email or password.");
         }
 
         String token = tokenProvider.generateToken(user.getUserId(), user.getEmail(), user.getRole());
         LoginResponse response = new LoginResponse(
                 token, user.getUserId(), user.getEmail(), user.getRole(), user.isPasswordChangeRequired()
         );
+        System.out.println("[AUTH LOGIN SUCCESS] Logged in: " + user.getEmail() + " (Password change required: " + user.isPasswordChangeRequired() + ")");
         return Envelope.ok(response);
     }
 
@@ -120,28 +129,48 @@ public class AuthController {
 
     @PostMapping("/auth/forgot-password")
     public Envelope forgotPassword(@RequestBody ForgotPasswordRequest request) {
-        Optional<StaffUser> userOpt = staffUserRepository.findByEmail(request.getEmail());
+        String email = (request != null && request.getEmail() != null) ? request.getEmail().trim() : "";
+        System.out.println("[AUTH] Forgot-password requested for: '" + email + "'");
 
-        if (userOpt.isPresent()) {
-            StaffUser user = userOpt.get();
-            
-            // Generate an 8-character temporary password
-            String tempPassword = java.util.UUID.randomUUID().toString().substring(0, 8);
-            
-            user.setPassword(passwordEncoder.encode(tempPassword));
-            user.setPasswordChangeRequired(true);
-            staffUserRepository.save(user);
-
-            emailService.sendEmail(
-                user.getEmail(), 
-                "Temporary Password", 
-                "Your temporary password is: " + tempPassword + "\n\nPlease login and change it immediately."
-            );
-            
-            auditService.logSystemAction("FORGOT_PASSWORD", "USER", request.getEmail());
+        if (email.isEmpty()) {
+            throw new RuntimeException("Email address is required.");
         }
 
-        // Always return success to prevent email enumeration
-        return Envelope.ok("Temp password delivered by email");
+        Optional<StaffUser> userOpt = staffUserRepository.findByEmailIgnoreCase(email);
+
+        if (userOpt.isEmpty()) {
+            System.err.println("[AUTH] Forgot-password rejected: '" + email + "' is not registered.");
+            throw new RuntimeException("This email address is not registered in the staff directory. Please enter a valid registered email.");
+        }
+
+        StaffUser user = userOpt.get();
+
+        if (!user.isActive()) {
+            System.err.println("[AUTH] Forgot-password rejected: '" + email + "' is inactive.");
+            throw new RuntimeException("Your staff account is currently deactivated. Please contact your system administrator.");
+        }
+
+        System.out.println("[AUTH] User validated in DB: " + user.getEmail() + " (ID: " + user.getUserId() + ")");
+        
+        // Generate an 8-character temporary password without hyphens
+        String tempPassword = java.util.UUID.randomUUID().toString().replace("-", "").substring(0, 8);
+        System.out.println("[AUTH] Generated temp password for " + user.getEmail() + ": " + tempPassword);
+        
+        user.setPassword(passwordEncoder.encode(tempPassword));
+        user.setPasswordChangeRequired(true);
+        staffUserRepository.save(user);
+
+        emailService.sendPasswordResetEmail(
+            user.getEmail(),
+            user.getEmail(),
+            "ZenCube Security Portal",
+            "Administrator",
+            tempPassword,
+            15
+        );
+        
+        auditService.logSystemAction("FORGOT_PASSWORD", "USER", user.getEmail());
+
+        return Envelope.ok("Temporary password sent to " + user.getEmail() + ". Please check your inbox.");
     }
 }

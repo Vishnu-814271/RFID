@@ -3,7 +3,6 @@ package com.RFID.RFID.controller;
 import com.RFID.RFID.dto.DTOs.PersonRequest;
 import com.RFID.RFID.dto.Envelope;
 import com.RFID.RFID.model.*;
-import com.RFID.RFID.repository.AttendanceEventRepository;
 import com.RFID.RFID.repository.AttendanceSessionRepository;
 import com.RFID.RFID.repository.CardMappingRepository;
 import com.RFID.RFID.repository.PersonRepository;
@@ -13,7 +12,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -29,20 +27,17 @@ public class PersonController {
     private final PersonRepository personRepository;
     private final CardMappingRepository mappingRepository;
     private final AttendanceSessionRepository sessionRepository;
-    private final AttendanceEventRepository eventRepository;
     private final RfidCardRepository cardRepository;
     private final AuditService auditService;
 
     public PersonController(PersonRepository personRepository,
                             CardMappingRepository mappingRepository,
                             AttendanceSessionRepository sessionRepository,
-                            AttendanceEventRepository eventRepository,
                             RfidCardRepository cardRepository,
                             AuditService auditService) {
         this.personRepository = personRepository;
         this.mappingRepository = mappingRepository;
         this.sessionRepository = sessionRepository;
-        this.eventRepository = eventRepository;
         this.cardRepository = cardRepository;
         this.auditService = auditService;
     }

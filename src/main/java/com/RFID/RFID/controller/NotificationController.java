@@ -2,7 +2,6 @@ package com.RFID.RFID.controller;
 
 import com.RFID.RFID.dto.Envelope;
 import com.RFID.RFID.model.AppNotification;
-import com.RFID.RFID.model.Role;
 import com.RFID.RFID.model.StaffUser;
 import com.RFID.RFID.repository.AppNotificationRepository;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -10,8 +9,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/notifications")
@@ -31,7 +28,13 @@ public class NotificationController {
         StaffUser currentUser = (principal instanceof StaffUser) ? (StaffUser) principal : null;
         String roleStr = (currentUser != null && currentUser.getRole() != null) ? currentUser.getRole().name() : "ADMIN";
         
-        List<AppNotification> notifications = notificationRepository.findByTargetRolesContainingOrderByCreatedAtDesc(roleStr);
+        List<AppNotification> notifications;
+        if ("ADMIN".equals(roleStr)) {
+            // ADMIN has full visibility into all operational alerts and notifications
+            notifications = notificationRepository.findAll(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "createdAt"));
+        } else {
+            notifications = notificationRepository.findByTargetRolesContainingOrderByCreatedAtDesc(roleStr);
+        }
         return Envelope.ok(notifications);
     }
 

@@ -272,7 +272,7 @@ public class TapService {
         // Exactly 3 denied taps triggers the alert so we don't spam for 4, 5, etc.
         if (deniedCount == 3) {
             String msg = "Repeated denied taps (3+ times in 5 mins) for card: " + cardUid;
-            com.RFID.RFID.model.AppNotification notif = new com.RFID.RFID.model.AppNotification(msg, "REPEATED_DENIAL", "MANAGER");
+            com.RFID.RFID.model.AppNotification notif = new com.RFID.RFID.model.AppNotification(msg, "REPEATED_DENIAL", "ADMIN,MANAGER");
             notificationRepository.save(notif);
         }
     }

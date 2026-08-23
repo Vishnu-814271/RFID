@@ -239,7 +239,6 @@ public class ReportingService {
 
         // Cache config values once
         Set<String> workingDays = configService.getWorkingDays();
-        int minWorkingMinutes = configService.getMinWorkingMinutes();
 
         List<Person> activePeople = personRepository.findAll().stream()
                 .filter(p -> p.getStatus() == PersonStatus.ACTIVE)

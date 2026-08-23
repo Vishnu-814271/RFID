@@ -74,7 +74,8 @@ export function Header({ onToggleSidebar }) {
                 position: 'absolute', right: 0, top: 'calc(100% + 8px)',
                 backgroundColor: 'var(--color-bg-surface)',
                 border: 'none',
-                borderRadius: '4px', width: '320px',
+                borderRadius: '6px',
+                width: 'min(340px, calc(100vw - 2rem))',
                 maxHeight: '400px', overflowY: 'auto',
                 zIndex: 1000, boxShadow: '0 14px 36px rgba(16, 43, 76, 0.18), 0 3px 10px rgba(16, 43, 76, 0.08)'
               }}>

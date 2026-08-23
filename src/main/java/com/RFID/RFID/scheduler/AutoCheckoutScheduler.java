@@ -83,7 +83,7 @@ public class AutoCheckoutScheduler {
         if (autoClosedCount > 0) {
             System.out.println("Auto-Checkout completed at " + cutoffTime + ". Processed " + autoClosedCount + " missed checkouts.");
             String summary = "Auto-checkout completed. Processed " + autoClosedCount + " missed checkouts.";
-            com.RFID.RFID.model.AppNotification notif = new com.RFID.RFID.model.AppNotification(summary, "AUTO_CHECKOUT_SUMMARY", "MANAGER");
+            com.RFID.RFID.model.AppNotification notif = new com.RFID.RFID.model.AppNotification(summary, "AUTO_CHECKOUT_SUMMARY", "ADMIN,MANAGER");
             notificationRepository.save(notif);
         }
     }

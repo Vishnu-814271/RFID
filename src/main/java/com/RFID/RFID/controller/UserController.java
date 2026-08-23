@@ -9,7 +9,6 @@ import com.RFID.RFID.service.AuditService;
 import com.RFID.RFID.service.EmailService;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import com.RFID.RFID.model.Person;
 import com.RFID.RFID.repository.PersonRepository;
@@ -17,8 +16,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/users")
@@ -103,11 +100,12 @@ public class UserController {
             throw new RuntimeException("Managers are only permitted to create Operator accounts.");
         }
 
-        if (staffUserRepository.findByEmail(request.getEmail()).isPresent()) {
-            throw new RuntimeException("Email is already registered.");
+        if (staffUserRepository.findByEmailIgnoreCase(request.getEmail().trim()).isPresent()) {
+            throw new RuntimeException("Email is already in use.");
         }
 
-        String tempPassword = java.util.UUID.randomUUID().toString().substring(0, 8);
+        String tempPassword = java.util.UUID.randomUUID().toString().replace("-", "").substring(0, 8);
+        System.out.println("[STAFF USER] Generated temp password for " + request.getEmail().trim() + ": " + tempPassword);
 
         StaffUser newUser = new StaffUser();
         newUser.setEmail(request.getEmail());
@@ -122,11 +120,16 @@ public class UserController {
         // Audit Trail
         auditService.log("STAFF_REGISTERED", "USER", saved.getUserId().toString());
 
-        // Send email with the temporary password
-        emailService.sendEmail(
+        // Send email with the temporary password and ZenV logo
+        String issuerName = (currentUser != null && currentUser.getEmail() != null) ? currentUser.getEmail() : "Administrator";
+        String issuerRole = (currentUser != null && currentUser.getRole() != null) ? currentUser.getRole().name() : "Admin";
+        emailService.sendPasswordResetEmail(
             request.getEmail(),
-            "Welcome to Zencube Access-Track",
-            "An account has been created for you.\n\nYour temporary password is: " + tempPassword + "\n\nPlease login and change it immediately."
+            request.getEmail(),
+            issuerName,
+            issuerRole,
+            tempPassword,
+            1440 // 24 hours for initial setup
         );
 
         Map<String, Object> data = new HashMap<>();

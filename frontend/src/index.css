@@ -396,25 +396,49 @@ a:hover {
   min-width: 600px;
 }
 
+@media (max-width: 1024px) {
+  .sidebar {
+    width: 260px;
+  }
+}
+
 @media (max-width: 768px) {
+  .page-container {
+    padding: 0;
+  }
+
   .page-header {
     flex-direction: column;
-    align-items: flex-start !important;
+    align-items: stretch !important;
     gap: 1rem;
   }
 
+  .page-header > div:first-child {
+    width: 100%;
+  }
+
   .page-header h1 {
-    font-size: 1.5rem;
+    font-size: 1.4rem;
+  }
+
+  .live-status-widget {
+    width: 100%;
+    box-sizing: border-box;
   }
 
   .card {
     padding: 1.15rem 1rem;
+    border-radius: 6px;
   }
 
   .modal {
-    max-width: 92vw;
+    max-width: 95vw;
+    width: 95%;
     padding: 1.25rem;
-    margin: 0 1rem;
+    margin: 0.75rem auto;
+    max-height: 88vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   .modal-actions {
@@ -424,6 +448,7 @@ a:hover {
 
   .modal-actions .btn {
     width: 100%;
+    justify-content: center;
   }
 
   .filters-bar, 
@@ -433,24 +458,41 @@ a:hover {
     gap: 0.75rem !important;
   }
 
+  .table-toolbar > div {
+    width: 100%;
+  }
+
   .search-box, 
   .search-bar {
     width: 100% !important;
+  }
+
+  .form-control,
+  .btn,
+  .icon-btn {
+    min-height: 40px; /* Touch-friendly size on mobile */
   }
 }
 
 @media (max-width: 480px) {
   .page-header h1 {
-    font-size: 1.35rem;
+    font-size: 1.25rem;
   }
 
   .btn {
-    padding: 0.45rem 0.85rem;
+    padding: 0.55rem 0.85rem;
     font-size: 0.825rem;
   }
 
   .card {
-    padding: 1rem 0.85rem;
+    padding: 1rem 0.75rem;
+  }
+
+  .data-table th,
+  .data-table td {
+    padding: 0.65rem 0.75rem;
+    font-size: 0.8rem;
   }
 }
+
 

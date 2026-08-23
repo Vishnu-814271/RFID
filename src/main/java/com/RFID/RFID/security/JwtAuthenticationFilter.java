@@ -50,7 +50,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         if (token != null && !tokenBlacklistService.isBlacklisted(token) && tokenProvider.validateToken(token)) {
             String email = tokenProvider.getEmailFromToken(token);
-            Optional<StaffUser> userOpt = staffUserRepository.findByEmail(email);
+            Optional<StaffUser> userOpt = staffUserRepository.findByEmailIgnoreCase(email);
 
             if (userOpt.isPresent()) {
                 StaffUser user = userOpt.get();

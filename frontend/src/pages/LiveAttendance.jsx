@@ -57,39 +57,55 @@ export function LiveAttendance() {
   return (
     <div className="page-container">
       {/* Top Header */}
-      <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+      <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1.25rem' }}>
         <div>
           <h1>Live Attendance</h1>
           <p className="text-muted">Real-time attendance log of all personnel present today.</p>
         </div>
+
+        {/* Live Attendance Metric Display (Clean Widget with Right Accent) */}
         <div
-          className="metric-card fill-zenv-teal"
+          className="live-status-widget"
           style={{
             display: 'flex',
             flexDirection: 'column',
-            alignItems: 'center',
             justifyContent: 'center',
-            padding: '1rem 2rem',
-            minWidth: '220px',
-            minHeight: '80px',
-            borderRadius: 'var(--border-radius-sm)',
-            boxShadow: '0 4px 16px rgba(16, 43, 76, 0.12)',
-            cursor: 'default'
+            backgroundColor: '#ffffff',
+            border: '1px solid #e2e8f0',
+            borderRight: '4px solid var(--color-primary-light, #1e556d)',
+            borderRadius: '8px',
+            padding: '0.85rem 1.75rem',
+            boxShadow: '0 4px 14px rgba(16, 43, 76, 0.06)',
+            userSelect: 'none',
+            pointerEvents: 'none'
           }}
         >
+          <div style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#64748b', marginBottom: '0.25rem' }}>
+            Present Today
+          </div>
+          
           <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.65rem' }}>
-            <span className="metric-value" style={{ color: '#ffffff', fontSize: '2.3rem', fontWeight: 800, lineHeight: 1, letterSpacing: '-0.02em' }}>
+            <span
+              style={{
+                fontSize: '2rem',
+                fontWeight: 800,
+                color: 'var(--color-primary, #102b4d)',
+                lineHeight: 1,
+                letterSpacing: '-0.03em'
+              }}
+            >
               {liveData.headcount}
             </span>
-            <span className="metric-title" style={{ color: 'rgba(255, 255, 255, 0.9)', fontSize: '0.875rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              Present Today
+            <span
+              style={{
+                fontSize: '0.825rem',
+                color: '#64748b',
+                fontWeight: 500
+              }}
+            >
+              {liveData.currentlyInside !== undefined ? `(${liveData.currentlyInside} active on site)` : 'personnel checked in'}
             </span>
           </div>
-          {liveData.currentlyInside !== undefined && (
-            <span style={{ color: 'rgba(255, 255, 255, 0.8)', fontSize: '0.78rem', marginTop: '0.25rem', fontWeight: 500 }}>
-              {liveData.currentlyInside} in office
-            </span>
-          )}
         </div>
       </div>
 
