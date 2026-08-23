@@ -7,7 +7,7 @@ services:
       POSTGRES_PASSWORD: rootpassword
       POSTGRES_DB: rfiddb
     ports:
-      - "5433:5432"
+      - "5434:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     restart: unless-stopped
@@ -38,7 +38,7 @@ services:
       - JWT_SECRET=ZEN_CUBE_JWT_SUPER_SECRET_KEY_FOR_LOCAL_DEV_MUST_BE_LONG_AND_SECURE_KEYS
       - MQTT_BROKER_URL=tcp://mosquitto:1883
     ports:
-      - "8081:8081"
+      - "8085:8081"
     depends_on:
       - db
       - mosquitto
