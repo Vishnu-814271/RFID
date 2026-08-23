@@ -25,14 +25,16 @@ public class AuthController {
     private final AuditService auditService;
     private final TokenBlacklistService tokenBlacklistService;
     private final EmailService emailService;
+    private final com.RFID.RFID.repository.AppNotificationRepository notificationRepository;
     private final org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
 
-    public AuthController(StaffUserRepository staffUserRepository, JwtTokenProvider tokenProvider, AuditService auditService, TokenBlacklistService tokenBlacklistService, EmailService emailService, org.springframework.security.crypto.password.PasswordEncoder passwordEncoder) {
+    public AuthController(StaffUserRepository staffUserRepository, JwtTokenProvider tokenProvider, AuditService auditService, TokenBlacklistService tokenBlacklistService, EmailService emailService, com.RFID.RFID.repository.AppNotificationRepository notificationRepository, org.springframework.security.crypto.password.PasswordEncoder passwordEncoder) {
         this.staffUserRepository = staffUserRepository;
         this.tokenProvider = tokenProvider;
         this.auditService = auditService;
         this.tokenBlacklistService = tokenBlacklistService;
         this.emailService = emailService;
+        this.notificationRepository = notificationRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -123,6 +125,12 @@ public class AuthController {
         user.setPasswordChangeRequired(false);
         staffUserRepository.save(user);
 
+        // Record In-App Security Notification
+        try {
+            String msg = "Password updated for staff member: " + user.getEmail();
+            notificationRepository.save(new com.RFID.RFID.model.AppNotification(msg, "PASSWORD_CHANGED", "ADMIN,MANAGER"));
+        } catch (Exception ignored) {}
+
         auditService.log("PASSWORD_CHANGED", "USER", user.getUserId().toString());
         return Envelope.ok("Password changed successfully.");
     }
@@ -159,6 +167,12 @@ public class AuthController {
         user.setPassword(passwordEncoder.encode(tempPassword));
         user.setPasswordChangeRequired(true);
         staffUserRepository.save(user);
+
+        // Record In-App Security Notification for Admin & Manager
+        try {
+            String notifMsg = "Temporary password generated & dispatched for: " + user.getEmail();
+            notificationRepository.save(new com.RFID.RFID.model.AppNotification(notifMsg, "PASSWORD_RESET", "ADMIN,MANAGER"));
+        } catch (Exception ignored) {}
 
         emailService.sendPasswordResetEmail(
             user.getEmail(),
