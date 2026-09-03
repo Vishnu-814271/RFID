@@ -39,4 +39,9 @@ data/
 node_modules/
 frontend/node_modules/
 test-data.sql
+token.json
+simulate_tap.ps1
+tap_in.ps1
+tap_out.ps1
+*.ps1
 
