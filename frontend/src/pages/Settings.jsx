@@ -3,7 +3,7 @@ import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { useRefresh, useAutoRefresh } from '../context/RefreshContext';
-import { ZenvCheckIcon, ZenvAlertIcon, ZenvTrashIcon } from '../components/ZenvIcons';
+import { ZenvCheckIcon, ZenvAlertIcon } from '../components/ZenvIcons';
 
 const ALL_DAYS = [
   { key: 'MON', label: 'Monday' },
@@ -133,26 +133,6 @@ export function Settings() {
   };
 
   const isAdmin = user?.role === 'ADMIN';
-
-  const handlePurgeData = async () => {
-    if (!window.confirm("WARNING: This will permanently delete all test people, RFID cards, card mappings, attendance sessions, tap events, and notifications.\n\nStaff users and system configurations will NOT be deleted.\n\nAre you sure you want to proceed?")) {
-      return;
-    }
-    setConfigLoading(true);
-    setSaveStatus(null);
-    try {
-      const res = await api.post('/config/purge-test-data');
-      const msg = typeof res === 'string' ? res : 'All test data purged successfully!';
-      setSaveStatus({ type: 'success', message: msg });
-      toast.success(msg);
-    } catch (err) {
-      const errMsg = `Error purging data: ${err.message || err.error || JSON.stringify(err)}`;
-      setSaveStatus({ type: 'error', message: errMsg });
-      toast.error(errMsg);
-    } finally {
-      setConfigLoading(false);
-    }
-  };
 
   return (
     <div className="page-container">
@@ -442,24 +422,6 @@ export function Settings() {
           </form>
         )}
       </div>
-
-      {isAdmin && (
-        <div className="card" style={{ width: '100%', marginTop: '1.5rem' }}>
-          <h3 style={{ color: '#ef4444' }}>Database Maintenance</h3>
-          <p className="text-muted" style={{ fontSize: '0.9rem', marginTop: '0.5rem' }}>
-            Purge all test/operational data including People, RFID Cards, Card Mappings, Attendance Sessions, Tap Logs, and Notifications. Staff accounts and system configurations will be preserved.
-          </p>
-          <button
-            type="button"
-            className="btn"
-            style={{ backgroundColor: '#ef4444', color: '#fff', marginTop: '1rem', gap: '0.5rem', display: 'inline-flex', alignItems: 'center' }}
-            disabled={configLoading}
-            onClick={handlePurgeData}
-          >
-            <ZenvTrashIcon size={16} /> Purge System Test Data
-          </button>
-        </div>
-      )}
     </div>
   );
 }

@@ -75,7 +75,7 @@ export function AccessLogs() {
         </div>
       </div>
 
-      <div className="metrics-grid mb-4">
+      <div className="metrics-grid access-logs-grid mb-4">
         <div className="metric-card fill-zenv-navy">
           <div className="metric-details">
             <span className="metric-value">{totalEvents}</span>

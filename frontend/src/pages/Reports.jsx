@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useLocation } from 'react-router-dom';
 import { X } from 'lucide-react';
 import { 
   ZenvDownloadIcon, 
@@ -17,6 +18,8 @@ export function Reports() {
   const { user } = useAuth();
   const toast = useToast();
   const { triggerRefresh } = useRefresh();
+  const location = useLocation();
+
   const [reportData, setReportData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -24,13 +27,24 @@ export function Reports() {
   const [selectedGroupLabel, setSelectedGroupLabel] = useState('ALL');
   const [selectedStatusTab, setSelectedStatusTab] = useState('ACTIVE');
   
-  // Default to the current month (from 1st of this month to today)
+  // Default to current month or incoming location.state
   const now = new Date();
   const currentMonthStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
   const currentToday = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
-  const [startDate, setStartDate] = useState(currentMonthStart);
-  const [endDate, setEndDate] = useState(currentToday);
+  const [startDate, setStartDate] = useState(location.state?.startDate || currentMonthStart);
+  const [endDate, setEndDate] = useState(location.state?.endDate || currentToday);
+  const [attendanceFilter, setAttendanceFilter] = useState(location.state?.attendanceFilter || 'ALL');
+
+  useEffect(() => {
+    if (location.state?.startDate && location.state?.endDate) {
+      setStartDate(location.state.startDate);
+      setEndDate(location.state.endDate);
+      if (location.state.attendanceFilter) {
+        setAttendanceFilter(location.state.attendanceFilter);
+      }
+    }
+  }, [location.state]);
 
   const [showSessionsModal, setShowSessionsModal] = useState(false);
   const [selectedPerson, setSelectedPerson] = useState(null);
@@ -142,8 +156,14 @@ export function Reports() {
     const matchesMemberType = selectedMemberType === 'ALL' || row.memberType === selectedMemberType;
     const matchesGroupLabel = selectedGroupLabel === 'ALL' || row.groupLabel === selectedGroupLabel;
     const matchesStatus = selectedStatusTab === 'ALL' || (selectedStatusTab === 'INACTIVE' ? row.status === 'INACTIVE' : row.status !== 'INACTIVE');
+
+    const matchesAttendance = attendanceFilter === 'ALL' ||
+      (attendanceFilter === 'LATE_OR_ABSENT' && ((row.lateCount || 0) > 0 || (row.absentDays || 0) > 0)) ||
+      (attendanceFilter === 'LATE' && (row.lateCount || 0) > 0) ||
+      (attendanceFilter === 'ABSENT' && (row.absentDays || 0) > 0) ||
+      (attendanceFilter === 'PRESENT' && (row.daysPresent || 0) > 0);
     
-    return matchesSearch && matchesMemberType && matchesGroupLabel && matchesStatus;
+    return matchesSearch && matchesMemberType && matchesGroupLabel && matchesStatus && matchesAttendance;
   });
 
   return (
@@ -159,25 +179,25 @@ export function Reports() {
       </div>
 
       <div className="card">
-        <div className="table-toolbar" style={{ flexWrap: 'wrap', gap: '1rem' }}>
+        <div className="table-toolbar" style={{ flexWrap: 'wrap', gap: '1rem', marginBottom: '1rem' }}>
           <div className="search-bar table-search" style={{ flex: '1 1 200px', marginBottom: 0 }}>
             <ZenvSearchIcon size={18} className="search-icon" />
             <input 
               type="text" 
-              placeholder="Search by name or group..." 
+              placeholder="Search by name, ID, team..." 
               className="search-input"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
           
-          <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center' }}>
             {/* Member Type Filter */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
               <span className="text-muted" style={{ fontSize: '0.85rem', fontWeight: 500 }}>Type:</span>
               <select 
                 className="form-control" 
-                style={{ padding: '0.25rem 0.5rem', minWidth: '130px' }}
+                style={{ padding: '0.25rem 0.5rem', minWidth: '115px' }}
                 value={selectedMemberType}
                 onChange={(e) => setSelectedMemberType(e.target.value)}
               >
@@ -187,60 +207,107 @@ export function Reports() {
               </select>
             </div>
 
-            {/* Group Label Filter */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <span className="text-muted" style={{ fontSize: '0.85rem', fontWeight: 500 }}>Group:</span>
+            {/* Group / Team Label Filter */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+              <span className="text-muted" style={{ fontSize: '0.85rem', fontWeight: 500 }}>Team:</span>
               <select 
                 className="form-control" 
-                style={{ padding: '0.25rem 0.5rem', minWidth: '120px' }}
+                style={{ padding: '0.25rem 0.5rem', minWidth: '110px' }}
                 value={selectedGroupLabel}
                 onChange={(e) => setSelectedGroupLabel(e.target.value)}
               >
-                <option value="ALL">All Groups</option>
+                <option value="ALL">All Teams</option>
                 {uniqueGroupLabels.map(group => (
                   <option key={group} value={group}>{group}</option>
                 ))}
               </select>
             </div>
 
-            {/* Status Dropdown Filter (Active, Deactivated, All Members) */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <span className="text-muted" style={{ fontSize: '0.85rem', fontWeight: 500 }}>Status:</span>
+            {/* Attendance Filter */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+              <span className="text-muted" style={{ fontSize: '0.85rem', fontWeight: 500 }}>Filter:</span>
               <select 
                 className="form-control" 
-                style={{ padding: '0.25rem 0.5rem', minWidth: '185px' }}
-                value={selectedStatusTab}
-                onChange={(e) => setSelectedStatusTab(e.target.value)}
+                style={{ padding: '0.25rem 0.5rem', minWidth: '150px' }}
+                value={attendanceFilter}
+                onChange={(e) => setAttendanceFilter(e.target.value)}
               >
-                <option value="ACTIVE">Active Personnel ({activeCount})</option>
-                <option value="INACTIVE">Deactivated Personnel ({inactiveCount})</option>
-                <option value="ALL">All Members ({reportData.length})</option>
+                <option value="ALL">All Attendance</option>
+                <option value="LATE_OR_ABSENT">Late or Absent</option>
+                <option value="LATE">Late Only</option>
+                <option value="ABSENT">Absent Only</option>
+                <option value="PRESENT">Present Only</option>
               </select>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <ZenvCalendarIcon size={16} className="text-muted" />
+            {/* Status Dropdown Filter */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+              <span className="text-muted" style={{ fontSize: '0.85rem', fontWeight: 500 }}>Status:</span>
+              <select 
+                className="form-control" 
+                style={{ padding: '0.25rem 0.5rem', minWidth: '150px' }}
+                value={selectedStatusTab}
+                onChange={(e) => setSelectedStatusTab(e.target.value)}
+              >
+                <option value="ACTIVE">Active ({activeCount})</option>
+                <option value="INACTIVE">Inactive ({inactiveCount})</option>
+                <option value="ALL">All Status ({reportData.length})</option>
+              </select>
+            </div>
+
+            {/* Date Range */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+              <ZenvCalendarIcon size={15} className="text-muted" />
               <input 
                 type="date" 
                 className="form-control" 
-                style={{ padding: '0.25rem 0.5rem' }} 
+                style={{ padding: '0.25rem 0.5rem', fontSize: '0.82rem' }} 
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
               />
-            </div>
-            <span className="text-muted">to</span>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <ZenvCalendarIcon size={16} className="text-muted" />
+              <span className="text-muted" style={{ fontSize: '0.82rem' }}>to</span>
               <input 
                 type="date" 
                 className="form-control" 
-                style={{ padding: '0.25rem 0.5rem' }} 
+                style={{ padding: '0.25rem 0.5rem', fontSize: '0.82rem' }} 
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
               />
             </div>
           </div>
         </div>
+
+        {/* Active Filter Banner when viewing Today's Late/Absent */}
+        {attendanceFilter === 'LATE_OR_ABSENT' && startDate === currentToday && endDate === currentToday && (
+          <div style={{ 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'center',
+            background: 'rgba(180, 83, 9, 0.08)', 
+            border: '1px solid rgba(180, 83, 9, 0.25)', 
+            color: '#92400e', 
+            padding: '0.5rem 0.85rem', 
+            borderRadius: 'var(--border-radius-sm, 2px)', 
+            marginBottom: '0.85rem',
+            fontSize: '0.825rem'
+          }}>
+            <span>
+              <strong>Showing Today's Late / Absent List ({currentToday}):</strong> Displaying only members who were late or absent today.
+            </span>
+            <button 
+              type="button"
+              className="btn btn-secondary"
+              style={{ padding: '0.18rem 0.55rem', fontSize: '0.75rem' }}
+              onClick={() => {
+                setStartDate(currentMonthStart);
+                setEndDate(currentToday);
+                setAttendanceFilter('ALL');
+              }}
+            >
+              Reset to Full Month
+            </button>
+          </div>
+        )}
 
         <div className="data-table-container">
           {loading ? (
@@ -252,7 +319,7 @@ export function Reports() {
                   <th>ID</th>
                   <th>Name</th>
                   <th>Type</th>
-                  <th>Group</th>
+                  <th>Team</th>
                   <th>Present</th>
                   <th>Under Hours</th>
                   <th>Absent</th>
@@ -350,7 +417,11 @@ export function Reports() {
                 ))}
                 {filteredData.length === 0 && (
                   <tr>
-                    <td colSpan="11" style={{ textAlign: 'center' }} className="text-muted">No attendance data found.</td>
+                    <td colSpan="11" style={{ textAlign: 'center', padding: '2rem' }} className="text-muted">
+                      {attendanceFilter === 'LATE_OR_ABSENT' 
+                        ? 'No late or absent personnel found for the selected period.' 
+                        : 'No attendance data found.'}
+                    </td>
                   </tr>
                 )}
               </tbody>

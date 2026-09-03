@@ -118,86 +118,89 @@ export function StaffUsers() {
           </div>
         )}
 
-        <div className="card data-table-container">
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>User ID</th>
-                <th>ID</th>
-                <th>Email</th>
-                <th>Role</th>
-                <th>Status</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {users.map(u => (
-                <tr key={u.userId}>
-                  <td className="font-medium">#{u.userId}</td>
-                  <td>
-                    {u.personId ? (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                        <span style={{ 
-                          fontFamily: 'monospace',
-                          fontWeight: '600',
-                          fontSize: '0.85rem',
-                          background: '#f1f5f9',
-                          color: '#0f172a',
-                          padding: '2px 8px',
-                          borderRadius: '4px',
-                          border: '1px solid #cbd5e1',
-                          display: 'inline-block',
-                          width: 'fit-content'
-                        }}>
-                          {u.personExternalRef || `EXT-${String(u.personId).padStart(4, '0')}`}
-                        </span>
-                        <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
-                          Person #{u.personId} ({u.personName})
-                        </span>
-                      </div>
-                    ) : (
-                      <span className="text-muted" style={{ fontSize: '0.85rem' }}>-</span>
-                    )}
-                  </td>
-                  <td className="font-medium">{u.email}</td>
-                  <td><span className={`badge ${u.role === 'ADMIN' ? 'badge-danger' : u.role === 'MANAGER' ? 'badge-primary' : 'badge-success'}`}>{u.role}</span></td>
-                  <td>
-                    <span style={{ color: u.active ? 'var(--color-success)' : 'var(--color-danger)' }}>
-                      {u.active ? 'Active' : 'Deactivated'}
-                    </span>
-                  </td>
-                  <td>
-                    {user?.role === 'ADMIN' && u.userId !== user.userId && (
-                      <div className="action-buttons">
-                        <button 
-                          className="btn btn-secondary" 
-                          style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem' }}
-                          onClick={() => toggleUserActive(u.userId, u.active)}
-                        >
-                          {u.active ? 'Deactivate' : 'Activate'}
-                        </button>
-                        <button 
-                          className="btn btn-warning" 
-                          style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem', color: '#000' }}
-                          onClick={() => handleResetPassword(u.userId, u.email)}
-                        >
-                          Reset Password
-                        </button>
-                        <button 
-                          className="icon-btn-small text-danger" 
-                          style={{ padding: '0.25rem 0.5rem', marginLeft: '0.5rem' }}
-                          title="Delete User"
-                          onClick={() => deleteUser(u.userId, u.email)}
-                        >
-                          <ZenvTrashIcon size={16} />
-                        </button>
-                      </div>
-                    )}
-                  </td>
+        <div className="card">
+          <div className="data-table-container">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>User ID</th>
+                  <th>ID</th>
+                  <th>Email</th>
+                  <th>Role</th>
+                  <th>Status</th>
+                  <th>Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {users.map(u => (
+                  <tr key={u.userId}>
+                    <td className="font-medium">#{u.userId}</td>
+                    <td>
+                      {u.personId ? (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                          <span style={{ 
+                            fontFamily: 'monospace',
+                            fontWeight: '600',
+                            fontSize: '0.85rem',
+                            background: '#f1f5f9',
+                            color: '#0f172a',
+                            padding: '1px 6px',
+                            borderRadius: '4px',
+                            display: 'inline-block',
+                            width: 'fit-content'
+                          }}>
+                            {u.externalRef || `ID: ${u.personId}`}
+                          </span>
+                          {u.personName && (
+                            <span style={{ fontSize: '0.8rem', color: '#64748b' }}>
+                              {u.personName}
+                            </span>
+                          )}
+                        </div>
+                      ) : (
+                        <span style={{ color: '#94a3b8', fontStyle: 'italic', fontSize: '0.85rem' }}>None</span>
+                      )}
+                    </td>
+                    <td>{u.email}</td>
+                    <td><span className="badge badge-info">{u.role}</span></td>
+                    <td>
+                      <span className={`badge ${u.active ? 'badge-success' : 'badge-danger'}`}>
+                        {u.active ? 'Active' : 'Inactive'}
+                      </span>
+                    </td>
+                    <td>
+                      {user?.role === 'ADMIN' && u.userId !== user.userId && (
+                        <div className="action-buttons">
+                          <button 
+                            className="btn btn-secondary" 
+                            style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem' }}
+                            onClick={() => toggleUserActive(u.userId, u.active)}
+                          >
+                            {u.active ? 'Deactivate' : 'Activate'}
+                          </button>
+                          <button 
+                            className="btn btn-warning" 
+                            style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem', color: '#000' }}
+                            onClick={() => handleResetPassword(u.userId, u.email)}
+                          >
+                            Reset Password
+                          </button>
+                          <button 
+                            className="icon-btn-small text-danger" 
+                            style={{ padding: '0.25rem 0.5rem', marginLeft: '0.5rem' }}
+                            title="Delete User"
+                            onClick={() => deleteUser(u.userId, u.email)}
+                          >
+                            <ZenvTrashIcon size={16} />
+                          </button>
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>

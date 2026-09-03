@@ -69,16 +69,36 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
   for (unsigned int i = 0; i < length; i++) {
     message += (char)payload[i];
   }
-  Serial.printf("[MQTT Feedback] Received: %s\n", message.c_str());
+  Serial.printf("[MQTT] Message on '%s': %s\n", topic, message.c_str());
 
-  // Parse JSON Feedback Response
-  StaticJsonDocument<512> doc;
+  // Parse JSON Feedback / Event Response
+  StaticJsonDocument<1024> doc;
   DeserializationError error = deserializeJson(doc, message);
   if (error) {
     Serial.println("[MQTT] JSON parse error");
     return;
   }
 
+  // 1. Handle Card Lifecycle Broadcasts (rfid/cards/events)
+  if (doc.containsKey("event")) {
+    JsonObject event = doc["event"];
+    const char* eventType = event["event_type"];
+    const char* status = event["status"];
+    const char* cardUid = event["card_uid"];
+    const char* personName = event["person_name"];
+    const char* timestamp = doc["timestamp"];
+
+    Serial.printf("[CARD LIFECYCLE EVENT] Time: %s | Event: %s | Status: %s | Card UID: %s%s%s\n",
+                  timestamp ? timestamp : "N/A",
+                  eventType ? eventType : "N/A",
+                  status ? status : "N/A",
+                  cardUid ? cardUid : "N/A",
+                  personName ? " | Person: " : "",
+                  personName ? personName : "");
+    return;
+  }
+
+  // 2. Handle Reader Tap Feedback (rfid/cards/{READER_ID})
   const char* decision = doc["decision"]; // "GRANTED" or "DENIED"
   const char* eventType = doc["eventType"]; // "CHECK_IN", "CHECK_OUT", or null
   const char* reason = doc["reason"];
@@ -112,6 +132,8 @@ void reconnectMqtt() {
       Serial.println(" Connected!");
       mqttClient.subscribe(topicFeedback.c_str());
       Serial.printf("[MQTT] Subscribed to %s\n", topicFeedback.c_str());
+      mqttClient.subscribe("rfid/cards/events");
+      Serial.println("[MQTT] Subscribed to rfid/cards/events");
     } else {
       Serial.printf(" Failed (rc=%d), retrying in 5 seconds...\n", mqttClient.state());
       delay(5000);

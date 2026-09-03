@@ -176,24 +176,4 @@ public class CardController {
 
         return Envelope.ok(saved);
     }
-
-    @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
-    public Envelope deleteCard(@PathVariable Long id) {
-        RfidCard card = cardRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Card not found."));
-
-        List<CardMapping> mappings = mappingRepository.findByCard(card);
-        mappingRepository.deleteAll(mappings);
-
-        cardRepository.delete(card);
-        auditService.log("CARD_DELETED", "CARD", id.toString());
-
-        // Broadcast to MQTT
-        if (mqttPublisherService != null) {
-            mqttPublisherService.broadcastCardLifecycleEvent("CARD_DELETED", card, null);
-        }
-
-        return Envelope.ok("Card deleted successfully.");
-    }
 }

@@ -22,7 +22,7 @@
 
 .layout-content {
   flex: 1;
-  padding: 2rem;
+  padding: 1.75rem 2rem 3.5rem 2rem;
   overflow-y: auto;
   min-width: 0;
 }

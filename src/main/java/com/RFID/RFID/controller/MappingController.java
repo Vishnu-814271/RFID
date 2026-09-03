@@ -117,9 +117,9 @@ public class MappingController {
             auditService.log("CARD_RELEASED", "MAPPING", saved.getMappingId().toString());
         }
 
-        // Broadcast Card Release Event via MQTT
+        // Broadcast Card Unassigned Event via MQTT
         if (mqttPublisherService != null) {
-            mqttPublisherService.broadcastCardLifecycleEvent("CARD_RELEASED", card, mapping.getPerson());
+            mqttPublisherService.broadcastCardLifecycleEvent("CARD_UNASSIGNED", card, mapping.getPerson());
         }
 
         return Envelope.ok(saved);

@@ -71,8 +71,8 @@ export function AuditLogs() {
                 </tr>
               </thead>
               <tbody>
-                {filteredLogs.map(log => (
-                  <tr key={log.logId}>
+                {filteredLogs.map((log, idx) => (
+                  <tr key={log.auditId || log.id || idx}>
                     <td className="font-medium" style={{ whiteSpace: 'nowrap' }}>
                       {formatDateTime(log.timestamp)}
                     </td>

@@ -17,6 +17,15 @@
     rel="stylesheet">
 
   <title>ZenV Quantum | Access-Track</title>
+  <script>
+    // Suppress third-party browser extension errors from polluting the DevTools console
+    window.addEventListener('error', function(event) {
+      if (event.message && event.message.includes("reading 'startTime'")) {
+        event.stopImmediatePropagation();
+        event.preventDefault();
+      }
+    }, true);
+  </script>
 </head>
 
 <body>

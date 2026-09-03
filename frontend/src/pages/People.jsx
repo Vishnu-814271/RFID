@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { X } from 'lucide-react';
-import { 
-  ZenvPlusIcon, 
-  ZenvSearchIcon, 
-  ZenvEditIcon, 
-  ZenvBanIcon, 
-  ZenvCheckIcon, 
-  ZenvAlertIcon 
+import {
+  ZenvPlusIcon,
+  ZenvSearchIcon,
+  ZenvEditIcon,
+  ZenvBanIcon,
+  ZenvCheckIcon,
+  ZenvAlertIcon,
+  ZenvIdCardIcon
 } from '../components/ZenvIcons';
 import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
@@ -19,7 +20,7 @@ export function People() {
   const toast = useToast();
   const { triggerRefresh } = useRefresh();
   const isManagerOrAdmin = user?.role === 'ADMIN' || user?.role === 'MANAGER';
-  
+
   const [searchTerm, setSearchTerm] = useState('');
   const [people, setPeople] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -31,9 +32,20 @@ export function People() {
   const [selectedPerson, setSelectedPerson] = useState(null);
   const [availableCards, setAvailableCards] = useState([]);
   const [selectedCardId, setSelectedCardId] = useState('');
-  
+
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [activeDropdownId, setActiveDropdownId] = useState(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (!e.target.closest('.actions-dropdown-container')) {
+        setActiveDropdownId(null);
+      }
+    };
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, []);
 
   const [formData, setFormData] = useState({
     fullName: '',
@@ -180,7 +192,7 @@ export function People() {
     e.preventDefault();
     setError('');
     if (!selectedCardId) return setError("Please select a card");
-    
+
     try {
       await api.post('/mappings', { personId: selectedPerson.personId, cardId: parseInt(selectedCardId) });
       setShowAssignModal(false);
@@ -213,12 +225,22 @@ export function People() {
 
   const [memberTypeFilter, setMemberTypeFilter] = useState('ALL');
   const [statusFilter, setStatusFilter] = useState('ACTIVE'); // Default: Active
+  const [cardFilter, setCardFilter] = useState('ALL'); // 'ALL' | 'ASSIGNED' | 'UNASSIGNED'
 
   // Extract unique member types (EMPLOYEE & STUDENT only)
   const uniqueMemberTypes = Array.from(new Set([
     'EMPLOYEE', 'STUDENT',
     ...people.map(p => p.memberType).filter(t => t === 'EMPLOYEE' || t === 'STUDENT')
   ])).sort();
+
+  // Dynamically scope people by the selected status so Type and Card counts match the Status filter count
+  const peopleInSelectedStatus = people.filter(p => {
+    if (statusFilter === 'ALL') return true;
+    return p.status === statusFilter;
+  });
+
+  const assignedCount = peopleInSelectedStatus.filter(p => !!p.assignedCardUid).length;
+  const unassignedCount = peopleInSelectedStatus.filter(p => !p.assignedCardUid).length;
 
   const filteredPeople = people.filter(p => {
     const term = searchTerm.toLowerCase();
@@ -233,7 +255,11 @@ export function People() {
     );
     const matchesType = memberTypeFilter === 'ALL' || p.memberType === memberTypeFilter;
     const matchesStatus = statusFilter === 'ALL' || p.status === statusFilter;
-    return matchesSearch && matchesType && matchesStatus;
+    const matchesCard = cardFilter === 'ALL' ||
+      (cardFilter === 'ASSIGNED' && !!p.assignedCardUid) ||
+      (cardFilter === 'UNASSIGNED' && !p.assignedCardUid);
+
+    return matchesSearch && matchesType && matchesStatus && matchesCard;
   });
 
   return (
@@ -257,10 +283,10 @@ export function People() {
         <div className="table-toolbar" style={{ flexWrap: 'wrap', gap: '1rem', justifyContent: 'space-between', marginBottom: '1rem' }}>
           <div className="search-bar table-search" style={{ flex: '1 1 250px' }}>
             <ZenvSearchIcon size={18} className="search-icon" />
-            <input 
-              type="text" 
-              placeholder="Search by name, student ID, group, email, card..." 
-              className="search-input" 
+            <input
+              type="text"
+              placeholder="Search by name, student ID, team, email, card..."
+              className="search-input"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -276,9 +302,9 @@ export function People() {
                 value={memberTypeFilter}
                 onChange={(e) => setMemberTypeFilter(e.target.value)}
               >
-                <option value="ALL">All Types ({people.length})</option>
+                <option value="ALL">All Types ({peopleInSelectedStatus.length})</option>
                 {uniqueMemberTypes.map(t => {
-                  const count = people.filter(p => p.memberType === t).length;
+                  const count = peopleInSelectedStatus.filter(p => p.memberType === t).length;
                   return (
                     <option key={t} value={t}>
                       {t.charAt(0) + t.slice(1).toLowerCase()} ({count})
@@ -302,140 +328,236 @@ export function People() {
                 <option value="ALL">All Status ({people.length})</option>
               </select>
             </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+              <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-text-muted)' }}>Card:</span>
+              <select
+                className="form-control"
+                style={{ padding: '0.35rem 0.65rem', fontSize: '0.85rem', minWidth: '145px' }}
+                value={cardFilter}
+                onChange={(e) => setCardFilter(e.target.value)}
+              >
+                <option value="ALL">All Cards ({peopleInSelectedStatus.length})</option>
+                <option value="ASSIGNED">Assigned ({assignedCount})</option>
+                <option value="UNASSIGNED">Unassigned ({unassignedCount})</option>
+              </select>
+            </div>
           </div>
         </div>
 
-        <div className="data-table-container">
+        <div className="data-table-container people-table-container">
           {loading ? (
             <div style={{ padding: '2rem', textAlign: 'center' }}>Loading people...</div>
           ) : (
-            <table className="data-table">
+            <table className="data-table people-table">
+              <colgroup>
+                <col style={{ width: '60px' }} />
+                <col style={{ width: '18%' }} />
+                <col style={{ width: '11%' }} />
+                <col style={{ width: '10%' }} />
+                <col style={{ width: '11%' }} />
+                <col style={{ width: '19%' }} />
+                <col style={{ width: '13%' }} />
+                <col style={{ width: '9%' }} />
+                <col style={{ width: '9%' }} />
+              </colgroup>
               <thead>
                 <tr>
                   <th>#</th>
                   <th>Name</th>
                   <th>ID</th>
                   <th>Type</th>
-                  <th>Group</th>
+                  <th>Team</th>
                   <th>Contact Info</th>
                   <th>Assigned Card</th>
                   <th>Status</th>
-                  <th style={{ width: '130px' }}>Actions</th>
+                  <th style={{ textAlign: 'center' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {filteredPeople.map(person => (
-                  <tr key={person.personId}>
-                    <td className="font-medium">{person.personId}</td>
-                    <td>
-                      <div className="person-name-cell">
-                        <div className="avatar-small">{person.fullName?.charAt(0) || '?'}</div>
-                        <span>{person.fullName}</span>
-                      </div>
-                    </td>
-                    <td>
-                      <span style={{ 
-                        fontFamily: 'monospace',
-                        fontWeight: '600',
-                        fontSize: '0.85rem',
-                        background: '#f1f5f9',
-                        color: '#0f172a',
-                        padding: '2px 8px',
-                        borderRadius: '4px',
-                        border: '1px solid #cbd5e1',
-                        display: 'inline-block'
-                      }}>
-                        {person.externalRef || `EXT-${String(person.personId).padStart(4, '0')}`}
-                      </span>
-                    </td>
-                    <td>
-                      <span className={`badge ${person.memberType === 'STUDENT' ? 'badge-warning' : 'badge-primary'}`} style={{ fontSize: '0.75rem', letterSpacing: '0.02em', padding: '3px 8px' }}>
-                        {person.memberType || 'EMPLOYEE'}
-                      </span>
-                    </td>
-                    <td>{person.groupLabel}</td>
-                    <td style={{ fontSize: '0.85rem' }}>
-                      <div>{person.email || '-'}</div>
-                      <div className="text-muted">{person.phone || '-'}</div>
-                    </td>
-                    <td>
-                      {person.assignedCardUid ? (
-                        <span style={{ fontSize: '0.9rem' }}>{person.assignedCardUid}</span>
-                      ) : (
-                        <span className="text-muted">-</span>
-                      )}
-                    </td>
-                    <td>
-                      <span className={`badge ${
-                        person.status === 'ACTIVE' ? 'badge-success' :
-                        person.status === 'COMPLETED' ? 'badge-secondary' : 'badge-danger'
-                      }`} style={person.status === 'COMPLETED' ? { background: '#979085', color: '#ffffff' } : {}}>
-                        {person.status}
-                      </span>
-                    </td>
-                    <td>
-                      <div className="action-buttons">
+                {filteredPeople.map((person, idx) => {
+                  const isUpward = idx >= filteredPeople.length - 2 && filteredPeople.length > 2;
+                  const isMenuOpen = activeDropdownId === person.personId;
+
+                  return (
+                    <tr key={person.personId}>
+                      <td className="font-medium">#{person.personId}</td>
+                      <td>
+                        <div className="person-name-cell">
+                          <div className="avatar-small">{person.fullName?.charAt(0) || '?'}</div>
+                          <span title={person.fullName}>{person.fullName}</span>
+                        </div>
+                      </td>
+                      <td>
+                        <span style={{
+                          fontFamily: 'monospace',
+                          fontWeight: '600',
+                          fontSize: '0.82rem',
+                          background: '#f1f5f9',
+                          color: '#0f172a',
+                          padding: '2px 7px',
+                          borderRadius: '4px',
+                          border: '1px solid #cbd5e1',
+                          display: 'inline-block'
+                        }}>
+                          {person.externalRef || `EXT-${String(person.personId).padStart(4, '0')}`}
+                        </span>
+                      </td>
+                      <td>
+                        <span className={`badge ${person.memberType === 'STUDENT' ? 'badge-warning' : 'badge-primary'}`} style={{ fontSize: '0.75rem', letterSpacing: '0.02em', padding: '3px 8px' }}>
+                          {person.memberType || 'EMPLOYEE'}
+                        </span>
+                      </td>
+                      <td>{person.groupLabel}</td>
+                      <td>
+                        <div className="contact-info-cell">
+                          <span className="contact-email" title={person.email}>{person.email || '-'}</span>
+                          <span className="contact-phone">{person.phone || '-'}</span>
+                        </div>
+                      </td>
+                      <td>
                         {person.assignedCardUid ? (
-                          <button 
-                            className="icon-btn-small text-danger" 
-                            title="Release Card" 
-                            onClick={() => handleReleaseCard(person)}
-                          >
-                            <X size={16} />
-                          </button>
+                          <span style={{ 
+                            fontSize: '0.82rem', 
+                            fontFamily: 'monospace', 
+                            fontWeight: 600,
+                            color: '#0f172a',
+                            background: '#f1f5f9',
+                            padding: '2px 8px',
+                            borderRadius: '4px',
+                            border: '1px solid #cbd5e1',
+                            display: 'inline-block'
+                          }}>
+                            {person.assignedCardUid}
+                          </span>
                         ) : (
-                          person.status === 'ACTIVE' ? (
-                            <button 
-                              className="icon-btn-small text-primary" 
-                              title="Assign Card" 
-                              onClick={() => openAssignModal(person)}
-                            >
-                              <ZenvIdCardIcon size={16} />
-                            </button>
-                          ) : (
-                            <button 
-                              className="icon-btn-small text-muted" 
-                              title={person.status === 'COMPLETED' ? "Completed: Cannot assign cards" : "Inactive: Cannot assign cards"} 
-                              disabled
-                              style={{ opacity: 0.35, cursor: 'not-allowed' }}
-                            >
-                              <ZenvIdCardIcon size={16} />
-                            </button>
-                          )
+                          <span className="badge" style={{ 
+                            background: 'rgba(151, 144, 133, 0.12)', 
+                            color: '#78716c', 
+                            border: '1px dashed #cbd5e1',
+                            fontSize: '0.72rem',
+                            fontWeight: 600,
+                            padding: '2px 7px'
+                          }}>
+                            Unassigned
+                          </span>
                         )}
-                        <button className="icon-btn-small text-primary" title="Edit" onClick={() => openEditModal(person)}>
-                          <ZenvEditIcon size={16} />
-                        </button>
-                        {isManagerOrAdmin && (
-                          <>
-                            {person.status !== 'COMPLETED' && (
-                              <button 
-                                className="icon-btn-small" 
-                                title="Mark Completed (Candidate will not be assigned future cards)" 
-                                onClick={() => handleMarkCompleted(person)}
-                                style={{ color: '#d97706' }}
+                      </td>
+                      <td>
+                        <span className={`badge ${person.status === 'ACTIVE' ? 'badge-success' :
+                          person.status === 'COMPLETED' ? 'badge-secondary' : 'badge-danger'
+                          }`} style={person.status === 'COMPLETED' ? { background: '#979085', color: '#ffffff' } : {}}>
+                          {person.status}
+                        </span>
+                      </td>
+                      <td style={{ textAlign: 'center', overflow: 'visible' }}>
+                        <div className="actions-dropdown-container">
+                          <button
+                            type="button"
+                            className={`actions-dropdown-btn ${isMenuOpen ? 'active' : ''}`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setActiveDropdownId(isMenuOpen ? null : person.personId);
+                            }}
+                            title="Actions menu"
+                          >
+                            <span>Actions</span>
+                            <span style={{ fontSize: '0.62rem', transform: isMenuOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s ease' }}>
+                              ▼
+                            </span>
+                          </button>
+
+                          {isMenuOpen && (
+                            <div
+                              className={`actions-dropdown-menu ${isUpward ? 'open-upward' : ''}`}
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {/* Action 1: Assign or Release Card */}
+                              {person.assignedCardUid ? (
+                                <button
+                                  type="button"
+                                  className="actions-dropdown-item item-danger"
+                                  onClick={() => {
+                                    setActiveDropdownId(null);
+                                    handleReleaseCard(person);
+                                  }}
+                                >
+                                  <X size={15} />
+                                  <span>Release Card</span>
+                                </button>
+                              ) : (
+                                <button
+                                  type="button"
+                                  className="actions-dropdown-item item-primary"
+                                  disabled={person.status !== 'ACTIVE'}
+                                  style={person.status !== 'ACTIVE' ? { opacity: 0.45, cursor: 'not-allowed' } : {}}
+                                  onClick={() => {
+                                    if (person.status === 'ACTIVE') {
+                                      setActiveDropdownId(null);
+                                      openAssignModal(person);
+                                    }
+                                  }}
+                                  title={person.status !== 'ACTIVE' ? "Cannot assign cards to inactive or completed members" : "Assign Card"}
+                                >
+                                  <ZenvIdCardIcon size={15} />
+                                  <span>Assign Card</span>
+                                </button>
+                              )}
+
+                              {/* Action 2: Edit Person Details */}
+                              <button
+                                type="button"
+                                className="actions-dropdown-item item-primary"
+                                onClick={() => {
+                                  setActiveDropdownId(null);
+                                  openEditModal(person);
+                                }}
                               >
-                                <ZenvCheckIcon size={16} />
+                                <ZenvEditIcon size={15} />
+                                <span>Edit Details</span>
                               </button>
-                            )}
-                            {person.status !== 'COMPLETED' && (
-                              <button 
-                                className={`icon-btn-small ${person.status === 'ACTIVE' ? 'text-danger' : 'text-success'}`} 
-                                title={person.status === 'ACTIVE' ? 'Deactivate' : 'Activate'}
-                                onClick={() => handleToggleStatus(person.personId, person.status)}
-                              >
-                                {person.status === 'ACTIVE' ? <ZenvBanIcon size={16} /> : <ZenvCheckIcon size={16} />}
-                              </button>
-                            )}
-                          </>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+
+                              {isManagerOrAdmin && person.status !== 'COMPLETED' && (
+                                <>
+                                  <div className="actions-dropdown-divider" />
+
+                                  {/* Action 3: Toggle Status (Deactivate / Activate) */}
+                                  <button
+                                    type="button"
+                                    className={`actions-dropdown-item ${person.status === 'ACTIVE' ? 'item-danger' : 'item-success'}`}
+                                    onClick={() => {
+                                      setActiveDropdownId(null);
+                                      handleToggleStatus(person.personId, person.status);
+                                    }}
+                                  >
+                                    {person.status === 'ACTIVE' ? <ZenvBanIcon size={15} /> : <ZenvCheckIcon size={15} />}
+                                    <span>{person.status === 'ACTIVE' ? 'Deactivate' : 'Activate'}</span>
+                                  </button>
+
+                                  {/* Action 4: Mark Membership Completed */}
+                                  <button
+                                    type="button"
+                                    className="actions-dropdown-item item-warning"
+                                    onClick={() => {
+                                      setActiveDropdownId(null);
+                                      handleMarkCompleted(person);
+                                    }}
+                                  >
+                                    <ZenvCheckIcon size={15} />
+                                    <span>Mark Completed</span>
+                                  </button>
+                                </>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
                 {filteredPeople.length === 0 && (
                   <tr>
-                    <td colSpan="9" style={{textAlign: 'center'}} className="text-muted">No people found.</td>
+                    <td colSpan="9" style={{ textAlign: 'center' }} className="text-muted">No people found.</td>
                   </tr>
                 )}
               </tbody>
@@ -455,20 +577,20 @@ export function People() {
             <form onSubmit={handleAddPerson}>
               <div className="form-group">
                 <label className="form-label">Full Name</label>
-                <input 
-                  type="text" 
-                  className="form-control" 
+                <input
+                  type="text"
+                  className="form-control"
                   value={formData.fullName}
-                  onChange={(e) => setFormData({...formData, fullName: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
                   required
                 />
               </div>
               <div className="form-group">
                 <label className="form-label">Member Type</label>
-                <select 
-                  className="form-control" 
+                <select
+                  className="form-control"
                   value={formData.memberType}
-                  onChange={(e) => setFormData({...formData, memberType: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, memberType: e.target.value })}
                 >
                   <option value="EMPLOYEE">Employee</option>
                   <option value="STUDENT">Student</option>
@@ -478,11 +600,11 @@ export function People() {
                 <label className="form-label">
                   {formData.memberType === 'STUDENT' ? 'ID *' : 'ID'}
                 </label>
-                <input 
-                  type="text" 
-                  className="form-control" 
+                <input
+                  type="text"
+                  className="form-control"
                   value={formData.externalRef}
-                  onChange={(e) => setFormData({...formData, externalRef: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, externalRef: e.target.value })}
                   placeholder={formData.memberType === 'STUDENT' ? 'e.g. STU1001' : 'e.g. EMP1001 (Optional)'}
                   pattern="^[a-zA-Z0-9_\-]{3,20}$"
                   title="3 to 20 characters (letters, numbers, hyphens, underscores)"
@@ -490,33 +612,33 @@ export function People() {
                 />
               </div>
               <div className="form-group">
-                <label className="form-label">Group / Department</label>
-                <input 
-                  type="text" 
-                  className="form-control" 
+                <label className="form-label">Team / Department</label>
+                <input
+                  type="text"
+                  className="form-control"
                   value={formData.groupLabel}
-                  onChange={(e) => setFormData({...formData, groupLabel: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, groupLabel: e.target.value })}
                 />
               </div>
               <div className="form-group">
                 <label className="form-label">Email (Optional)</label>
-                <input 
-                  type="email" 
-                  className="form-control" 
+                <input
+                  type="email"
+                  className="form-control"
                   value={formData.email}
-                  onChange={(e) => setFormData({...formData, email: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 />
               </div>
               <div className="form-group">
                 <label className="form-label">Phone (Optional)</label>
-                <input 
-                  type="tel" 
-                  className="form-control" 
+                <input
+                  type="tel"
+                  className="form-control"
                   value={formData.phone}
                   onChange={(e) => {
                     const val = e.target.value;
                     if (/^\d*$/.test(val) && val.length <= 10) {
-                      setFormData({...formData, phone: val});
+                      setFormData({ ...formData, phone: val });
                     }
                   }}
                   pattern="^\d{10}$"
@@ -546,8 +668,8 @@ export function People() {
             <form onSubmit={handleAssignCard}>
               <div className="form-group">
                 <label className="form-label">Select Available Card</label>
-                <select 
-                  className="form-control" 
+                <select
+                  className="form-control"
                   value={selectedCardId}
                   onChange={(e) => setSelectedCardId(e.target.value)}
                   required
@@ -560,7 +682,7 @@ export function People() {
                   ))}
                 </select>
                 {availableCards.length === 0 && (
-                  <p className="text-danger" style={{fontSize: '0.8rem', marginTop: '0.25rem'}}>No available cards. Please register a new card first.</p>
+                  <p className="text-danger" style={{ fontSize: '0.8rem', marginTop: '0.25rem' }}>No available cards. Please register a new card first.</p>
                 )}
               </div>
               <div className="modal-actions">
@@ -583,20 +705,20 @@ export function People() {
             <form onSubmit={handleEditPerson}>
               <div className="form-group">
                 <label className="form-label">Full Name</label>
-                <input 
-                  type="text" 
-                  className="form-control" 
+                <input
+                  type="text"
+                  className="form-control"
                   value={editFormData.fullName}
-                  onChange={(e) => setEditFormData({...editFormData, fullName: e.target.value})}
+                  onChange={(e) => setEditFormData({ ...editFormData, fullName: e.target.value })}
                   required
                 />
               </div>
               <div className="form-group">
                 <label className="form-label">Member Type</label>
-                <select 
-                  className="form-control" 
+                <select
+                  className="form-control"
                   value={editFormData.memberType}
-                  onChange={(e) => setEditFormData({...editFormData, memberType: e.target.value})}
+                  onChange={(e) => setEditFormData({ ...editFormData, memberType: e.target.value })}
                 >
                   <option value="EMPLOYEE">Employee</option>
                   <option value="STUDENT">Student</option>
@@ -606,11 +728,11 @@ export function People() {
                 <label className="form-label">
                   {editFormData.memberType === 'STUDENT' ? 'ID *' : 'ID'}
                 </label>
-                <input 
-                  type="text" 
-                  className="form-control" 
+                <input
+                  type="text"
+                  className="form-control"
                   value={editFormData.externalRef}
-                  onChange={(e) => setEditFormData({...editFormData, externalRef: e.target.value})}
+                  onChange={(e) => setEditFormData({ ...editFormData, externalRef: e.target.value })}
                   placeholder={editFormData.memberType === 'STUDENT' ? 'e.g. STU1001' : 'e.g. EMP1001 (Optional)'}
                   pattern="^[a-zA-Z0-9_\-]{3,20}$"
                   title="3 to 20 characters (letters, numbers, hyphens, underscores)"
@@ -618,33 +740,33 @@ export function People() {
                 />
               </div>
               <div className="form-group">
-                <label className="form-label">Group / Department</label>
-                <input 
-                  type="text" 
-                  className="form-control" 
+                <label className="form-label">Team / Department</label>
+                <input
+                  type="text"
+                  className="form-control"
                   value={editFormData.groupLabel}
-                  onChange={(e) => setEditFormData({...editFormData, groupLabel: e.target.value})}
+                  onChange={(e) => setEditFormData({ ...editFormData, groupLabel: e.target.value })}
                 />
               </div>
               <div className="form-group">
                 <label className="form-label">Email (Optional)</label>
-                <input 
-                  type="email" 
-                  className="form-control" 
+                <input
+                  type="email"
+                  className="form-control"
                   value={editFormData.email}
-                  onChange={(e) => setEditFormData({...editFormData, email: e.target.value})}
+                  onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
                 />
               </div>
               <div className="form-group">
                 <label className="form-label">Phone (Optional)</label>
-                <input 
-                  type="tel" 
-                  className="form-control" 
+                <input
+                  type="tel"
+                  className="form-control"
                   value={editFormData.phone}
                   onChange={(e) => {
                     const val = e.target.value;
                     if (/^\d*$/.test(val) && val.length <= 10) {
-                      setEditFormData({...editFormData, phone: val});
+                      setEditFormData({ ...editFormData, phone: val });
                     }
                   }}
                   pattern="^\d{10}$"
@@ -682,17 +804,17 @@ export function People() {
             </div>
 
             <div className="modal-actions" style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.5rem' }}>
-              <button 
-                type="button" 
-                className="btn btn-secondary" 
+              <button
+                type="button"
+                className="btn btn-secondary"
                 onClick={() => setPersonToComplete(null)}
                 disabled={isSubmitting}
               >
                 Cancel
               </button>
-              <button 
-                type="button" 
-                className="btn btn-primary" 
+              <button
+                type="button"
+                className="btn btn-primary"
                 style={{ background: 'var(--color-primary)' }}
                 onClick={confirmMarkCompleted}
                 disabled={isSubmitting}
@@ -710,14 +832,14 @@ export function People() {
           <div className="modal" style={{ maxWidth: '440px', borderRadius: 'var(--border-radius-sm, 2px)', border: '1px solid var(--color-border)', boxShadow: '0 20px 40px rgba(0,0,0,0.2)' }}>
             <div className="modal-header" style={{ borderBottom: '1px solid var(--color-border)', paddingBottom: '0.85rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                <div style={{ 
-                  width: '34px', 
-                  height: '34px', 
-                  borderRadius: '2px', 
-                  background: 'rgba(16, 43, 76, 0.1)', 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'center', 
+                <div style={{
+                  width: '34px',
+                  height: '34px',
+                  borderRadius: '2px',
+                  background: 'rgba(16, 43, 76, 0.1)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                   color: 'var(--color-primary)',
                   flexShrink: 0
                 }}>
@@ -743,16 +865,16 @@ export function People() {
             </div>
 
             <div className="modal-actions" style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', borderTop: '1px solid var(--color-border)', paddingTop: '0.85rem' }}>
-              <button 
-                type="button" 
-                className="btn btn-secondary" 
+              <button
+                type="button"
+                className="btn btn-secondary"
                 onClick={() => setPersonToRelease(null)}
                 disabled={isSubmitting}
               >
                 Cancel
               </button>
-              <button 
-                type="button" 
+              <button
+                type="button"
                 className="btn btn-primary"
                 onClick={confirmReleaseCard}
                 disabled={isSubmitting}

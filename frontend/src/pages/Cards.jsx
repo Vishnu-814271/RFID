@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { X } from 'lucide-react';
-import { ZenvPlusIcon, ZenvSearchIcon, ZenvBanIcon, ZenvAlertIcon } from '../components/ZenvIcons';
+import { ZenvPlusIcon, ZenvSearchIcon, ZenvBanIcon, ZenvAlertIcon, ZenvIdCardIcon, ZenvCheckIcon } from '../components/ZenvIcons';
 import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
@@ -15,11 +15,22 @@ export function Cards() {
   const [cards, setCards] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
-  const [cardToDelete, setCardToDelete] = useState(null);
   const [newCardUid, setNewCardUid] = useState('');
   const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('ACTIVE'); // 'ACTIVE' (Default) | 'INACTIVE' | 'ALL'
+  const [assignmentFilter, setAssignmentFilter] = useState('ALL'); // 'ALL' | 'ASSIGNED' | 'UNASSIGNED'
+  const [activeDropdownId, setActiveDropdownId] = useState(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (!e.target.closest('.actions-dropdown-container')) {
+        setActiveDropdownId(null);
+      }
+    };
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, []);
 
   const fetchCards = useCallback(async () => {
     if (user?.passwordChangeRequired) return;
@@ -69,25 +80,27 @@ export function Cards() {
     }
   };
 
-  const confirmDeleteCard = async () => {
-    if (!cardToDelete) return;
-    try {
-      await api.delete(`/cards/${cardToDelete.id}`);
-      setCardToDelete(null);
-      toast.success('Card deleted successfully');
-      triggerRefresh();
-    } catch (err) {
-      toast.error(err?.message || 'Failed to delete card');
-    }
-  };
-
   const activeCount = cards.filter(c => c.status === 'AVAILABLE' || c.status === 'ASSIGNED').length;
   const inactiveCount = cards.filter(c => c.status === 'DEACTIVATED' || c.status === 'LOST').length;
+
+  // Scope cards by selected status so Assignment counts match the active status view
+  const cardsInSelectedStatus = cards.filter(c => {
+    const isActive = c.status === 'AVAILABLE' || c.status === 'ASSIGNED';
+    const isInactive = c.status === 'DEACTIVATED' || c.status === 'LOST';
+    if (statusFilter === 'ACTIVE') return isActive;
+    if (statusFilter === 'INACTIVE') return isInactive;
+    if (statusFilter === 'ALL') return true;
+    return c.status === statusFilter;
+  });
+
+  const assignedCount = cardsInSelectedStatus.filter(c => c.status === 'ASSIGNED' || !!c.assignedPersonId).length;
+  const unassignedCount = cardsInSelectedStatus.filter(c => c.status !== 'ASSIGNED' && !c.assignedPersonId).length;
 
   const filteredCards = cards.filter(c => {
     const matchesSearch = c.cardUid?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           c.cardId?.toString().includes(searchTerm) ||
-                          c.assignedPersonName?.toLowerCase().includes(searchTerm.toLowerCase());
+                          c.assignedPersonName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          c.assignedPersonExternalRef?.toLowerCase().includes(searchTerm.toLowerCase());
 
     const isActive = c.status === 'AVAILABLE' || c.status === 'ASSIGNED';
     const isInactive = c.status === 'DEACTIVATED' || c.status === 'LOST';
@@ -97,7 +110,12 @@ export function Cards() {
                           (statusFilter === 'INACTIVE' && isInactive) ||
                           (c.status === statusFilter);
 
-    return matchesSearch && matchesStatus;
+    const isAssigned = c.status === 'ASSIGNED' || !!c.assignedPersonId;
+    const matchesAssignment = (assignmentFilter === 'ALL') ||
+                              (assignmentFilter === 'ASSIGNED' && isAssigned) ||
+                              (assignmentFilter === 'UNASSIGNED' && !isAssigned);
+
+    return matchesSearch && matchesStatus && matchesAssignment;
   });
 
   return (
@@ -128,19 +146,36 @@ export function Cards() {
             />
           </div>
 
-          {/* Status Filter Dropdown (Default: Active) */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-text-muted)' }}>Status:</span>
-            <select
-              className="form-control"
-              style={{ padding: '0.35rem 0.65rem', fontSize: '0.85rem', minWidth: '150px' }}
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-            >
-              <option value="ACTIVE">Active ({activeCount})</option>
-              <option value="INACTIVE">Inactive ({inactiveCount})</option>
-              <option value="ALL">All Cards ({cards.length})</option>
-            </select>
+          <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center' }}>
+            {/* Status Filter Dropdown (Default: Active) */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+              <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-text-muted)' }}>Status:</span>
+              <select
+                className="form-control"
+                style={{ padding: '0.35rem 0.65rem', fontSize: '0.85rem', minWidth: '140px' }}
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+              >
+                <option value="ACTIVE">Active ({activeCount})</option>
+                <option value="INACTIVE">Inactive ({inactiveCount})</option>
+                <option value="ALL">All Status ({cards.length})</option>
+              </select>
+            </div>
+
+            {/* Assignment Filter Dropdown (All, Assigned, Unassigned) */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+              <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-text-muted)' }}>Assignment:</span>
+              <select
+                className="form-control"
+                style={{ padding: '0.35rem 0.65rem', fontSize: '0.85rem', minWidth: '150px' }}
+                value={assignmentFilter}
+                onChange={(e) => setAssignmentFilter(e.target.value)}
+              >
+                <option value="ALL">All Cards ({cardsInSelectedStatus.length})</option>
+                <option value="ASSIGNED">Assigned ({assignedCount})</option>
+                <option value="UNASSIGNED">Unassigned ({unassignedCount})</option>
+              </select>
+            </div>
           </div>
         </div>
 
@@ -155,90 +190,145 @@ export function Cards() {
                   <th>Card UID</th>
                   <th>Status</th>
                   <th>Assigned To</th>
-                  {isManagerOrAdmin && <th style={{ width: '120px' }}>Actions</th>}
+                  {isManagerOrAdmin && <th style={{ width: '105px', textAlign: 'center' }}>Actions</th>}
                 </tr>
               </thead>
               <tbody>
-                {filteredCards.map(c => (
-                  <tr key={c.cardId}>
-                    <td className="font-medium">{c.cardId}</td>
-                    <td><span style={{ fontSize: '0.9rem' }}>{c.cardUid}</span></td>
-                    <td>
-                      <span className={`badge badge-${
-                        c.status === 'AVAILABLE' ? 'success' : 
-                        c.status === 'ASSIGNED' ? 'primary' : 
-                        c.status === 'LOST' ? 'warning' : 'danger'
-                      }`}>
-                        {c.status}
-                      </span>
-                    </td>
-                    <td>
-                      {c.assignedPersonName ? (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                          <span style={{ fontSize: '0.9rem', fontWeight: 500 }}>{c.assignedPersonName}</span>
-                          <span style={{ 
-                            fontFamily: 'monospace',
-                            fontWeight: '600',
-                            fontSize: '0.75rem',
-                            background: '#f1f5f9',
-                            color: '#0f172a',
-                            padding: '1px 6px',
-                            borderRadius: '4px',
-                            border: '1px solid #cbd5e1',
-                            display: 'inline-block',
-                            width: 'fit-content'
-                          }}>
-                            {c.assignedPersonExternalRef || `EXT-${String(c.assignedPersonId).padStart(4, '0')}`}
-                          </span>
-                        </div>
-                      ) : (
-                        <span className="text-muted">-</span>
-                      )}
-                    </td>
-                    {isManagerOrAdmin && (
+                {filteredCards.map((c, idx) => {
+                  const isUpward = idx >= filteredCards.length - 2 && filteredCards.length > 2;
+                  const isMenuOpen = activeDropdownId === c.cardId;
+
+                  return (
+                    <tr key={c.cardId}>
+                      <td className="font-medium">#{c.cardId}</td>
+                      <td><span style={{ fontSize: '0.9rem', fontFamily: 'monospace', fontWeight: 600 }}>{c.cardUid}</span></td>
                       <td>
-                        <div className="action-buttons">
-                          {(c.status === 'AVAILABLE' || c.status === 'ASSIGNED') && (
-                            <>
-                              <button 
-                                className="icon-btn-small text-warning" 
-                                title="Mark Lost" 
-                                onClick={() => handleRequestStatusChange(c, 'LOST')}
-                              >
-                                <ZenvAlertIcon size={16} />
-                              </button>
-                              <button 
-                                className="icon-btn-small text-danger" 
-                                title="Deactivate" 
-                                onClick={() => handleRequestStatusChange(c, 'DEACTIVATED')}
-                              >
-                                <ZenvBanIcon size={16} />
-                              </button>
-                            </>
-                          )}
-                          {c.status === 'DEACTIVATED' && user?.role === 'ADMIN' && (
-                            <button 
-                              className="btn btn-success" 
-                              style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}
-                              title="Reactivate Card"
-                              onClick={() => handleRequestStatusChange(c, 'AVAILABLE')}
-                            >
-                              Reactivate
-                            </button>
-                          )}
-                          {c.status === 'LOST' && (
-                            <span className="text-muted" style={{ fontSize: '0.75rem', fontStyle: 'italic' }}>
-                              Permanently Disabled
-                            </span>
-                          )}
-                        </div>
+                        <span className={`badge badge-${
+                          c.status === 'AVAILABLE' ? 'success' : 
+                          c.status === 'ASSIGNED' ? 'primary' : 
+                          c.status === 'LOST' ? 'warning' : 'danger'
+                        }`}>
+                          {c.status}
+                        </span>
                       </td>
-                    )}
-                  </tr>
-                ))}
+                      <td>
+                        {c.assignedPersonName ? (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                            <span style={{ fontSize: '0.9rem', fontWeight: 500 }}>{c.assignedPersonName}</span>
+                            <span style={{ 
+                              fontFamily: 'monospace',
+                              fontWeight: '600',
+                              fontSize: '0.75rem',
+                              background: '#f1f5f9',
+                              color: '#0f172a',
+                              padding: '1px 6px',
+                              borderRadius: '4px',
+                              border: '1px solid #cbd5e1',
+                              display: 'inline-block',
+                              width: 'fit-content'
+                            }}>
+                              {c.assignedPersonExternalRef || `EXT-${String(c.assignedPersonId).padStart(4, '0')}`}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="badge" style={{ 
+                            background: 'rgba(151, 144, 133, 0.12)', 
+                            color: '#78716c', 
+                            border: '1px dashed #cbd5e1',
+                            fontSize: '0.72rem',
+                            fontWeight: 600,
+                            padding: '2px 7px'
+                          }}>
+                            Unassigned
+                          </span>
+                        )}
+                      </td>
+                      {isManagerOrAdmin && (
+                        <td style={{ textAlign: 'center', overflow: 'visible' }}>
+                          <div className="actions-dropdown-container">
+                            <button
+                              type="button"
+                              className={`actions-dropdown-btn ${isMenuOpen ? 'active' : ''}`}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setActiveDropdownId(isMenuOpen ? null : c.cardId);
+                              }}
+                              title="Actions menu"
+                            >
+                              <span>Actions</span>
+                              <span style={{ fontSize: '0.62rem', transform: isMenuOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s ease' }}>
+                                ▼
+                              </span>
+                            </button>
+
+                            {isMenuOpen && (
+                              <div 
+                                className={`actions-dropdown-menu ${isUpward ? 'open-upward' : ''}`} 
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                {(c.status === 'AVAILABLE' || c.status === 'ASSIGNED') && (
+                                  <>
+                                    <button
+                                      type="button"
+                                      className="actions-dropdown-item item-warning"
+                                      onClick={() => {
+                                        setActiveDropdownId(null);
+                                        handleRequestStatusChange(c, 'LOST');
+                                      }}
+                                    >
+                                      <ZenvAlertIcon size={15} />
+                                      <span>Mark Lost</span>
+                                    </button>
+                                    <button
+                                      type="button"
+                                      className="actions-dropdown-item item-danger"
+                                      onClick={() => {
+                                        setActiveDropdownId(null);
+                                        handleRequestStatusChange(c, 'DEACTIVATED');
+                                      }}
+                                    >
+                                      <ZenvBanIcon size={15} />
+                                      <span>Deactivate Card</span>
+                                    </button>
+                                  </>
+                                )}
+
+                                {c.status === 'DEACTIVATED' && user?.role === 'ADMIN' && (
+                                  <button
+                                    type="button"
+                                    className="actions-dropdown-item item-success"
+                                    onClick={() => {
+                                      setActiveDropdownId(null);
+                                      handleRequestStatusChange(c, 'AVAILABLE');
+                                    }}
+                                  >
+                                    <ZenvCheckIcon size={15} />
+                                    <span>Reactivate Card</span>
+                                  </button>
+                                )}
+
+                                {c.status === 'LOST' && (
+                                  <div style={{ padding: '0.5rem 0.85rem', fontSize: '0.78rem', color: 'var(--color-text-muted)', fontStyle: 'italic' }}>
+                                    Permanently Disabled
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                      )}
+                    </tr>
+                  );
+                })}
                 {filteredCards.length === 0 && (
                   <tr>
-                    <td colSpan={isManagerOrAdmin ? "5" : "4"} style={{textAlign: 'center'}} className="text-muted">No cards found.</td>
+                    <td colSpan={isManagerOrAdmin ? "5" : "4"} style={{ textAlign: 'center', padding: '2rem' }} className="text-muted">
+                      {assignmentFilter === 'ASSIGNED' 
+                        ? 'No assigned cards found.' 
+                        : assignmentFilter === 'UNASSIGNED' 
+                        ? 'No unassigned cards found.' 
+                        : 'No cards found.'}
+                    </td>
                   </tr>
                 )}
               </tbody>
@@ -331,25 +421,6 @@ export function Cards() {
               >
                 Confirm Update
               </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {cardToDelete && (
-        <div className="modal-overlay">
-          <div className="modal">
-            <div className="modal-header">
-              <h2 className="modal-title" style={{ color: 'var(--color-danger)' }}>Confirm Deletion</h2>
-              <button className="modal-close" onClick={() => setCardToDelete(null)}><X size={20} /></button>
-            </div>
-            <div style={{ padding: '1rem 0' }}>
-              <p>Are you sure you want to permanently delete card <strong>{cardToDelete.uid}</strong>?</p>
-              <p className="text-muted" style={{ fontSize: '0.85rem', marginTop: '0.5rem' }}>This will erase its mapping history. This action cannot be undone.</p>
-            </div>
-            <div className="modal-actions" style={{ marginTop: '1.5rem' }}>
-              <button type="button" className="btn btn-secondary" onClick={() => setCardToDelete(null)}>Cancel</button>
-              <button type="button" className="btn" style={{ background: 'var(--color-danger)', color: 'white', border: 'none' }} onClick={confirmDeleteCard}>Delete</button>
             </div>
           </div>
         </div>

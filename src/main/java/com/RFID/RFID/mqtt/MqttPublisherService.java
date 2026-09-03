@@ -18,9 +18,12 @@ import org.springframework.messaging.MessageChannel;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -113,60 +116,98 @@ public class MqttPublisherService {
     public boolean broadcastCardLifecycleEvent(String eventType, RfidCard card, Person person) {
         try {
             Map<String, Object> payload = new LinkedHashMap<>();
-            // 1. timestamp (Unix epoch seconds)
-            payload.put("timestamp", Instant.now().getEpochSecond());
+            
+            // 1. Human-understandable timestamp format: "yyyy-MM-dd HH:mm:ss"
+            LocalDateTime now = LocalDateTime.now();
+            String humanTimestamp = now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+            payload.put("timestamp", humanTimestamp);
+            payload.put("timestamp_epoch", Instant.now().getEpochSecond());
 
             // 2. event object
             Map<String, Object> eventObj = new LinkedHashMap<>();
 
-            // Status normalization
-            String status = "assigned";
+            // Event Type normalization
+            String normalizedEventType = (eventType != null && !eventType.isEmpty()) ? eventType : "CARD_EVENT";
+            if ("CARD_RELEASED".equalsIgnoreCase(normalizedEventType) || "RELEASE".equalsIgnoreCase(normalizedEventType)) {
+                normalizedEventType = "CARD_UNASSIGNED";
+            }
+            eventObj.put("event_type", normalizedEventType);
+
+            // Status normalization: "assigned", "unassigned", "deactivated", "lost"
+            // Replaces confusing "available" with clean "unassigned"
+            String status = "unassigned";
             if (card != null && card.getStatus() != null) {
-                status = card.getStatus().name().toLowerCase();
-            } else if (eventType != null) {
-                if (eventType.contains("ASSIGN")) status = "assigned";
-                else if (eventType.contains("RELEASE") || eventType.contains("AVAIL") || eventType.contains("UNASSIGN")) status = "unassigned";
-                else if (eventType.contains("DELET")) status = "deleted";
-                else if (eventType.contains("REGISTER")) status = "registered";
-                else status = eventType.toLowerCase();
+                if (card.getStatus() == CardStatus.ASSIGNED) {
+                    status = "assigned";
+                } else if (card.getStatus() == CardStatus.AVAILABLE) {
+                    status = "unassigned";
+                } else {
+                    status = card.getStatus().name().toLowerCase();
+                }
+            } else if (normalizedEventType != null) {
+                if (normalizedEventType.contains("ASSIGN") && !normalizedEventType.contains("UNASSIGN")) {
+                    status = "assigned";
+                } else if (normalizedEventType.contains("UNASSIGN") || normalizedEventType.contains("RELEASE") || normalizedEventType.contains("AVAIL")) {
+                    status = "unassigned";
+                } else if (normalizedEventType.contains("REGISTER")) {
+                    status = "unassigned";
+                } else {
+                    status = normalizedEventType.toLowerCase();
+                }
             }
             eventObj.put("status", status);
 
+            // Specific Card details for this event
+            if (card != null) {
+                eventObj.put("card_uid", card.getCardUid());
+                eventObj.put("card_id", card.getCardId());
+            } else {
+                eventObj.put("card_uid", null);
+            }
+
+            // Person details (if assigned or released)
+            if (person != null) {
+                eventObj.put("person_id", person.getPersonId());
+                eventObj.put("person_name", person.getFullName());
+                eventObj.put("external_ref", person.getExternalRef());
+            }
+
             // Fetch card records
             List<RfidCard> allCards = cardRepository != null ? cardRepository.findAll() : List.of();
-            List<RfidCard> assignedCards = allCards.stream()
+            List<String> assignedCardUids = allCards.stream()
                     .filter(c -> c.getStatus() == CardStatus.ASSIGNED)
+                    .map(RfidCard::getCardUid)
+                    .filter(Objects::nonNull)
                     .collect(Collectors.toList());
-            List<RfidCard> unassignedCards = allCards.stream()
+            List<String> unassignedCardUids = allCards.stream()
                     .filter(c -> c.getStatus() == CardStatus.AVAILABLE)
+                    .map(RfidCard::getCardUid)
+                    .filter(Objects::nonNull)
                     .collect(Collectors.toList());
-            List<RfidCard> activeCards = allCards.stream()
-                    .filter(c -> c.getStatus() == CardStatus.ASSIGNED || c.getStatus() == CardStatus.AVAILABLE)
+            List<String> allCardUids = allCards.stream()
+                    .map(RfidCard::getCardUid)
+                    .filter(Objects::nonNull)
                     .collect(Collectors.toList());
 
             long totalEvents = eventRepository != null ? eventRepository.count() : 0L;
 
             // counts
             Map<String, Object> counts = new LinkedHashMap<>();
-            counts.put("assigned", assignedCards.size());
-            counts.put("unassigned", unassignedCards.size());
+            counts.put("assigned", assignedCardUids.size());
+            counts.put("unassigned", unassignedCardUids.size());
             counts.put("total_events", totalEvents);
             eventObj.put("counts", counts);
 
-            // cards array: [{ "card_uid": "..." }]
-            List<Map<String, String>> cardsList = allCards.stream()
-                    .map(c -> {
-                        Map<String, String> cardItem = new LinkedHashMap<>();
-                        cardItem.put("card_uid", c.getCardUid());
-                        return cardItem;
-                    })
-                    .collect(Collectors.toList());
-            eventObj.put("cards", cardsList);
+            // cards array: ["CARD_EMP_0101", "CARD_EMP_0102", ...] (direct string array per user request)
+            eventObj.put("cards", allCardUids);
+            eventObj.put("assigned_cards", assignedCardUids);
+            eventObj.put("unassigned_cards", unassignedCardUids);
 
             // active_card_counts
             Map<String, Object> activeCardCounts = new LinkedHashMap<>();
-            activeCardCounts.put("assigned_count", assignedCards.size());
-            activeCardCounts.put("total_active", activeCards.size());
+            activeCardCounts.put("assigned_count", assignedCardUids.size());
+            activeCardCounts.put("unassigned_count", unassignedCardUids.size());
+            activeCardCounts.put("total_active", assignedCardUids.size() + unassignedCardUids.size());
             eventObj.put("active_card_counts", activeCardCounts);
 
             payload.put("event", eventObj);

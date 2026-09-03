@@ -24,17 +24,20 @@ public class ReportController {
     private final ReportingService reportingService;
     private final AttendanceSessionRepository sessionRepository;
     private final AttendanceEventRepository eventRepository;
+    private final com.RFID.RFID.repository.PersonRepository personRepository;
     private final com.RFID.RFID.service.AuditService auditService;
     private final com.RFID.RFID.scheduler.AutoCheckoutScheduler autoCheckoutScheduler;
 
     public ReportController(ReportingService reportingService,
                             AttendanceSessionRepository sessionRepository,
                             AttendanceEventRepository eventRepository,
+                            com.RFID.RFID.repository.PersonRepository personRepository,
                             com.RFID.RFID.service.AuditService auditService,
                             com.RFID.RFID.scheduler.AutoCheckoutScheduler autoCheckoutScheduler) {
         this.reportingService = reportingService;
         this.sessionRepository = sessionRepository;
         this.eventRepository = eventRepository;
+        this.personRepository = personRepository;
         this.auditService = auditService;
         this.autoCheckoutScheduler = autoCheckoutScheduler;
     }
@@ -75,15 +78,78 @@ public class ReportController {
             map.put("isCheckedOut", session.getStatus() != SessionStatus.OPEN);
             map.put("durationMinutes", session.getDurationMinutes());
             map.put("isLate", session.isLate());
+            map.put("attendanceStatus", "PRESENT");
             attendanceList.add(map);
         }
 
+        // Active members who have not checked in today are marked as ABSENT
+        List<Person> activePeople = (personRepository != null)
+                ? personRepository.findByStatus(PersonStatus.ACTIVE)
+                : Collections.emptyList();
+
+        List<Map<String, Object>> absentList = new ArrayList<>();
+        for (Person person : activePeople) {
+            if (!uniquePersonIds.contains(person.getPersonId())) {
+                Map<String, Object> map = new HashMap<>();
+                map.put("sessionId", null);
+                map.put("personId", person.getPersonId());
+                map.put("fullName", person.getFullName());
+                String extRef = (person.getExternalRef() != null && !person.getExternalRef().trim().isEmpty())
+                        ? person.getExternalRef()
+                        : "EXT-" + String.format("%04d", person.getPersonId());
+                map.put("externalRef", extRef);
+                map.put("memberType", person.getMemberType());
+                map.put("groupLabel", person.getGroupLabel());
+                map.put("checkInAt", null);
+                map.put("checkOutAt", null);
+                map.put("status", "ABSENT");
+                map.put("isCheckedOut", false);
+                map.put("durationMinutes", 0);
+                map.put("isLate", false);
+                map.put("attendanceStatus", "ABSENT");
+                absentList.add(map);
+            }
+        }
+
+        // Sort absent list alphabetically by full name
+        absentList.sort(Comparator.comparing(m -> String.valueOf(m.get("fullName")), String.CASE_INSENSITIVE_ORDER));
+
         Map<String, Object> data = new HashMap<>();
         data.put("headcount", uniquePersonIds.size()); // Total unique present today — does not decrease upon checkout
+        data.put("presentCount", uniquePersonIds.size());
+        data.put("absentCount", absentList.size());
+        data.put("totalActive", activePeople.size());
         data.put("currentlyInside", currentlyInside);
         data.put("presentMembers", attendanceList);
+        data.put("absentMembers", absentList);
 
         return Envelope.ok(data);
+    }
+
+    @GetMapping("/attendance/sessions")
+    public Envelope getSessions(
+            @RequestParam(required = false) String startDate,
+            @RequestParam(required = false) String endDate) {
+        LocalDate start = (startDate != null && !startDate.isEmpty()) ?
+                LocalDate.parse(startDate, DateTimeFormatter.ISO_DATE) : LocalDate.now().minusDays(365);
+        LocalDate end = (endDate != null && !endDate.isEmpty()) ?
+                LocalDate.parse(endDate, DateTimeFormatter.ISO_DATE) : LocalDate.now();
+
+        List<AttendanceSession> sessions = sessionRepository.findAllWithPersonByWorkDateBetween(start, end);
+        List<Map<String, Object>> result = new ArrayList<>(sessions.size());
+        for (AttendanceSession s : sessions) {
+            Map<String, Object> map = new HashMap<>();
+            map.put("sessionId", s.getSessionId());
+            map.put("personId", s.getPerson().getPersonId());
+            map.put("memberType", s.getPerson().getMemberType() != null ? s.getPerson().getMemberType().name() : null);
+            map.put("workDate", s.getWorkDate().toString());
+            map.put("checkInAt", s.getCheckInAt() != null ? s.getCheckInAt().toString() : null);
+            map.put("checkOutAt", s.getCheckOutAt() != null ? s.getCheckOutAt().toString() : null);
+            map.put("isLate", s.isLate());
+            map.put("status", s.getStatus().name());
+            result.add(map);
+        }
+        return Envelope.ok(result);
     }
 
     @GetMapping("/attendance/report")

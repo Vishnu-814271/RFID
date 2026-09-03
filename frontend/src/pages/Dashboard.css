@@ -18,26 +18,25 @@
   margin-bottom: 2rem;
 }
 
+.metrics-grid.access-logs-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
 .metric-card {
   background: var(--color-bg-surface);
   border: none;
   border-radius: var(--border-radius-sm);
-  padding: 1.25rem 1.5rem;
+  padding: 1.25rem 1.25rem 0.85rem 1.25rem;
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  justify-content: space-between;
   align-items: center;
   text-align: center;
   box-shadow: 0 4px 16px rgba(16, 43, 76, 0.08);
-  cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  cursor: default;
   position: relative;
   overflow: hidden;
-  min-height: 95px;
-}
-
-.metric-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(16, 43, 76, 0.12);
+  min-height: 145px;
 }
 
 /* ZENV Official Brand Card Palettes (Page 29 Guidelines) */
@@ -80,44 +79,103 @@
 
 .metric-card[class*="fill-"] .metric-title {
   color: rgba(255, 255, 255, 0.9);
-  font-size: 0.875rem;
+  font-size: 0.825rem;
   letter-spacing: 0.5px;
   text-transform: uppercase;
   font-weight: 600;
+  text-align: left;
+  margin: 0;
 }
 
 .metric-card[class*="fill-"] .metric-value {
   color: #ffffff;
-  font-size: 2.3rem;
+  font-size: 2.35rem;
   font-weight: 800;
   line-height: 1;
+  text-align: center;
+  margin: 0;
+}
+
+.metric-card-header {
+  display: flex;
+  justify-content: flex-start;
+  align-items: flex-start;
+  width: 100%;
+  text-align: left;
+}
+
+.metric-card-body {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  flex: 1;
+  text-align: center;
+  padding: 0.4rem 0;
 }
 
 .metric-details {
   display: flex;
-  flex-direction: row;
-  align-items: baseline;
+  flex-direction: column;
+  align-items: center;
   justify-content: center;
-  gap: 0.65rem;
-  flex-wrap: wrap;
+  gap: 0.35rem;
   text-align: center;
   width: 100%;
+  flex: 1;
+  padding-top: 0.4rem;
 }
 
 .metric-title {
   color: var(--color-text-muted);
-  font-size: 0.875rem;
+  font-size: 0.825rem;
   font-weight: 600;
   letter-spacing: 0.5px;
   text-transform: uppercase;
+  text-align: left;
+  margin: 0;
 }
 
 .metric-value {
   color: var(--color-text-main);
-  font-size: 2.3rem;
+  font-size: 2.35rem;
   font-weight: 800;
   line-height: 1;
   letter-spacing: -0.02em;
+  text-align: center;
+  margin: 0;
+}
+
+.metric-card-footer {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  width: 100%;
+  margin-top: 0.25rem;
+}
+
+.metric-view-btn {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.88);
+  padding: 0.2rem 0.35rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  transition: color 0.2s ease, transform 0.2s ease;
+  line-height: 1.2;
+}
+
+.metric-view-btn:hover {
+  background: transparent;
+  color: #ffffff;
+  transform: translateX(3px);
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .dashboard-content {
@@ -151,8 +209,8 @@
   }
 
   .metric-card {
-    padding: 1rem 1.25rem;
-    min-height: 80px;
+    padding: 1rem 1rem 0.75rem 1rem;
+    min-height: 125px;
   }
 
   .metric-value,

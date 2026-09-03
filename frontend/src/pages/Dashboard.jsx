@@ -20,6 +20,7 @@ export function Dashboard() {
   const [events, setEvents] = useState([]);
   const [people, setPeople] = useState([]);
   const [reportData, setReportData] = useState([]);
+  const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedType, setSelectedType] = useState('ALL');
   const navigate = useNavigate();
@@ -30,12 +31,13 @@ export function Dashboard() {
     if (user?.passwordChangeRequired) return;
 
     try {
-      const [analyticsRes, liveRes, eventsRes, peopleRes, reportRes] = await Promise.all([
+      const [analyticsRes, liveRes, eventsRes, peopleRes, reportRes, sessionsRes] = await Promise.all([
         api.get('/dashboard/analytics').catch(() => ({})),
         api.get('/attendance/live').catch(() => ({ headcount: 0, presentMembers: [] })),
         api.get('/events').catch(() => []),
         api.get('/people').catch(() => []),
-        api.get('/attendance/report').catch(() => [])
+        api.get('/attendance/report').catch(() => []),
+        api.get('/attendance/sessions').catch(() => [])
       ]);
 
       setAnalytics(analyticsRes);
@@ -43,6 +45,7 @@ export function Dashboard() {
       setEvents(eventsRes || []);
       setPeople(peopleRes || []);
       setReportData(reportRes || []);
+      setSessions(sessionsRes || []);
     } catch (error) {
       console.error("Failed to load dashboard data", error);
     } finally {
@@ -102,7 +105,18 @@ export function Dashboard() {
     return reportData.filter(r => filteredPersonIds.has(r.personId) || r.memberType === selectedType);
   }, [reportData, selectedType, filteredPersonIds]);
 
-  // 6. Effective Analytics Metrics for the 4 Cards
+  // 6. Filtered Sessions for Attendance Charts
+  const filteredSessions = useMemo(() => {
+    if (!sessions) return [];
+    if (selectedType === 'ALL') return sessions;
+    return sessions.filter(s => {
+      if (s.personId) return filteredPersonIds.has(s.personId);
+      if (s.memberType) return s.memberType === selectedType;
+      return false;
+    });
+  }, [sessions, selectedType, filteredPersonIds]);
+
+  // 7. Effective Analytics Metrics for the 4 Cards
   const effectiveAnalytics = useMemo(() => {
     const totalPeople = filteredPeople.length;
     const presentToday = effectiveLiveData.headcount;
@@ -174,33 +188,87 @@ export function Dashboard() {
         </div>
       </div>
 
-      {/* Metrics Cards Responsive to Filter (Centered with Suffix Name) */}
+      {/* Metrics Cards Responsive to Filter */}
       <div className="metrics-grid">
-        <div className="metric-card fill-zenv-navy" onClick={() => navigate('/people')}>
-          <div className="metric-details">
-            <span className="metric-value">{effectiveAnalytics.totalPeople}</span>
+        <div className="metric-card fill-zenv-navy">
+          <div className="metric-card-header">
             <span className="metric-title">{selectedType === 'ALL' ? 'Total Persons' : `Total ${selectedType.charAt(0) + selectedType.slice(1).toLowerCase()}s`}</span>
           </div>
+          <div className="metric-card-body">
+            <span className="metric-value">{effectiveAnalytics.totalPeople}</span>
+          </div>
+          <div className="metric-card-footer">
+            <button
+              type="button"
+              className="metric-view-btn"
+              onClick={() => navigate('/people')}
+            >
+              View &rarr;
+            </button>
+          </div>
         </div>
 
-        <div className="metric-card fill-zenv-teal" onClick={() => navigate('/live')}>
-          <div className="metric-details">
-            <span className="metric-value">{effectiveAnalytics.presentToday}</span>
+        <div className="metric-card fill-zenv-teal">
+          <div className="metric-card-header">
             <span className="metric-title">Present Today</span>
           </div>
-        </div>
-
-        <div className="metric-card fill-zenv-taupe" onClick={() => navigate('/reports')}>
-          <div className="metric-details">
-            <span className="metric-value">{effectiveAnalytics.lateArrivals} / {effectiveAnalytics.absentees}</span>
-            <span className="metric-title">Late / Absent Today</span>
+          <div className="metric-card-body">
+            <span className="metric-value">{effectiveAnalytics.presentToday}</span>
+          </div>
+          <div className="metric-card-footer">
+            <button
+              type="button"
+              className="metric-view-btn"
+              onClick={() => navigate('/live')}
+            >
+              View &rarr;
+            </button>
           </div>
         </div>
 
-        <div className="metric-card fill-zenv-darkgreen" onClick={() => navigate('/access-logs', { state: { decision: 'DENIED' } })}>
-          <div className="metric-details">
-            <span className="metric-value">{effectiveAnalytics.deniedTaps}</span>
+        <div className="metric-card fill-zenv-taupe">
+          <div className="metric-card-header">
+            <span className="metric-title">Late / Absent Today</span>
+          </div>
+          <div className="metric-card-body">
+            <span className="metric-value">{effectiveAnalytics.lateArrivals} / {effectiveAnalytics.absentees}</span>
+          </div>
+          <div className="metric-card-footer">
+            <button
+              type="button"
+              className="metric-view-btn"
+              onClick={() => {
+                const now = new Date();
+                const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+                navigate('/reports', {
+                  state: {
+                    startDate: todayStr,
+                    endDate: todayStr,
+                    attendanceFilter: 'LATE_OR_ABSENT'
+                  }
+                });
+              }}
+            >
+              View &rarr;
+            </button>
+          </div>
+        </div>
+
+        <div className="metric-card fill-zenv-darkgreen">
+          <div className="metric-card-header">
             <span className="metric-title">Denied Taps Today</span>
+          </div>
+          <div className="metric-card-body">
+            <span className="metric-value">{effectiveAnalytics.deniedTaps}</span>
+          </div>
+          <div className="metric-card-footer">
+            <button
+              type="button"
+              className="metric-view-btn"
+              onClick={() => navigate('/access-logs', { state: { decision: 'DENIED' } })}
+            >
+              View &rarr;
+            </button>
           </div>
         </div>
       </div>
@@ -211,6 +279,7 @@ export function Dashboard() {
           analytics={effectiveAnalytics}
           liveData={effectiveLiveData}
           reportData={filteredReportData}
+          sessions={filteredSessions}
           events={filteredEvents}
         />
       </div>
