@@ -7,7 +7,9 @@ import com.RFID.RFID.repository.AttendanceSessionRepository;
 import com.RFID.RFID.repository.CardMappingRepository;
 import com.RFID.RFID.repository.PersonRepository;
 import com.RFID.RFID.repository.RfidCardRepository;
+import com.RFID.RFID.mqtt.MqttPublisherService;
 import com.RFID.RFID.service.AuditService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,17 +31,20 @@ public class PersonController {
     private final AttendanceSessionRepository sessionRepository;
     private final RfidCardRepository cardRepository;
     private final AuditService auditService;
+    private final MqttPublisherService mqttPublisherService;
 
     public PersonController(PersonRepository personRepository,
                             CardMappingRepository mappingRepository,
                             AttendanceSessionRepository sessionRepository,
                             RfidCardRepository cardRepository,
-                            AuditService auditService) {
+                            AuditService auditService,
+                            @Autowired(required = false) MqttPublisherService mqttPublisherService) {
         this.personRepository = personRepository;
         this.mappingRepository = mappingRepository;
         this.sessionRepository = sessionRepository;
         this.cardRepository = cardRepository;
         this.auditService = auditService;
+        this.mqttPublisherService = mqttPublisherService;
     }
 
     @GetMapping
@@ -133,7 +138,7 @@ public class PersonController {
         return Envelope.ok(saved);
     }
 
-    @PatchMapping("/{id}")
+    @RequestMapping(value = "/{id}", method = {RequestMethod.PATCH, RequestMethod.PUT})
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'OPERATOR')")
     @Transactional
     public Envelope editPerson(@PathVariable Long id, @RequestBody Map<String, Object> updates) {
@@ -195,6 +200,11 @@ public class PersonController {
                     if (card.getStatus() == CardStatus.ASSIGNED) {
                         card.setStatus(CardStatus.AVAILABLE);
                         cardRepository.save(card);
+                    }
+
+                    // Broadcast Card Unassigned Event via MQTT
+                    if (mqttPublisherService != null) {
+                        mqttPublisherService.broadcastCardLifecycleEvent("CARD_UNASSIGNED", card, person);
                     }
                 }
             }

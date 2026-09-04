@@ -162,7 +162,8 @@ export function People() {
       setPersonToComplete(null);
       triggerRefresh();
     } catch (err) {
-      toast.error(err?.message || 'Failed to complete candidate tenure');
+      const msg = typeof err === 'string' ? err : (err?.message || 'Failed to complete candidate tenure');
+      toast.error(msg);
     } finally {
       setIsSubmitting(false);
     }
