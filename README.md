@@ -194,6 +194,12 @@ For comprehensive hardware pinouts, circuit wiring diagrams, and MQTT message pa
 
 👉 **[Dedicated MQTT Protocol & Hardware Documentation (docs/MQTT_DOCUMENTATION.md)](docs/MQTT_DOCUMENTATION.md)**
 
+For the complete system setup, architecture, data flow, API surface, operations, and troubleshooting guide:
+
+👉 **[End-to-End Project Guide (docs/END_TO_END_PROJECT_GUIDE.md)](docs/END_TO_END_PROJECT_GUIDE.md)**
+
+👉 **[Feature Test Cases (docs/FEATURE_TEST_CASES.md)](docs/FEATURE_TEST_CASES.md)**
+
 ---
 
 ## 8. Local Development Setup

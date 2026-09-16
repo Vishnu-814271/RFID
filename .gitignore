@@ -31,17 +31,38 @@ build/
 
 ### VS Code ###
 .vscode/
+.kilo/
+.history/
 
 ### Local Data & Build ###
 data/
 *.mv.db
 *.trace.db
+*.log
+logs/
+coverage/
+.nyc_output/
+.cache/
+*.class
+hs_err_pid*.log
+replay_pid*.log
 node_modules/
 frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+.env
+.env.*
+!.env.example
+docker-compose.override.yml
 test-data.sql
 token.json
 simulate_tap.ps1
 tap_in.ps1
 tap_out.ps1
 *.ps1
+
+### OS metadata ###
+.DS_Store
+Thumbs.db
+desktop.ini
 
