@@ -195,6 +195,41 @@
   align-items: flex-end;
 }
 
+.monthly-rate-track {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  width: 30px;
+  height: 88%;
+  overflow: hidden;
+  border-radius: var(--border-radius-sm) var(--border-radius-sm) 0 0;
+}
+
+.monthly-rate-fill {
+  width: 100%;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  color: #ffffff;
+  font-size: 0.62rem;
+  font-weight: 700;
+  transition: height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.monthly-rate-fill span {
+  pointer-events: none;
+}
+
+.monthly-rate-present {
+  background-color: var(--color-primary-light);
+}
+
+.monthly-rate-absent {
+  background-color: var(--color-secondary);
+}
+
 .bar-fill {
   width: 100%;
   border-radius: var(--border-radius-sm) var(--border-radius-sm) 0 0;
@@ -212,7 +247,7 @@
 
 /* Absentees Bar: Matching Late / Absent Today Card (#979085) */
 .bar-absent {
-  background: linear-gradient(180deg, #b8b3ab 0%, var(--color-secondary) 100%);
+  background: linear-gradient(180deg, var(--color-secondary-light) 0%, var(--color-secondary) 100%);
 }
 
 .bar-fill-zero {
@@ -386,5 +421,5 @@
 }
 
 .legend-color.legend-absent { 
-  background: linear-gradient(180deg, #b8b3ab 0%, var(--color-secondary) 100%); 
+  background: linear-gradient(180deg, var(--color-secondary-light) 0%, var(--color-secondary) 100%); 
 }

@@ -135,12 +135,17 @@ export function AttendanceBarChart({ analytics, liveData, reportData = [], sessi
     const activeDaysInMonth = Math.max(1, distinctDates.length);
     const avgPresent = distinctDates.length > 0 ? Math.round(totalPresent / activeDaysInMonth) : 0;
     const avgAbsent = distinctDates.length > 0 ? Math.max(0, totalPeople - avgPresent) : 0;
+    const attendanceRate = totalPeople > 0 && distinctDates.length > 0
+      ? Math.min(100, Math.max(0, Math.round((totalPresent / (totalPeople * distinctDates.length)) * 100)))
+      : 0;
 
     return {
       label: mLabel,
       subLabel: distinctDates.length > 0 ? `${monthFullNames[mIdx]} (${distinctDates.length} days active)` : monthFullNames[mIdx],
       present: avgPresent,
       absent: avgAbsent,
+      attendanceRate,
+      activeDays: distinctDates.length,
       total: totalPeople,
       isCurrent: isCurrentMonthOfCurrentYear,
       isFuture: false
@@ -159,13 +164,13 @@ export function AttendanceBarChart({ analytics, liveData, reportData = [], sessi
     <div className="chart-container card">
       <div className="chart-header">
         <div className="chart-title">
-          <ZenvAnalyticsChartIcon size={22} className="chart-icon-header" primaryColor="#102b4d" accentColor="#1e556d" />
+          <ZenvAnalyticsChartIcon size={22} className="chart-icon-header" primaryColor="var(--color-primary)" accentColor="var(--color-primary-light)" />
           <div>
             <h3>Attendance Overview Trend</h3>
             <span className="chart-subtitle">
               {timeframe === 'week' 
                 ? 'Weekly comparison (Present vs Absentees)' 
-                : `Monthly breakdown for ${selectedYear} (Present vs Absentees)`}
+                : `Monthly attendance performance for ${selectedYear}`}
             </span>
           </div>
         </div>
@@ -229,20 +234,43 @@ export function AttendanceBarChart({ analytics, liveData, reportData = [], sessi
                 {isHovered && (
                   <div className="chart-tooltip comparison-tooltip">
                     <div className="tooltip-title">{item.label} {item.subLabel ? `(${item.subLabel})` : ''}</div>
-                    {item.isFuture ? (
-                      <div className="tooltip-row future-row" style={{ color: 'rgba(255, 255, 255, 0.75)', fontSize: '0.75rem', fontStyle: 'italic', margin: '4px 0 0 0' }}>
-                        Upcoming - No attendance yet
+                    {item.isFuture || (timeframe === 'months' && item.activeDays === 0) ? (
+                      <div className="tooltip-row future-row">
+                        {item.isFuture ? 'Upcoming - No attendance yet' : 'No attendance data'}
                       </div>
                     ) : (
                       <>
-                        <div className="tooltip-row present-row">
-                          <span>{timeframe === 'months' ? 'Avg. Present:' : 'Present:'}</span>
-                          <strong>{item.present}</strong>
-                        </div>
-                        <div className="tooltip-row absent-row">
-                          <span>{timeframe === 'months' ? 'Avg. Absentees:' : 'Absentees:'}</span>
-                          <strong>{item.absent}</strong>
-                        </div>
+                        {timeframe === 'months' ? (
+                          <>
+                            <div className="tooltip-row present-row">
+                              <span>Attendance Rate:</span>
+                              <strong>{item.attendanceRate}%</strong>
+                            </div>
+                            <div className="tooltip-row present-row">
+                              <span>Present Average:</span>
+                              <strong>{item.present}</strong>
+                            </div>
+                            <div className="tooltip-row absent-row">
+                              <span>Absent Average:</span>
+                              <strong>{item.absent}</strong>
+                            </div>
+                            <div className="tooltip-row total-row">
+                              <span>Active Days:</span>
+                              <strong>{item.activeDays}</strong>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <div className="tooltip-row present-row">
+                              <span>Present:</span>
+                              <strong>{item.present}</strong>
+                            </div>
+                            <div className="tooltip-row absent-row">
+                              <span>Absentees:</span>
+                              <strong>{item.absent}</strong>
+                            </div>
+                          </>
+                        )}
                         <div className="tooltip-divider"></div>
                         <div className="tooltip-row total-row">
                           <span>Total Headcount:</span>
@@ -253,11 +281,20 @@ export function AttendanceBarChart({ analytics, liveData, reportData = [], sessi
                   </div>
                 )}
 
-                {/* 2 Comparison Bars: Present and Absentees, or Empty for upcoming */}
+                {/* Monthly uses a 100% stacked rate bar; weekly uses side-by-side counts. */}
                 <div className="comparison-bars-container two-bars">
-                  {item.isFuture ? (
+                  {item.isFuture || (timeframe === 'months' && item.activeDays === 0) ? (
                     <div className="future-placeholder-track">
                       <div className="future-placeholder-line"></div>
+                    </div>
+                  ) : timeframe === 'months' ? (
+                    <div className="monthly-rate-track">
+                      <div className="monthly-rate-fill monthly-rate-present" style={{ height: `${item.attendanceRate}%` }}>
+                        {item.attendanceRate >= 14 && <span>{item.attendanceRate}%</span>}
+                      </div>
+                      <div className="monthly-rate-fill monthly-rate-absent" style={{ height: `${100 - item.attendanceRate}%` }}>
+                        {item.attendanceRate <= 86 && <span>{100 - item.attendanceRate}%</span>}
+                      </div>
                     </div>
                   ) : (
                     <>
@@ -303,15 +340,15 @@ export function AttendanceBarChart({ analytics, liveData, reportData = [], sessi
         </div>
       </div>
 
-      {/* Comparison Legend: Present and Absentees only */}
+      {/* Legend follows the active timeframe. */}
       <div className="chart-legend comparison-legend">
         <div className="legend-item">
           <span className="legend-color legend-present"></span>
-          <span>Present</span>
+          <span>{timeframe === 'months' ? 'Present Rate' : 'Present'}</span>
         </div>
         <div className="legend-item">
           <span className="legend-color legend-absent"></span>
-          <span>Absentees</span>
+          <span>{timeframe === 'months' ? 'Absent Rate' : 'Absentees'}</span>
         </div>
       </div>
     </div>

@@ -100,7 +100,6 @@ public class MqttPublisherService {
      *     "counts": {
      *       "assigned": 5,
      *       "unassigned": 3,
-     *       "total_events": 8
      *     },
      *     "cards": [
      *       { "card_uid": "UID_A1B2C3D4" },
@@ -121,7 +120,6 @@ public class MqttPublisherService {
             LocalDateTime now = LocalDateTime.now();
             String humanTimestamp = now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
             payload.put("timestamp", humanTimestamp);
-            payload.put("timestamp_epoch", Instant.now().getEpochSecond());
 
             // 2. event object
             Map<String, Object> eventObj = new LinkedHashMap<>();
@@ -160,16 +158,14 @@ public class MqttPublisherService {
             // Specific Card details for this event
             if (card != null) {
                 eventObj.put("card_uid", card.getCardUid());
-                eventObj.put("card_id", card.getCardId());
             } else {
                 eventObj.put("card_uid", null);
             }
 
             // Person details (if assigned or released)
             if (person != null) {
-                eventObj.put("person_id", person.getPersonId());
                 eventObj.put("person_name", person.getFullName());
-                eventObj.put("external_ref", person.getExternalRef());
+                eventObj.put("Type", person.getMemberType() != null ? person.getMemberType().name() : null);
             }
 
             // Fetch card records
@@ -189,26 +185,20 @@ public class MqttPublisherService {
                     .filter(Objects::nonNull)
                     .collect(Collectors.toList());
 
-            long totalEvents = eventRepository != null ? eventRepository.count() : 0L;
-
             // counts
             Map<String, Object> counts = new LinkedHashMap<>();
             counts.put("assigned", assignedCardUids.size());
             counts.put("unassigned", unassignedCardUids.size());
-            counts.put("total_events", totalEvents);
+            counts.put("total_cards_active", assignedCardUids.size() + unassignedCardUids.size());
             eventObj.put("counts", counts);
 
-            // cards array: ["CARD_EMP_0101", "CARD_EMP_0102", ...] (direct string array per user request)
-            eventObj.put("cards", allCardUids);
-            eventObj.put("assigned_cards", assignedCardUids);
-            eventObj.put("unassigned_cards", unassignedCardUids);
-
-            // active_card_counts
-            Map<String, Object> activeCardCounts = new LinkedHashMap<>();
-            activeCardCounts.put("assigned_count", assignedCardUids.size());
-            activeCardCounts.put("unassigned_count", unassignedCardUids.size());
-            activeCardCounts.put("total_active", assignedCardUids.size() + unassignedCardUids.size());
-            eventObj.put("active_card_counts", activeCardCounts);
+            // Active card UIDs exclude deactivated and lost cards.
+            List<String> activeCardUids = allCards.stream()
+                    .filter(c -> c.getStatus() == CardStatus.ASSIGNED || c.getStatus() == CardStatus.AVAILABLE)
+                    .map(RfidCard::getCardUid)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+            eventObj.put("Assigned_card_UID", activeCardUids);
 
             payload.put("event", eventObj);
 

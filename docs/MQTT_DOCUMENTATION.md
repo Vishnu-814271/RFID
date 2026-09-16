@@ -148,19 +148,15 @@ Broadcasted to all hardware readers and monitoring microservices whenever an RFI
 ```json
 {
   "timestamp": "2026-09-03 18:35:29",
-  "timestamp_epoch": 1788440729,
   "event": {
-    "event_type": "CARD_ASSIGNED",
-    "status": "assigned",
-    "card_uid": "CARD_MAP_729",
-    "card_id": 323,
-    "person_id": 290,
-    "person_name": "Test Employee 729",
-    "external_ref": "EMP-729",
+    "event_type": "CARD_STATUS_CHANGED",
+    "status": "deactivated",
+    "card_uid": "CARD_EMP_0104",
+    "person_name": "Ananya Iyer",
+    "Type": "EMPLOYEE",
     "counts": {
       "assigned": 18,
       "unassigned": 9,
-      "total_events": 46
     },
     "cards": [
       "CARD_EMP_0101",
@@ -170,20 +166,15 @@ Broadcasted to all hardware readers and monitoring microservices whenever an RFI
       "CARD_STU_0109",
       "CARD_MAP_729"
     ],
-    "assigned_cards": [
-      "CARD_EMP_0102",
-      "CARD_EMP_0103",
-      "CARD_EMP_0104",
-      "CARD_MAP_729"
-    ],
-    "unassigned_cards": [
-      "CARD_SPARE_01",
-      "CARD_SPARE_02"
-    ],
     "active_card_counts": {
+      "Active_card_UID": [
+        "CARD_EMP_0102",
+        "CARD_EMP_0103",
+        "CARD_MAP_729"
+      ],
       "assigned_count": 18,
       "unassigned_count": 9,
-      "total_active": 27
+      "total_cards_active": 27
     }
   }
 }
@@ -199,10 +190,10 @@ Broadcasted to all hardware readers and monitoring microservices whenever an RFI
 
 #### Key Payload Modernizations:
 1. **Direct String Arrays**: `cards: ["CARD_EMP_0101", ...]` provides zero-overhead card checking for microcontrollers (instead of bloated `[{"card_uid": "..."}]`).
-2. **Dual Card Arrays**: Explicit `assigned_cards` and `unassigned_cards` lists allow hardware to update its local offline cache immediately.
+2. **Active Card UIDs**: `Active_card_UID` contains only assigned and unassigned card UIDs; deactivated and lost cards are excluded.
 3. **Clean Status Naming**: Replaced ambiguous `"status": "available"` with standard `"status": "unassigned"`.
-4. **Human Timestamps**: Provides `"yyyy-MM-dd HH:mm:ss"` alongside `"timestamp_epoch"`.
-5. **Target Metadata**: Directly includes `card_uid`, `card_id`, `person_id`, `person_name`, and `external_ref`.
+4. **Human Timestamps**: Uses the `"yyyy-MM-dd HH:mm:ss"` format.
+5. **Target Metadata**: Includes the changed card UID, person name, and member `Type` when available.
 
 ---
 

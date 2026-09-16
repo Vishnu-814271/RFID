@@ -124,7 +124,6 @@ class MqttIntegrationTests {
                 "counts": {
                   "assigned": 5,
                   "unassigned": 3,
-                  "total_events": 8
                 },
                 "cards": [
                   { "card_uid": "UID_A1B2C3D4" }
