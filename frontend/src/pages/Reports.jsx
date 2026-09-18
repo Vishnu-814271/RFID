@@ -13,6 +13,7 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { useRefresh, useAutoRefresh } from '../context/RefreshContext';
 import { formatTime, formatHours, formatMinutesToHours } from '../utils/dateUtils';
+import './Reports.css';
 
 export function Reports() {
   const { user } = useAuth();
@@ -142,20 +143,37 @@ export function Reports() {
     }
   };
 
-  const uniqueGroupLabels = Array.from(new Set(reportData.map(row => row.groupLabel).filter(Boolean))).sort();
+  const hasNoTeam = reportData.some(row => !row.groupLabel || row.groupLabel.trim() === '' || row.groupLabel === 'N/A');
+  const baseGroupLabels = Array.from(new Set(reportData.map(row => row.groupLabel).filter(g => g && g.trim() !== '' && g !== 'N/A'))).sort();
+  const uniqueGroupLabels = hasNoTeam ? [...baseGroupLabels, 'N/A'] : baseGroupLabels;
 
-  const activeCount = reportData.filter(r => r.status !== 'INACTIVE').length;
+  const availableMemberTypes = Array.from(new Set([
+    'EMPLOYEE', 'STUDENT',
+    ...reportData.map(row => row.memberType).filter(t => t && t !== 'N/A' && t !== 'NA')
+  ])).sort();
+
+  const getMemberTypeCount = (type) => {
+    return reportData.filter(r => r.memberType === type).length;
+  };
+
+  const activeCount = reportData.filter(r => r.status === 'ACTIVE').length;
+  const completedCount = reportData.filter(r => r.status === 'COMPLETED').length;
   const inactiveCount = reportData.filter(r => r.status === 'INACTIVE').length;
 
   const filteredData = reportData.filter(row => {
     const matchesSearch = searchTerm === '' || 
       row.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       row.externalRef?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      row.groupLabel?.toLowerCase().includes(searchTerm.toLowerCase());
+      (row.groupLabel || 'N/A').toLowerCase().includes(searchTerm.toLowerCase());
       
     const matchesMemberType = selectedMemberType === 'ALL' || row.memberType === selectedMemberType;
-    const matchesGroupLabel = selectedGroupLabel === 'ALL' || row.groupLabel === selectedGroupLabel;
-    const matchesStatus = selectedStatusTab === 'ALL' || (selectedStatusTab === 'INACTIVE' ? row.status === 'INACTIVE' : row.status !== 'INACTIVE');
+
+    const matchesGroupLabel = selectedGroupLabel === 'ALL' ||
+      (selectedGroupLabel === 'N/A'
+        ? (!row.groupLabel || row.groupLabel.trim() === '' || row.groupLabel === 'N/A')
+        : row.groupLabel === selectedGroupLabel);
+
+    const matchesStatus = selectedStatusTab === 'ALL' || row.status === selectedStatusTab;
 
     const matchesAttendance = attendanceFilter === 'ALL' ||
       (attendanceFilter === 'LATE_OR_ABSENT' && ((row.lateCount || 0) > 0 || (row.absentDays || 0) > 0)) ||
@@ -197,13 +215,16 @@ export function Reports() {
               <span className="text-muted" style={{ fontSize: '0.85rem', fontWeight: 500 }}>Type:</span>
               <select 
                 className="form-control" 
-                style={{ padding: '0.25rem 0.5rem', minWidth: '115px' }}
+                style={{ padding: '0.25rem 0.5rem', minWidth: '130px' }}
                 value={selectedMemberType}
                 onChange={(e) => setSelectedMemberType(e.target.value)}
               >
-                <option value="ALL">All Types</option>
-                <option value="EMPLOYEE">Employee</option>
-                <option value="STUDENT">Student</option>
+                <option value="ALL">All Types ({reportData.length})</option>
+                {availableMemberTypes.map(type => (
+                  <option key={type} value={type}>
+                    {type === 'EMPLOYEE' ? 'Employee' : type === 'STUDENT' ? 'Student' : type} ({getMemberTypeCount(type)})
+                  </option>
+                ))}
               </select>
             </div>
 
@@ -250,6 +271,7 @@ export function Reports() {
                 onChange={(e) => setSelectedStatusTab(e.target.value)}
               >
                 <option value="ACTIVE">Active ({activeCount})</option>
+                <option value="COMPLETED">Completed ({completedCount})</option>
                 <option value="INACTIVE">Inactive ({inactiveCount})</option>
                 <option value="ALL">All Status ({reportData.length})</option>
               </select>
@@ -333,17 +355,7 @@ export function Reports() {
                 {filteredData.map((row, i) => (
                   <tr key={i}>
                     <td>
-                      <span style={{ 
-                        fontFamily: 'monospace',
-                        fontWeight: '600',
-                        fontSize: '0.85rem',
-                        background: '#f1f5f9',
-                        color: '#0f172a',
-                        padding: '2px 8px',
-                        borderRadius: '4px',
-                        border: '1px solid #cbd5e1',
-                        display: 'inline-block'
-                      }}>
+                      <span className="ext-id-badge">
                         {row.externalRef || `EXT-${String(row.personId).padStart(4, '0')}`}
                       </span>
                     </td>
@@ -355,23 +367,21 @@ export function Reports() {
                         </span>
                       )}
                     </td>
-                    <td>{row.memberType || 'N/A'}</td>
+                    <td>
+                      <span style={{ 
+                        fontSize: '0.85rem', 
+                        fontWeight: row.memberType ? 500 : 600,
+                        color: row.memberType ? 'inherit' : 'var(--color-text-muted)'
+                      }}>
+                        {row.memberType ? (row.memberType === 'EMPLOYEE' ? 'Employee' : row.memberType === 'STUDENT' ? 'Student' : row.memberType) : 'N/A'}
+                      </span>
+                    </td>
                     <td>{row.groupLabel || 'N/A'}</td>
                     <td><span className="text-success font-medium">{row.daysPresent || 0}</span></td>
                     <td>
                       {(row.underHoursDays || 0) > 0 ? (
                         <span
-                          className="badge"
-                          style={{
-                            background: '#fff7ed',
-                            color: '#c2410c',
-                            border: '1px solid #fed7aa',
-                            display: 'inline-block',
-                            padding: '3px 8px',
-                            borderRadius: '4px',
-                            fontSize: '0.82rem',
-                            fontWeight: 600
-                          }}
+                          className="badge-zenv-underhours"
                           title="Tapped in but worked less than the minimum required hours"
                         >
                           {row.underHoursDays} {row.underHoursDays === 1 ? 'day' : 'days'}
@@ -383,8 +393,7 @@ export function Reports() {
                     <td>
                       {row.absentDays > 0 ? (
                         <button 
-                          className="badge badge-danger" 
-                          style={{ cursor: 'pointer', border: 'none', padding: '4px 8px', fontSize: '0.85rem', fontWeight: 600 }}
+                          className="badge-zenv-absent-btn" 
                           onClick={() => {
                             setSelectedAbsencePerson(row);
                             setShowAbsencesModal(true);
@@ -400,7 +409,7 @@ export function Reports() {
                     <td><span className="text-warning font-medium">{row.lateCount || 0}</span></td>
                     <td>
                       {row.missedCheckouts > 0 ? (
-                        <span className="badge badge-danger" style={{ display: 'inline-block' }}>
+                        <span className="badge-zenv-missed">
                           {row.missedCheckouts} Missed check-out
                         </span>
                       ) : (
@@ -544,7 +553,7 @@ export function Reports() {
               <button className="modal-close" onClick={() => setShowAbsencesModal(false)}><X size={20} /></button>
             </div>
             
-            <div style={{ marginBottom: '1rem', padding: '0.75rem', background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: 'var(--border-radius)', color: '#991b1b' }}>
+            <div className="report-modal-alert">
               <strong>Total Missed Working Days: {selectedAbsencePerson.absentDays}</strong> (Period: {startDate} to {endDate})
             </div>
 

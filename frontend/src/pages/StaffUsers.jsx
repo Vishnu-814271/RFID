@@ -108,7 +108,7 @@ export function StaffUsers() {
             </form>
             
             {tempPassword && (
-              <div style={{ marginTop: '1.5rem', padding: '1rem', background: 'var(--color-warning-light)', color: 'var(--color-warning-dark)', borderRadius: 'var(--border-radius)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <div style={{ marginTop: '1.5rem', padding: '1rem', background: 'var(--color-warning-light)', color: 'var(--color-warning-dark)', borderRadius: 'var(--border-radius-sm)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <ZenvQuantumShieldIcon size={20} />
                 <div>
                   <strong>Important:</strong> User created successfully. Their temporary password is <code>{tempPassword}</code>. They must change it upon login.
@@ -138,27 +138,17 @@ export function StaffUsers() {
                     <td>
                       {u.personId ? (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                          <span style={{ 
-                            fontFamily: 'monospace',
-                            fontWeight: '600',
-                            fontSize: '0.85rem',
-                            background: '#f1f5f9',
-                            color: '#0f172a',
-                            padding: '1px 6px',
-                            borderRadius: '4px',
-                            display: 'inline-block',
-                            width: 'fit-content'
-                          }}>
+                          <span className="ext-id-badge">
                             {u.externalRef || `ID: ${u.personId}`}
                           </span>
                           {u.personName && (
-                            <span style={{ fontSize: '0.8rem', color: '#64748b' }}>
+                            <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>
                               {u.personName}
                             </span>
                           )}
                         </div>
                       ) : (
-                        <span style={{ color: '#94a3b8', fontStyle: 'italic', fontSize: '0.85rem' }}>None</span>
+                        <span style={{ color: 'var(--color-text-muted)', fontStyle: 'italic', fontSize: '0.85rem' }}>None</span>
                       )}
                     </td>
                     <td>{u.email}</td>

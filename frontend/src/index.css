@@ -1,52 +1,47 @@
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&display=swap');
 
 :root {
-  /* ZENV Quantum Brand Color Palette (Page 29 of Brand Guidelines) */
-  --color-primary: #102b4d;          /* Dark Blue / Navy (HEX: 102b4d, RGB: 16-43-76) */
-  --color-primary-light: #1e556d;    /* Green / Teal Blue (HEX: 1e556d, RGB: 30-85-109) */
-  --color-primary-dark: #1d4150;     /* Dark Green (HEX: 1d4150, RGB: 29-65-80) */
+  /* ZENV Quantum Brand Color Palette (Classic Corporate Profile) */
+  --color-primary: #102b4d;          /* Dark Navy Blue (HEX: 102b4d) */
+  --color-primary-light: #1e556d;    /* Teal Blue (HEX: 1e556d) */
+  --color-primary-dark: #102b4d;     /* Deep Navy (HEX: 102b4d) */
   
-  --color-secondary: #979085;        /* Taupe / Gray-Brown (HEX: 979085, RGB: 151-144-133) */
-  --color-secondary-light: #d1d1d1;  /* American Silver / Light Gray (HEX: d1d1d1) */
+  --color-secondary: #979085;        /* Taupe / Neutral (HEX: 979085) */
+  --color-secondary-light: #cbd5e1;  /* Light Silver / Border Slate (HEX: cbd5e1) */
   
-  --color-accent: #193e65;           /* Blue (HEX: 193e65, RGB: 25-62-101) */
+  --color-accent: #193e65;           /* Classic Accent Blue (HEX: 193e65) */
   
-  --color-success: #1e556d;      /* ZENV Teal */
-  --color-warning: #979085;      /* ZENV Taupe */
-  --color-danger: #D45529;       /* Terracotta Orange (CREATE DEFECT color) */
-  --color-info: #193e65;
+  --color-success: #1e556d;          /* ZENV Teal (Present) */
+  --color-warning: #979085;          /* ZENV Taupe (Late) */
+  --color-danger: #D45529;           /* ZENV Terracotta (Absent / Missed) */
+  --color-info: #193e65;             /* ZENV Blue (In Office) */
 
-  /* Neutrals & Background Canvas (Page 23-24) */
-  --color-bg-body: #f4f4f4;      /* Smoke White (HEX: f4f4f4) */
-  --color-bg-surface: #ffffff;
-  --color-bg-subtle: #e9ecef;
+  /* Classic Background & Surfaces */
+  --color-bg-body: #f8fafc;          /* Classic Slate White */
+  --color-bg-surface: #ffffff;       /* Pure White Surface */
+  --color-bg-subtle: #f1f5f9;        /* Soft Slate Tint */
   
   /* Typography Colors */
-  --color-text-main: #102b4d;    /* ZENV Dark Blue */
-  --color-text-muted: #5c6773;
+  --color-text-main: #102b4d;        /* Deep Navy Main Text */
+  --color-text-muted: #64748b;       /* Classic Slate Muted */
   --color-taupe: #979085;
   
   /* Borders */
-  --color-border: #d1d1d1;       /* American Silver */
+  --color-border: #e2e8f0;           /* Crisp Classic Border */
   --color-border-hover: #979085;
 
-  /* Typography (Noto Sans for entire application) */
-  --font-family-header: 'Noto Sans', sans-serif;
+  /* Typography (Noto Sans) */
+  --font-family-header: 'Noto Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-weight-header: 600;
   
-  --font-family-body: 'Noto Sans', sans-serif;
+  --font-family-body: 'Noto Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-weight-body: 400;
 
-  --font-family-lockup: 'Noto Sans', sans-serif;
-  --font-weight-lockup: 400;
-
   --font-family: 'Noto Sans', sans-serif;
-  --font-family-display: 'Noto Sans', sans-serif;
-
-  --font-size-base: 14.5px;
+  --font-size-base: 14px;
   --line-height: 1.5;
 
-  /* Layout & Sharp Geometry Sizing (Page 46: Strictly No Circular/Rounded Corners) */
+  /* Sharp Geometry (Page 46 Guidelines) */
   --sidebar-width: 260px;
   --header-height: 64px;
   --border-radius-sm: 2px;
@@ -54,10 +49,10 @@
   --border-radius-lg: 2px;
   --border-radius-full: 2px;
   
-  /* Shadows */
-  --shadow-sm: 0 1px 3px rgba(16, 43, 76, 0.08);
-  --shadow-md: 0 4px 12px rgba(16, 43, 76, 0.12);
-  --shadow-lg: 0 10px 25px rgba(16, 43, 76, 0.18);
+  /* Classic Subtle Shadows */
+  --shadow-sm: 0 1px 2px rgba(16, 43, 76, 0.04);
+  --shadow-md: 0 4px 12px rgba(16, 43, 76, 0.06);
+  --shadow-lg: 0 8px 24px rgba(16, 43, 76, 0.09);
 }
 
 /* Reset & Base Styles */
@@ -139,9 +134,9 @@ a:hover {
 /* Common Components (ZENV Sharp Rectangular Cards) */
 .card {
   background-color: var(--color-bg-surface);
-  border: none;
-  border-radius: var(--border-radius-md);
-  box-shadow: 0 4px 18px rgba(16, 43, 76, 0.08), 0 1px 3px rgba(16, 43, 76, 0.04);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-sm);
+  box-shadow: var(--shadow-sm);
   padding: 1.5rem;
 }
 
@@ -151,13 +146,13 @@ a:hover {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  padding: 0.5rem 1rem;
+  padding: 0.5rem 1.15rem;
   font-size: 0.875rem;
   font-weight: 600;
   border-radius: var(--border-radius-sm);
   border: 1px solid transparent;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.18s ease;
   background: none;
 }
 
@@ -183,7 +178,7 @@ a:hover {
 
 .btn-secondary:hover:not(:disabled) {
   background-color: var(--color-bg-subtle);
-  border-color: var(--color-border-hover);
+  border-color: var(--color-secondary);
 }
 
 .btn-danger {
@@ -192,7 +187,7 @@ a:hover {
 }
 
 .btn-danger:hover:not(:disabled) {
-  background-color: #dc2626;
+  background-color: #b8441e;
 }
 
 /* Forms */
@@ -202,16 +197,16 @@ a:hover {
 
 .form-label {
   display: block;
-  font-size: 0.875rem;
+  font-size: 0.85rem;
   font-weight: 600;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.4rem;
   color: var(--color-text-main);
 }
 
 .form-control {
   display: block;
   width: 100%;
-  padding: 0.5rem 0.75rem;
+  padding: 0.48rem 0.75rem;
   font-size: 0.875rem;
   font-family: inherit;
   line-height: 1.5;
@@ -226,7 +221,7 @@ a:hover {
 .form-control:focus {
   border-color: var(--color-primary);
   outline: 0;
-  box-shadow: 0 0 0 2px rgba(16, 43, 76, 0.15);
+  box-shadow: 0 0 0 2px rgba(16, 43, 76, 0.12);
 }
 
 /* Page Layout Containers */
@@ -254,17 +249,17 @@ a:hover {
   margin-bottom: 1.25rem;
 }
 
-/* Data Table with Sticky Headers (Consistent Alignment, Clean Borders) */
+/* Data Table with Sticky Headers (Classic Clean Corporate Style) */
 .data-table-container {
   width: 100%;
   overflow-x: auto;
   overflow-y: auto;
-  min-height: 400px;
+  min-height: 380px;
   max-height: calc(100vh - 280px);
   background: var(--color-bg-surface);
-  border: none;
-  border-radius: var(--border-radius-md);
-  box-shadow: 0 4px 18px rgba(16, 43, 76, 0.08), 0 1px 3px rgba(16, 43, 76, 0.04);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-sm);
+  box-shadow: none;
   position: relative;
 }
 
@@ -287,19 +282,20 @@ a:hover {
   position: sticky;
   top: 0;
   z-index: 10;
-  box-shadow: 0 2px 6px rgba(16, 43, 76, 0.05);
+  box-shadow: 0 1px 3px rgba(16, 43, 76, 0.05);
 }
 
 .data-table thead tr {
-  background-color: #e9eff5;
+  background-color: #f1f5f9;
+  border-bottom: 2px solid var(--color-border);
 }
 
 .data-table th {
-  padding: 0.75rem 0.95rem;
-  background-color: #e9eff5;
+  padding: 0.8rem 1rem;
+  background-color: #f1f5f9;
   color: var(--color-primary);
   font-weight: 700;
-  font-size: 0.8rem;
+  font-size: 0.775rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   text-align: left;
@@ -309,17 +305,17 @@ a:hover {
 }
 
 .data-table td {
-  padding: 0.75rem 0.95rem;
+  padding: 0.8rem 1rem;
   text-align: left;
   vertical-align: middle;
   border: none;
   color: var(--color-text-main);
-  font-size: 0.86rem;
+  font-size: 0.875rem;
 }
 
 .data-table tbody tr {
-  transition: background-color 0.15s ease, box-shadow 0.15s ease;
-  border-bottom: 1px solid rgba(209, 209, 209, 0.4);
+  transition: background-color 0.12s ease;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
 }
 
 .data-table tbody tr:last-child {
@@ -327,12 +323,11 @@ a:hover {
 }
 
 .data-table tbody tr:nth-child(even) {
-  background-color: rgba(244, 244, 244, 0.55);
+  background-color: rgba(248, 250, 252, 0.6);
 }
 
 .data-table tbody tr:hover {
-  background-color: #ffffff;
-  box-shadow: 0 3px 12px rgba(16, 43, 76, 0.08);
+  background-color: rgba(16, 43, 76, 0.025);
 }
 
 .data-table th:first-child,
@@ -511,12 +506,90 @@ a:hover {
   border-color: var(--color-border);
 }
 
-.modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(16, 43, 76, 0.6); display: flex; align-items: center; justify-content: center; z-index: 1000; }
-.modal { background: var(--color-bg-surface); padding: 2rem; border-radius: var(--border-radius-sm); width: 100%; max-width: 500px; box-shadow: 0 16px 40px rgba(16, 43, 76, 0.20), 0 4px 12px rgba(16, 43, 76, 0.08); border: none; }
-.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
-.modal-title { font-size: 1.25rem; font-weight: 700; color: var(--color-primary); margin: 0; }
-.modal-close { background: none; border: none; cursor: pointer; color: var(--color-text-muted); }
-.modal-actions { display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem; }
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(16, 43, 76, 0.65);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1.5rem 1rem;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+.modal {
+  background: var(--color-bg-surface);
+  padding: 1.5rem 1.75rem;
+  border-radius: var(--border-radius-sm);
+  width: 100%;
+  max-width: 520px;
+  max-height: min(88vh, 720px);
+  overflow-y: auto;
+  box-shadow: 0 16px 40px rgba(16, 43, 76, 0.20), 0 4px 12px rgba(16, 43, 76, 0.08);
+  border: 1px solid var(--color-border);
+  position: relative;
+  box-sizing: border-box;
+  margin: auto;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--color-border);
+  position: sticky;
+  top: -1.5rem;
+  background: var(--color-bg-surface);
+  z-index: 10;
+  margin-top: -0.25rem;
+}
+
+.modal-title {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  margin: 0;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-muted);
+  padding: 0.4rem;
+  border-radius: var(--border-radius-sm);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.modal-close:hover {
+  color: var(--color-danger);
+  background-color: rgba(212, 85, 41, 0.1);
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(16, 43, 76, 0.06);
+}
+
+.modal .form-group {
+  margin-bottom: 0.75rem;
+}
+
 
 .topbar { background: var(--color-bg-surface); padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: none; box-shadow: 0 3px 14px rgba(16, 43, 76, 0.08), 0 1px 3px rgba(16, 43, 76, 0.04); }
 .tap-simulator { display: flex; gap: 0.5rem; align-items: center; background: var(--color-bg-subtle); padding: 0.4rem 0.85rem; border-radius: var(--border-radius-sm); border: none; box-shadow: 0 2px 8px rgba(16, 43, 76, 0.06); }
@@ -582,7 +655,7 @@ a:hover {
 
   .card {
     padding: 1.15rem 1rem;
-    border-radius: 6px;
+    border-radius: var(--border-radius-sm);
   }
 
   .modal {
@@ -593,6 +666,7 @@ a:hover {
     max-height: 88vh;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
+    border-radius: var(--border-radius-sm);
   }
 
   .modal-actions {
@@ -624,7 +698,7 @@ a:hover {
   .form-control,
   .btn,
   .icon-btn {
-    min-height: 40px; /* Touch-friendly size on mobile */
+    min-height: 38px; /* Touch-friendly size on mobile */
   }
 }
 
@@ -640,6 +714,7 @@ a:hover {
 
   .card {
     padding: 1rem 0.75rem;
+    border-radius: var(--border-radius-sm);
   }
 
   .data-table th,

@@ -19,6 +19,7 @@ export function Settings() {
   const { user } = useAuth();
   const toast = useToast();
   const { triggerRefresh } = useRefresh();
+  const isAdmin = user?.role === 'ADMIN';
 
   // Config state
   const [config, setConfig] = useState(null);
@@ -132,8 +133,6 @@ export function Settings() {
     }
   };
 
-  const isAdmin = user?.role === 'ADMIN';
-
   return (
     <div className="page-container">
       <div className="page-header">
@@ -154,15 +153,16 @@ export function Settings() {
             alignItems: 'center',
             gap: '0.75rem',
             padding: '0.85rem 1.1rem',
-            borderRadius: '4px',
+            borderRadius: 'var(--border-radius-sm)',
             marginBottom: '1.5rem',
             fontSize: '0.9rem',
             fontWeight: '500',
-            background: saveStatus.type === 'success' ? '#ecfdf5' : '#fef2f2',
-            color: saveStatus.type === 'success' ? '#065f46' : '#991b1b',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
+            background: saveStatus.type === 'success' ? 'rgba(30, 85, 109, 0.08)' : 'rgba(212, 85, 41, 0.08)',
+            color: saveStatus.type === 'success' ? 'var(--color-primary-light)' : 'var(--color-danger)',
+            border: `1px solid ${saveStatus.type === 'success' ? 'rgba(30, 85, 109, 0.25)' : 'rgba(212, 85, 41, 0.25)'}`,
+            boxShadow: '0 2px 8px rgba(16, 43, 76, 0.04)'
           }}>
-            {saveStatus.type === 'success' ? <ZenvCheckIcon size={18} color="#10b981" /> : <ZenvAlertIcon size={18} color="#ef4444" />}
+            {saveStatus.type === 'success' ? <ZenvCheckIcon size={18} color="var(--color-primary-light)" /> : <ZenvAlertIcon size={18} color="var(--color-danger)" />}
             <span>{saveStatus.message}</span>
           </div>
         )}
@@ -421,6 +421,7 @@ export function Settings() {
             )}
           </form>
         )}
+
       </div>
     </div>
   );

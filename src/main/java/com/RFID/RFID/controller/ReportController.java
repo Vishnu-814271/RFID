@@ -259,17 +259,10 @@ public class ReportController {
             session.setLate((Boolean) updates.get("isLate"));
         }
 
-        AttendanceSession saved = sessionRepository.save(savedSessionCustom(session, updates));
-        return Envelope.ok(saved);
-    }
-
-    private AttendanceSession savedSessionCustom(AttendanceSession session, Map<String, Object> updates) {
-        // Record why & who in audit trail
+        AttendanceSession saved = sessionRepository.save(session);
         String reason = (String) updates.getOrDefault("correctionReason", "No reason provided");
-        sessionRepository.save(session);
-        
-        // Log in Audit Trail
         auditService.log("SESSION_CORRECTION", "SESSION", session.getSessionId().toString() + " - Reason: " + reason);
-        return session;
+
+        return Envelope.ok(saved);
     }
 }

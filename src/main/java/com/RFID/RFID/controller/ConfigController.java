@@ -5,17 +5,9 @@ import com.RFID.RFID.dto.Envelope;
 import com.RFID.RFID.service.ConfigService;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.HashMap;
 import java.util.Map;
-
-
-import com.RFID.RFID.repository.AttendanceEventRepository;
-import com.RFID.RFID.repository.AttendanceSessionRepository;
-import com.RFID.RFID.repository.AppNotificationRepository;
-import com.RFID.RFID.repository.PersonRepository;
-import com.RFID.RFID.repository.RfidCardRepository;
-import com.RFID.RFID.repository.CardMappingRepository;
-import com.RFID.RFID.service.AuditService;
 
 @RestController
 @RequestMapping("/api/config")
@@ -23,30 +15,9 @@ import com.RFID.RFID.service.AuditService;
 public class ConfigController {
 
     private final ConfigService configService;
-    private final AttendanceSessionRepository sessionRepository;
-    private final AttendanceEventRepository eventRepository;
-    private final AppNotificationRepository notificationRepository;
-    private final PersonRepository personRepository;
-    private final RfidCardRepository cardRepository;
-    private final CardMappingRepository mappingRepository;
-    private final AuditService auditService;
 
-    public ConfigController(ConfigService configService,
-                            AttendanceSessionRepository sessionRepository,
-                            AttendanceEventRepository eventRepository,
-                            AppNotificationRepository notificationRepository,
-                            PersonRepository personRepository,
-                            RfidCardRepository cardRepository,
-                            CardMappingRepository mappingRepository,
-                            AuditService auditService) {
+    public ConfigController(ConfigService configService) {
         this.configService = configService;
-        this.sessionRepository = sessionRepository;
-        this.eventRepository = eventRepository;
-        this.notificationRepository = notificationRepository;
-        this.personRepository = personRepository;
-        this.cardRepository = cardRepository;
-        this.mappingRepository = mappingRepository;
-        this.auditService = auditService;
     }
 
     @GetMapping
@@ -89,18 +60,5 @@ public class ConfigController {
         }
 
         return getConfig();
-    }
-
-    @PostMapping("/purge-test-data")
-    @PreAuthorize("hasRole('ADMIN')")
-    public Envelope purgeTestData() {
-        sessionRepository.deleteAll();
-        eventRepository.deleteAll();
-        mappingRepository.deleteAll();
-        cardRepository.deleteAll();
-        personRepository.deleteAll();
-        notificationRepository.deleteAll();
-        auditService.logSystemAction("PURGE_TEST_DATA", "SYSTEM", "All test people, cards, mappings, attendance sessions, tap events, and notifications purged.");
-        return Envelope.ok("All test people, cards, mappings, attendance sessions, tap logs, and notifications purged successfully.");
     }
 }

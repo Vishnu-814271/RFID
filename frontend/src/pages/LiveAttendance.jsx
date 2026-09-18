@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { ZenvRfidScanIcon, ZenvSearchIcon, ZenvRefreshIcon } from '../components/ZenvIcons';
+import React, { useState, useCallback } from 'react';
+import { ZenvSearchIcon } from '../components/ZenvIcons';
 import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import { useAutoRefresh } from '../context/RefreshContext';
 import { parseIST, formatTime } from '../utils/dateUtils';
+import './LiveAttendance.css';
 
 export function LiveAttendance() {
   const [liveData, setLiveData] = useState({ 
@@ -16,7 +17,7 @@ export function LiveAttendance() {
   });
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [attendanceFilter, setAttendanceFilter] = useState('ALL'); // 'ALL' | 'PRESENT' | 'ABSENT'
+  const [attendanceFilter, setAttendanceFilter] = useState('ALL'); // 'ALL' | 'IN_OFFICE' | 'PRESENT' | 'ABSENT'
   const [memberTypeFilter, setMemberTypeFilter] = useState('ALL');
   const { user } = useAuth();
 
@@ -45,6 +46,7 @@ export function LiveAttendance() {
   const absentMembers = liveData.absentMembers || [];
   const presentCount = liveData.presentCount ?? liveData.headcount ?? presentMembers.length;
   const absentCount = liveData.absentCount ?? absentMembers.length;
+  const currentlyInsideCount = liveData.currentlyInside ?? presentMembers.filter(m => !m.isCheckedOut && m.status === 'OPEN').length;
 
   // Sort present members: OPEN sessions first, then by check-in time desc
   const sortedPresentMembers = [...presentMembers].sort((a, b) => {
@@ -56,13 +58,17 @@ export function LiveAttendance() {
     return new Date(b.checkInAt || 0) - new Date(a.checkInAt || 0);
   });
 
+  const inOfficeMembers = sortedPresentMembers.filter(m => !m.isCheckedOut && m.status === 'OPEN');
+
   // Sort absent members: alphabetically by name
   const sortedAbsentMembers = [...absentMembers].sort((a, b) => 
     (a.fullName || '').localeCompare(b.fullName || '')
   );
 
   // Selected attendance records list
-  const recordsInAttendance = attendanceFilter === 'PRESENT'
+  const recordsInAttendance = attendanceFilter === 'IN_OFFICE'
+    ? inOfficeMembers
+    : attendanceFilter === 'PRESENT'
     ? sortedPresentMembers
     : attendanceFilter === 'ABSENT'
     ? sortedAbsentMembers
@@ -95,69 +101,60 @@ export function LiveAttendance() {
           <p className="text-muted">Real-time attendance tracking of presents and absents today.</p>
         </div>
 
-        {/* Live Attendance Metric Displays (Present Today & Absent Today) */}
-        <div style={{ display: 'flex', gap: '0.85rem', flexWrap: 'wrap' }}>
-          {/* Present Today Widget */}
+        {/* Live Attendance Metric Displays (ZENV Brand Colors & Sharp 2px Radii) */}
+        <div className="live-metrics-header">
+          {/* In Office Now Widget - ZenV Accent Blue (#193e65) */}
           <div
+            className={`live-metric-card card-in-office ${attendanceFilter === 'IN_OFFICE' ? 'active' : ''}`}
+            onClick={() => setAttendanceFilter(prev => prev === 'IN_OFFICE' ? 'ALL' : 'IN_OFFICE')}
+            title="Click to filter In Office personnel"
+          >
+            <div className="metric-tag">
+              In Office Now
+            </div>
+            <div className="metric-val-row">
+              <span className="metric-num">
+                {currentlyInsideCount}
+              </span>
+              <span className="metric-subtext">
+                active inside
+              </span>
+            </div>
+          </div>
+
+          {/* Present Today Widget - ZenV Teal (#1e556d) */}
+          <div
+            className={`live-metric-card card-present ${attendanceFilter === 'PRESENT' ? 'active' : ''}`}
             onClick={() => setAttendanceFilter(prev => prev === 'PRESENT' ? 'ALL' : 'PRESENT')}
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'center',
-              backgroundColor: attendanceFilter === 'PRESENT' ? 'rgba(16, 185, 129, 0.08)' : '#ffffff',
-              border: attendanceFilter === 'PRESENT' ? '2px solid #10b981' : '1px solid #e2e8f0',
-              borderRight: '4px solid #10b981',
-              borderRadius: '8px',
-              padding: '0.75rem 1.4rem',
-              boxShadow: '0 4px 14px rgba(16, 43, 76, 0.06)',
-              cursor: 'pointer',
-              userSelect: 'none',
-              transition: 'all 0.15s ease',
-              minWidth: '170px'
-            }}
             title="Click to filter Present personnel"
           >
-            <div style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#15803d', marginBottom: '0.2rem' }}>
+            <div className="metric-tag">
               Present Today
             </div>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem' }}>
-              <span style={{ fontSize: '1.85rem', fontWeight: 800, color: '#166534', lineHeight: 1, letterSpacing: '-0.02em' }}>
+            <div className="metric-val-row">
+              <span className="metric-num">
                 {presentCount}
               </span>
-              <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 500 }}>
+              <span className="metric-subtext">
                 checked in
               </span>
             </div>
           </div>
 
-          {/* Absent Today Widget */}
+          {/* Absent Today Widget - ZenV Terracotta (#D45529) */}
           <div
+            className={`live-metric-card card-absent ${attendanceFilter === 'ABSENT' ? 'active' : ''}`}
             onClick={() => setAttendanceFilter(prev => prev === 'ABSENT' ? 'ALL' : 'ABSENT')}
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'center',
-              backgroundColor: attendanceFilter === 'ABSENT' ? 'rgba(239, 68, 68, 0.08)' : '#ffffff',
-              border: attendanceFilter === 'ABSENT' ? '2px solid #ef4444' : '1px solid #e2e8f0',
-              borderRight: '4px solid #ef4444',
-              borderRadius: '8px',
-              padding: '0.75rem 1.4rem',
-              boxShadow: '0 4px 14px rgba(16, 43, 76, 0.06)',
-              cursor: 'pointer',
-              userSelect: 'none',
-              transition: 'all 0.15s ease',
-              minWidth: '170px'
-            }}
             title="Click to filter Absent personnel"
           >
-            <div style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#b91c1c', marginBottom: '0.2rem' }}>
+            <div className="metric-tag">
               Absent Today
             </div>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem' }}>
-              <span style={{ fontSize: '1.85rem', fontWeight: 800, color: '#991b1b', lineHeight: 1, letterSpacing: '-0.02em' }}>
+            <div className="metric-val-row">
+              <span className="metric-num">
                 {absentCount}
               </span>
-              <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 500 }}>
+              <span className="metric-subtext">
                 not checked in
               </span>
             </div>
@@ -189,6 +186,7 @@ export function LiveAttendance() {
                 onChange={(e) => setAttendanceFilter(e.target.value)}
               >
                 <option value="ALL">All ({presentCount + absentCount})</option>
+                <option value="IN_OFFICE">In Office ({currentlyInsideCount})</option>
                 <option value="PRESENT">Present Today ({presentCount})</option>
                 <option value="ABSENT">Absent Today ({absentCount})</option>
               </select>
@@ -260,39 +258,25 @@ export function LiveAttendance() {
                       key={i}
                       style={
                         isAbsent 
-                          ? { backgroundColor: 'rgba(239, 68, 68, 0.02)' }
+                          ? { backgroundColor: 'rgba(212, 85, 41, 0.02)' }
                           : {}
                       }
                     >
                       <td>
-                        <span className="ext-id-badge">
+                        <span className="badge-zenv-extid">
                           {m.externalRef || `EXT-${String(m.personId).padStart(4, '0')}`}
                         </span>
                       </td>
-                      <td className="font-medium">{m.fullName}</td>
-                      <td>{m.memberType}</td>
-                      <td>{m.groupLabel}</td>
+                      <td className="font-medium">{m.fullName || '-'}</td>
+                      <td>{m.memberType ? (m.memberType.charAt(0) + m.memberType.slice(1).toLowerCase()) : 'Employee'}</td>
+                      <td>{m.groupLabel || 'N/A'}</td>
                       <td>
                         {isAbsent ? (
-                          <span className="badge" style={{ 
-                            background: 'rgba(239, 68, 68, 0.12)', 
-                            color: '#dc2626', 
-                            border: '1px solid rgba(239, 68, 68, 0.28)',
-                            fontWeight: 600,
-                            padding: '2px 8px',
-                            fontSize: '0.74rem'
-                          }}>
+                          <span className="badge-zenv-absent">
                             Absent
                           </span>
                         ) : (
-                          <span className="badge" style={{ 
-                            background: 'rgba(16, 185, 129, 0.12)', 
-                            color: '#059669', 
-                            border: '1px solid rgba(16, 185, 129, 0.28)',
-                            fontWeight: 600,
-                            padding: '2px 8px',
-                            fontSize: '0.74rem'
-                          }}>
+                          <span className="badge-zenv-present">
                             Present
                           </span>
                         )}
@@ -336,3 +320,4 @@ export function LiveAttendance() {
     </div>
   );
 }
+

@@ -158,8 +158,8 @@ public class ReportingService {
     /**
      * Calculates absent dates for a person in the given range.
      * A date is considered absent if:
-     *   a) It is a working day AND after the person was created AND the person has no session, OR
-     *   b) It is a working day AND the person tapped in but worked less than minWorkingMinutes (under-hours).
+     *   It is an active working day AND after the person was registered AND the person has no recorded session.
+     * Partial / under-hours days are separately tracked under underHoursDays.
      */
     private List<String> calculateAbsentDates(Person person, LocalDate start, LocalDate end,
                                               Set<String> workingDays, List<AttendanceSession> sessions,
@@ -168,28 +168,26 @@ public class ReportingService {
             return Collections.emptyList(); // Inactive / Completed members don't accumulate absences
         }
 
-        // Days with sessions but above the minimum threshold = truly present
+        // Days where the person checked in and attended work (present or partial)
         Set<LocalDate> sessionDates = sessions.stream()
                 .map(AttendanceSession::getWorkDate)
                 .collect(Collectors.toSet());
 
-        Set<LocalDate> fullyPresentDates = sessionDates.stream()
-                .filter(d -> !underHoursDates.contains(d))
-                .collect(Collectors.toSet());
-
         LocalDate today = LocalDate.now();
         LocalDate effectiveEnd = end.isBefore(today) ? end : today;
+        LocalDate personCreatedDate = (person.getCreatedAt() != null) ? person.getCreatedAt().toLocalDate() : start;
+        LocalDate effectiveStart = start.isBefore(personCreatedDate) ? personCreatedDate : start;
 
-        if (start.isAfter(effectiveEnd)) {
+        if (effectiveStart.isAfter(effectiveEnd)) {
             return Collections.emptyList();
         }
 
         List<String> absentDates = new ArrayList<>();
-        for (LocalDate date = start; !date.isAfter(effectiveEnd); date = date.plusDays(1)) {
+        for (LocalDate date = effectiveStart; !date.isAfter(effectiveEnd); date = date.plusDays(1)) {
             if (date.equals(today) && hasOpenSessionToday) {
                 continue; // Currently present today
             }
-            if (isWorkingDay(date.getDayOfWeek(), workingDays) && !fullyPresentDates.contains(date)) {
+            if (isWorkingDay(date.getDayOfWeek(), workingDays) && !sessionDates.contains(date)) {
                 absentDates.add(date.toString());
             }
         }
@@ -214,18 +212,24 @@ public class ReportingService {
         try (PrintWriter writer = new PrintWriter(out)) {
             writer.println("Person ID,Student/Member ID,Full Name,Member Type,Status,Group,Days Present,Total Hours,Late Count,Missed Checkouts,Absent Days");
             for (Map<String, Object> row : data) {
+                String externalRef = Objects.toString(row.get("externalRef"), "").replace("\"", "\"\"");
+                String fullName = Objects.toString(row.get("fullName"), "").replace("\"", "\"\"");
+                String groupLabelVal = Objects.toString(row.get("groupLabel"), "").replace("\"", "\"\"");
+                String memberTypeVal = Objects.toString(row.get("memberType"), "");
+                String statusVal = Objects.toString(row.get("status"), "");
+
                 writer.printf("%s,\"%s\",\"%s\",%s,%s,\"%s\",%s,%s,%s,%s,%s%n",
-                        row.get("personId"),
-                        row.get("externalRef").toString().replace("\"", "\"\""),
-                        row.get("fullName").toString().replace("\"", "\"\""),
-                        row.get("memberType"),
-                        row.get("status"),
-                        row.get("groupLabel").toString().replace("\"", "\"\""),
-                        row.get("daysPresent"),
-                        row.get("totalHours"),
-                        row.get("lateCount"),
-                        row.get("missedCheckouts"),
-                        row.get("absentDays")
+                        Objects.toString(row.get("personId"), ""),
+                        externalRef,
+                        fullName,
+                        memberTypeVal,
+                        statusVal,
+                        groupLabelVal,
+                        Objects.toString(row.get("daysPresent"), "0"),
+                        Objects.toString(row.get("totalHours"), "0.0"),
+                        Objects.toString(row.get("lateCount"), "0"),
+                        Objects.toString(row.get("missedCheckouts"), "0"),
+                        Objects.toString(row.get("absentDays"), "0")
                 );
             }
             writer.flush();

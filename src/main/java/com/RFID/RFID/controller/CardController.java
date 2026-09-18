@@ -130,7 +130,7 @@ public class CardController {
             }
 
             if (newStatus == CardStatus.AVAILABLE && card.getStatus() == CardStatus.DEACTIVATED) {
-                if (currentUser.getRole() != Role.ADMIN) {
+                if (currentUser == null || currentUser.getRole() != Role.ADMIN) {
                     throw new RuntimeException("Only Admins can reactivate DEACTIVATED cards to AVAILABLE.");
                 }
             }

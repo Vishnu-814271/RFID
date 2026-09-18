@@ -14,10 +14,11 @@ target/
 .sts4-cache
 
 ### IntelliJ IDEA ###
-.idea
+.idea/
 *.iws
 *.iml
 *.ipr
+out/
 
 ### NetBeans ###
 /nbproject/private/
@@ -29,40 +30,81 @@ build/
 !**/src/main/**/build/
 !**/src/test/**/build/
 
-### VS Code ###
+### VS Code & Editors ###
 .vscode/
 .kilo/
 .history/
+.fleet/
 
-### Local Data & Build ###
+### Local Data, Databases & Test Files ###
 data/
 *.mv.db
 *.trace.db
+*.lock.db
+test-data.sql
+test-data-*.sql
+*.sql.bak
+sample-data/
+test-results/
+surefire-reports/
+*.dump
+*.dumpstream
+
+### Test Source Files (Local Only, Never Sent to GitHub) ###
+src/test/
+**/src/test/
+*Test.java
+*Tests.java
+*Test*.java
+test/
+tests/
+
+
+### Logs & Diagnostics ###
 *.log
 logs/
+backend.log
+frontend.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+hs_err_pid*.log
+replay_pid*.log
 coverage/
 .nyc_output/
 .cache/
-*.class
-hs_err_pid*.log
-replay_pid*.log
+
+### Frontend Build & Dependencies ###
 node_modules/
 frontend/node_modules/
+dist/
 frontend/dist/
 frontend/.vite/
+frontend/build/
+
+### Environment & Secrets ###
 .env
 .env.*
 !.env.example
-docker-compose.override.yml
-test-data.sql
 token.json
+*.key
+*.pem
+*.pfx
+
+### Scripts & Scratch ###
 simulate_tap.ps1
 tap_in.ps1
 tap_out.ps1
 *.ps1
+*.sh
+scratch/
+.system_generated/
+docker-compose.override.yml
 
 ### OS metadata ###
 .DS_Store
 Thumbs.db
 desktop.ini
+
 

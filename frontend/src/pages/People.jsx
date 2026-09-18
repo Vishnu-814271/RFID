@@ -53,8 +53,11 @@ export function People() {
     externalRef: '',
     groupLabel: '',
     email: '',
-    phone: ''
+    phone: '',
+    cardId: ''
   });
+
+  const [isAddPreviewMode, setIsAddPreviewMode] = useState(false);
 
   const [editFormData, setEditFormData] = useState({
     fullName: '',
@@ -64,6 +67,95 @@ export function People() {
     email: '',
     phone: ''
   });
+
+  // Auto-generate the next sequential ID based on memberType
+  const generateNextExternalRef = useCallback((memberType, peopleList = []) => {
+    const prefix = memberType === 'STUDENT' ? 'STU-' : 'EMP-';
+    const existingNumbers = [];
+    const existingRefsLower = new Set(
+      (peopleList || []).map(p => (p.externalRef || '').trim().toLowerCase()).filter(Boolean)
+    );
+
+    (peopleList || []).forEach(p => {
+      const ref = (p.externalRef || '').trim();
+      if (!ref) return;
+
+      const isStudentRef = /^STUD?[-_]?\d+/i.test(ref);
+      const isEmployeeRef = /^EMP[-_]?\d+/i.test(ref);
+
+      if (memberType === 'STUDENT' && isStudentRef) {
+        const match = ref.match(/^STUD?[-_]?(\d+)/i);
+        if (match && match[1]) {
+          const num = parseInt(match[1], 10);
+          if (!isNaN(num)) existingNumbers.push(num);
+        }
+      } else if (memberType === 'EMPLOYEE' && isEmployeeRef) {
+        const match = ref.match(/^EMP[-_]?(\d+)/i);
+        if (match && match[1]) {
+          const num = parseInt(match[1], 10);
+          if (!isNaN(num)) existingNumbers.push(num);
+        }
+      }
+    });
+
+    let nextNum = existingNumbers.length > 0 ? Math.max(...existingNumbers) + 1 : 101;
+
+    let candidate = `${prefix}${String(nextNum).padStart(4, '0')}`;
+    while (existingRefsLower.has(candidate.toLowerCase())) {
+      nextNum++;
+      candidate = `${prefix}${String(nextNum).padStart(4, '0')}`;
+    }
+
+    return candidate;
+  }, []);
+
+  const openAddModal = async () => {
+    const defaultType = 'EMPLOYEE';
+    const nextId = generateNextExternalRef(defaultType, people);
+    setFormData({
+      fullName: '',
+      memberType: defaultType,
+      externalRef: nextId,
+      groupLabel: '',
+      email: '',
+      phone: '',
+      cardId: ''
+    });
+    setIsAddPreviewMode(false);
+    setError('');
+    setShowModal(true);
+
+    try {
+      const cards = await api.get('/cards');
+      const available = (cards || []).filter(c => c.status === 'AVAILABLE');
+      setAvailableCards(available);
+    } catch (err) {
+      console.error("Failed to load available cards", err);
+    }
+  };
+
+  const handleMemberTypeChange = (newType) => {
+    const nextId = generateNextExternalRef(newType, people);
+    setFormData(prev => ({
+      ...prev,
+      memberType: newType,
+      externalRef: nextId
+    }));
+  };
+
+  const handleProceedToPreview = (e) => {
+    e.preventDefault();
+    if (!formData.fullName.trim()) {
+      setError("Please enter the person's full name.");
+      return;
+    }
+    if (!formData.externalRef.trim()) {
+      setError("Please enter or generate a valid ID.");
+      return;
+    }
+    setError('');
+    setIsAddPreviewMode(true);
+  };
 
   const fetchPeople = useCallback(async () => {
     if (user?.passwordChangeRequired) return;
@@ -80,22 +172,50 @@ export function People() {
   useAutoRefresh(fetchPeople, { intervalMs: 10000 });
 
   const handleAddPerson = async (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
     setError('');
     setIsSubmitting(true);
     try {
-      await api.post('/people', formData);
+      const personPayload = {
+        fullName: formData.fullName.trim(),
+        memberType: formData.memberType,
+        externalRef: formData.externalRef ? formData.externalRef.trim() : null,
+        groupLabel: formData.groupLabel ? formData.groupLabel.trim() : null,
+        email: formData.email ? formData.email.trim() : null,
+        phone: formData.phone ? formData.phone.trim() : null
+      };
+
+      const newPerson = await api.post('/people', personPayload);
+
+      // If a card was selected in the form, map it immediately
+      if (formData.cardId && newPerson?.personId) {
+        try {
+          await api.post('/mappings', {
+            personId: newPerson.personId,
+            cardId: parseInt(formData.cardId, 10)
+          });
+          const assignedCard = availableCards.find(c => String(c.cardId) === String(formData.cardId));
+          toast.success(`Person ${newPerson.fullName || ''} registered & card ${assignedCard ? assignedCard.cardUid : ''} assigned successfully!`);
+        } catch (mapErr) {
+          toast.warning(`Person registered, but card assignment failed: ${mapErr?.message || mapErr}`);
+        }
+      } else {
+        toast.success(`Person ${newPerson.fullName || ''} registered successfully!`);
+      }
+
       setShowModal(false);
+      setIsAddPreviewMode(false);
       setFormData({
         fullName: '',
         memberType: 'EMPLOYEE',
         externalRef: '',
         groupLabel: '',
         email: '',
-        phone: ''
+        phone: '',
+        cardId: ''
       });
-      toast.success('Person registered successfully!');
       triggerRefresh();
+      fetchPeople();
     } catch (err) {
       setError(err?.message || 'Failed to add person');
       toast.error(err?.message || 'Failed to add person');
@@ -105,6 +225,9 @@ export function People() {
   };
 
   const openEditModal = (person) => {
+    if (person.status === 'COMPLETED') {
+      return toast.warning("This candidate is marked as COMPLETED. All actions and edits are disabled.");
+    }
     setSelectedPerson(person);
     setEditFormData({
       fullName: person.fullName || '',
@@ -135,6 +258,9 @@ export function People() {
   const handleToggleStatus = async (personId, currentStatus) => {
     if (!isManagerOrAdmin) {
       return toast.warning("Only Managers and Admins can update personnel status.");
+    }
+    if (currentStatus === 'COMPLETED') {
+      return toast.warning("Cannot change status of a completed person. All actions are disabled.");
     }
     try {
       const nextStatus = currentStatus === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
@@ -227,6 +353,17 @@ export function People() {
   const [memberTypeFilter, setMemberTypeFilter] = useState('ALL');
   const [statusFilter, setStatusFilter] = useState('ACTIVE'); // Default: Active
   const [cardFilter, setCardFilter] = useState('ALL'); // 'ALL' | 'ASSIGNED' | 'UNASSIGNED'
+  const [sortField, setSortField] = useState('personId'); // Default sorted by ID
+  const [sortOrder, setSortOrder] = useState('asc'); // 'asc' | 'desc'
+
+  const handleSort = (field) => {
+    if (sortField === field) {
+      setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortOrder('asc');
+    }
+  };
 
   // Extract unique member types (EMPLOYEE & STUDENT only)
   const uniqueMemberTypes = Array.from(new Set([
@@ -263,6 +400,25 @@ export function People() {
     return matchesSearch && matchesType && matchesStatus && matchesCard;
   });
 
+  const sortedPeople = [...filteredPeople].sort((a, b) => {
+    let aVal = a[sortField];
+    let bVal = b[sortField];
+    if (sortField === 'personId') {
+      const aNum = Number(a.personId) || 0;
+      const bNum = Number(b.personId) || 0;
+      return sortOrder === 'asc' ? aNum - bNum : bNum - aNum;
+    }
+    if (sortField === 'externalRef') {
+      const aRef = (a.externalRef || `EXT-${String(a.personId).padStart(4, '0')}`).toLowerCase();
+      const bRef = (b.externalRef || `EXT-${String(b.personId).padStart(4, '0')}`).toLowerCase();
+      return sortOrder === 'asc' ? aRef.localeCompare(bRef) : bRef.localeCompare(aRef);
+    }
+    if (typeof aVal === 'string') {
+      return sortOrder === 'asc' ? (aVal || '').localeCompare(bVal || '') : (bVal || '').localeCompare(aVal || '');
+    }
+    return sortOrder === 'asc' ? (aVal > bVal ? 1 : -1) : (aVal < bVal ? 1 : -1);
+  });
+
   return (
     <div className="page-container">
       <div className="page-header">
@@ -270,11 +426,7 @@ export function People() {
           <h1>People Management</h1>
           <p className="text-muted">Manage employees and students.</p>
         </div>
-        <button className="btn btn-primary" onClick={() => {
-          setFormData({ fullName: '', memberType: 'EMPLOYEE', externalRef: '', groupLabel: '', email: '', phone: '' });
-          setError('');
-          setShowModal(true);
-        }} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+        <button className="btn btn-primary" onClick={openAddModal} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
           <ZenvPlusIcon size={18} />
           <span>Add Person</span>
         </button>
@@ -364,9 +516,27 @@ export function People() {
               </colgroup>
               <thead>
                 <tr>
-                  <th>#</th>
-                  <th>Name</th>
-                  <th>ID</th>
+                  <th 
+                    onClick={() => handleSort('personId')} 
+                    style={{ cursor: 'pointer', userSelect: 'none' }}
+                    title="Click to sort by System ID"
+                  >
+                    # {sortField === 'personId' ? (sortOrder === 'asc' ? '▲' : '▼') : <span style={{ opacity: 0.35, fontSize: '0.75rem' }}>↕</span>}
+                  </th>
+                  <th 
+                    onClick={() => handleSort('fullName')} 
+                    style={{ cursor: 'pointer', userSelect: 'none' }}
+                    title="Click to sort by Full Name"
+                  >
+                    Name {sortField === 'fullName' ? (sortOrder === 'asc' ? '▲' : '▼') : <span style={{ opacity: 0.35, fontSize: '0.75rem' }}>↕</span>}
+                  </th>
+                  <th 
+                    onClick={() => handleSort('externalRef')} 
+                    style={{ cursor: 'pointer', userSelect: 'none' }}
+                    title="Click to sort by Member / Employee ID"
+                  >
+                    ID {sortField === 'externalRef' ? (sortOrder === 'asc' ? '▲' : '▼') : <span style={{ opacity: 0.35, fontSize: '0.75rem' }}>↕</span>}
+                  </th>
                   <th>Type</th>
                   <th>Team</th>
                   <th>Contact Info</th>
@@ -376,8 +546,8 @@ export function People() {
                 </tr>
               </thead>
               <tbody>
-                {filteredPeople.map((person, idx) => {
-                  const isUpward = idx >= filteredPeople.length - 2 && filteredPeople.length > 2;
+                {sortedPeople.map((person, idx) => {
+                  const isUpward = idx >= sortedPeople.length - 2 && sortedPeople.length > 2;
                   const isMenuOpen = activeDropdownId === person.personId;
 
                   return (
@@ -409,7 +579,7 @@ export function People() {
                           {person.memberType || 'EMPLOYEE'}
                         </span>
                       </td>
-                      <td>{person.groupLabel}</td>
+                      <td>{person.groupLabel && person.groupLabel.trim() !== '' ? person.groupLabel : 'N/A'}</td>
                       <td>
                         <div className="contact-info-cell">
                           <span className="contact-email" title={person.email}>{person.email || '-'}</span>
@@ -452,106 +622,126 @@ export function People() {
                         </span>
                       </td>
                       <td style={{ textAlign: 'center', overflow: 'visible' }}>
-                        <div className="actions-dropdown-container">
-                          <button
-                            type="button"
-                            className={`actions-dropdown-btn ${isMenuOpen ? 'active' : ''}`}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setActiveDropdownId(isMenuOpen ? null : person.personId);
+                        {person.status === 'COMPLETED' ? (
+                          <span 
+                            className="badge" 
+                            style={{ 
+                              background: 'var(--color-bg-subtle)', 
+                              color: 'var(--color-text-muted)', 
+                              border: '1px solid var(--color-border)', 
+                              fontSize: '0.72rem', 
+                              fontWeight: 600,
+                              padding: '4px 10px',
+                              cursor: 'not-allowed',
+                              userSelect: 'none',
+                              display: 'inline-block'
                             }}
-                            title="Actions menu"
+                            title="Tenure is completed. All actions are disabled."
                           >
-                            <span>Actions</span>
-                            <span style={{ fontSize: '0.62rem', transform: isMenuOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s ease' }}>
-                              ▼
-                            </span>
-                          </button>
-
-                          {isMenuOpen && (
-                            <div
-                              className={`actions-dropdown-menu ${isUpward ? 'open-upward' : ''}`}
-                              onClick={(e) => e.stopPropagation()}
+                            Disabled
+                          </span>
+                        ) : (
+                          <div className="actions-dropdown-container">
+                            <button
+                              type="button"
+                              className={`actions-dropdown-btn ${isMenuOpen ? 'active' : ''}`}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setActiveDropdownId(isMenuOpen ? null : person.personId);
+                              }}
+                              title="Actions menu"
                             >
-                              {/* Action 1: Assign or Release Card */}
-                              {person.assignedCardUid ? (
-                                <button
-                                  type="button"
-                                  className="actions-dropdown-item item-danger"
-                                  onClick={() => {
-                                    setActiveDropdownId(null);
-                                    handleReleaseCard(person);
-                                  }}
-                                >
-                                  <X size={15} />
-                                  <span>Release Card</span>
-                                </button>
-                              ) : (
+                              <span>Actions</span>
+                              <span style={{ fontSize: '0.62rem', transform: isMenuOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s ease' }}>
+                                ▼
+                              </span>
+                            </button>
+
+                            {isMenuOpen && (
+                              <div
+                                className={`actions-dropdown-menu ${isUpward ? 'open-upward' : ''}`}
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                {/* Action 1: Assign or Release Card */}
+                                {person.assignedCardUid ? (
+                                  <button
+                                    type="button"
+                                    className="actions-dropdown-item item-danger"
+                                    onClick={() => {
+                                      setActiveDropdownId(null);
+                                      handleReleaseCard(person);
+                                    }}
+                                  >
+                                    <X size={15} />
+                                    <span>Release Card</span>
+                                  </button>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    className="actions-dropdown-item item-primary"
+                                    disabled={person.status !== 'ACTIVE'}
+                                    style={person.status !== 'ACTIVE' ? { opacity: 0.45, cursor: 'not-allowed' } : {}}
+                                    onClick={() => {
+                                      if (person.status === 'ACTIVE') {
+                                        setActiveDropdownId(null);
+                                        openAssignModal(person);
+                                      }
+                                    }}
+                                    title={person.status !== 'ACTIVE' ? "Cannot assign cards to inactive or completed members" : "Assign Card"}
+                                  >
+                                    <ZenvIdCardIcon size={15} />
+                                    <span>Assign Card</span>
+                                  </button>
+                                )}
+
+                                {/* Action 2: Edit Person Details */}
                                 <button
                                   type="button"
                                   className="actions-dropdown-item item-primary"
-                                  disabled={person.status !== 'ACTIVE'}
-                                  style={person.status !== 'ACTIVE' ? { opacity: 0.45, cursor: 'not-allowed' } : {}}
                                   onClick={() => {
-                                    if (person.status === 'ACTIVE') {
-                                      setActiveDropdownId(null);
-                                      openAssignModal(person);
-                                    }
+                                    setActiveDropdownId(null);
+                                    openEditModal(person);
                                   }}
-                                  title={person.status !== 'ACTIVE' ? "Cannot assign cards to inactive or completed members" : "Assign Card"}
                                 >
-                                  <ZenvIdCardIcon size={15} />
-                                  <span>Assign Card</span>
+                                  <ZenvEditIcon size={15} />
+                                  <span>Edit Details</span>
                                 </button>
-                              )}
 
-                              {/* Action 2: Edit Person Details */}
-                              <button
-                                type="button"
-                                className="actions-dropdown-item item-primary"
-                                onClick={() => {
-                                  setActiveDropdownId(null);
-                                  openEditModal(person);
-                                }}
-                              >
-                                <ZenvEditIcon size={15} />
-                                <span>Edit Details</span>
-                              </button>
+                                {isManagerOrAdmin && person.status !== 'COMPLETED' && (
+                                  <>
+                                    <div className="actions-dropdown-divider" />
 
-                              {isManagerOrAdmin && person.status !== 'COMPLETED' && (
-                                <>
-                                  <div className="actions-dropdown-divider" />
+                                    {/* Action 3: Toggle Status (Deactivate / Activate) */}
+                                    <button
+                                      type="button"
+                                      className={`actions-dropdown-item ${person.status === 'ACTIVE' ? 'item-danger' : 'item-success'}`}
+                                      onClick={() => {
+                                        setActiveDropdownId(null);
+                                        handleToggleStatus(person.personId, person.status);
+                                      }}
+                                    >
+                                      {person.status === 'ACTIVE' ? <ZenvBanIcon size={15} /> : <ZenvCheckIcon size={15} />}
+                                      <span>{person.status === 'ACTIVE' ? 'Deactivate' : 'Activate'}</span>
+                                    </button>
 
-                                  {/* Action 3: Toggle Status (Deactivate / Activate) */}
-                                  <button
-                                    type="button"
-                                    className={`actions-dropdown-item ${person.status === 'ACTIVE' ? 'item-danger' : 'item-success'}`}
-                                    onClick={() => {
-                                      setActiveDropdownId(null);
-                                      handleToggleStatus(person.personId, person.status);
-                                    }}
-                                  >
-                                    {person.status === 'ACTIVE' ? <ZenvBanIcon size={15} /> : <ZenvCheckIcon size={15} />}
-                                    <span>{person.status === 'ACTIVE' ? 'Deactivate' : 'Activate'}</span>
-                                  </button>
-
-                                  {/* Action 4: Mark Membership Completed */}
-                                  <button
-                                    type="button"
-                                    className="actions-dropdown-item item-warning"
-                                    onClick={() => {
-                                      setActiveDropdownId(null);
-                                      handleMarkCompleted(person);
-                                    }}
-                                  >
-                                    <ZenvCheckIcon size={15} />
-                                    <span>Mark Completed</span>
-                                  </button>
-                                </>
-                              )}
-                            </div>
-                          )}
-                        </div>
+                                    {/* Action 4: Mark Membership Completed */}
+                                    <button
+                                      type="button"
+                                      className="actions-dropdown-item item-warning"
+                                      onClick={() => {
+                                        setActiveDropdownId(null);
+                                        handleMarkCompleted(person);
+                                      }}
+                                    >
+                                      <ZenvCheckIcon size={15} />
+                                      <span>Mark Completed</span>
+                                    </button>
+                                  </>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </td>
                     </tr>
                   );
@@ -568,92 +758,282 @@ export function People() {
       </div>
 
       {showModal && (
-        <div className="modal-overlay">
-          <div className="modal">
+        <div
+          className="modal-overlay"
+          onClick={(e) => {
+            if (e.target === e.currentTarget && !isSubmitting) {
+              setShowModal(false);
+              setIsAddPreviewMode(false);
+            }
+          }}
+        >
+          <div className="modal" style={{ maxWidth: isAddPreviewMode ? '560px' : '520px' }}>
             <div className="modal-header">
-              <h2 className="modal-title">Add Person</h2>
-              <button className="modal-close" onClick={() => setShowModal(false)}><X size={20} /></button>
+              <h2 className="modal-title">
+                {isAddPreviewMode ? 'Preview & Confirm Person' : 'Add Person'}
+              </h2>
+              <button
+                type="button"
+                className="modal-close"
+                onClick={() => { setShowModal(false); setIsAddPreviewMode(false); }}
+                title="Close modal"
+                aria-label="Close modal"
+                disabled={isSubmitting}
+              >
+                <X size={20} />
+              </button>
             </div>
             {error && <div className="login-error">{error}</div>}
-            <form onSubmit={handleAddPerson}>
-              <div className="form-group">
-                <label className="form-label">Full Name</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  value={formData.fullName}
-                  onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                  required
-                />
+
+            {/* Step Indicator */}
+            <div className="person-preview-stepper" style={{ margin: '0.5rem 0 1rem 0' }}>
+              <div className={`person-preview-step ${!isAddPreviewMode ? 'active' : ''}`}>
+                <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '18px', height: '18px', borderRadius: '50%', backgroundColor: !isAddPreviewMode ? 'var(--color-primary)' : 'rgba(16,43,76,0.15)', color: !isAddPreviewMode ? '#fff' : 'inherit', fontSize: '0.7rem', fontWeight: 700 }}>1</span>
+                <span>Enter Details</span>
               </div>
-              <div className="form-group">
-                <label className="form-label">Member Type</label>
-                <select
-                  className="form-control"
-                  value={formData.memberType}
-                  onChange={(e) => setFormData({ ...formData, memberType: e.target.value })}
-                >
-                  <option value="EMPLOYEE">Employee</option>
-                  <option value="STUDENT">Student</option>
-                </select>
+              <span style={{ color: 'var(--color-border)', fontWeight: 700 }}>→</span>
+              <div className={`person-preview-step ${isAddPreviewMode ? 'active' : ''}`}>
+                <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '18px', height: '18px', borderRadius: '50%', backgroundColor: isAddPreviewMode ? 'var(--color-primary)' : 'rgba(16,43,76,0.15)', color: isAddPreviewMode ? '#fff' : 'inherit', fontSize: '0.7rem', fontWeight: 700 }}>2</span>
+                <span>Preview & Confirm</span>
               </div>
-              <div className="form-group">
-                <label className="form-label">
-                  {formData.memberType === 'STUDENT' ? 'ID *' : 'ID'}
-                </label>
-                <input
-                  type="text"
-                  className="form-control"
-                  value={formData.externalRef}
-                  onChange={(e) => setFormData({ ...formData, externalRef: e.target.value })}
-                  placeholder={formData.memberType === 'STUDENT' ? 'e.g. STU1001' : 'e.g. EMP1001 (Optional)'}
-                  pattern="^[a-zA-Z0-9_\-]{3,20}$"
-                  title="3 to 20 characters (letters, numbers, hyphens, underscores)"
-                  required={formData.memberType === 'STUDENT'}
-                />
+            </div>
+
+            {!isAddPreviewMode ? (
+              <form onSubmit={handleProceedToPreview}>
+                <div className="form-group">
+                  <label className="form-label">Full Name *</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    value={formData.fullName}
+                    onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                    placeholder="e.g. Rahul Sharma"
+                    required
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Member Type *</label>
+                  <select
+                    className="form-control"
+                    value={formData.memberType}
+                    onChange={(e) => handleMemberTypeChange(e.target.value)}
+                  >
+                    <option value="EMPLOYEE">Employee</option>
+                    <option value="STUDENT">Student</option>
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
+                    <label className="form-label" style={{ margin: 0 }}>
+                      {formData.memberType === 'STUDENT' ? 'Student ID *' : 'Employee ID *'}
+                    </label>
+                    <span style={{ fontSize: '0.72rem', color: 'var(--color-primary-light)', fontWeight: 600 }}>
+                      Auto-generated
+                    </span>
+                  </div>
+                  <input
+                    type="text"
+                    className="form-control"
+                    style={{ fontFamily: 'monospace', fontWeight: 600 }}
+                    value={formData.externalRef}
+                    onChange={(e) => setFormData({ ...formData, externalRef: e.target.value })}
+                    placeholder={formData.memberType === 'STUDENT' ? 'e.g. STU-0116' : 'e.g. EMP-0109'}
+                    pattern="^[a-zA-Z0-9_\-]{3,20}$"
+                    title="3 to 20 characters (letters, numbers, hyphens, underscores)"
+                    required
+                  />
+                  <p className="text-muted" style={{ fontSize: '0.75rem', marginTop: '0.25rem', marginBottom: 0 }}>
+                    Suggested next ID based on {formData.memberType === 'STUDENT' ? 'Student' : 'Employee'} sequence.
+                  </p>
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Assign RFID Card (Optional)</label>
+                  <select
+                    className="form-control"
+                    value={formData.cardId || ''}
+                    onChange={(e) => setFormData({ ...formData, cardId: e.target.value })}
+                  >
+                    <option value="">-- No Card (Assign Later) --</option>
+                    {availableCards.map(c => (
+                      <option key={c.cardId} value={c.cardId}>
+                        {c.cardUid} (Card #{c.cardId})
+                      </option>
+                    ))}
+                  </select>
+                  {availableCards.length === 0 ? (
+                    <p className="text-muted" style={{ fontSize: '0.75rem', marginTop: '0.25rem', marginBottom: 0 }}>
+                      No unassigned available cards currently. You can assign a card later from the table.
+                    </p>
+                  ) : (
+                    <p className="text-muted" style={{ fontSize: '0.75rem', marginTop: '0.25rem', marginBottom: 0 }}>
+                      {availableCards.length} available card{availableCards.length > 1 ? 's' : ''} ready to assign.
+                    </p>
+                  )}
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Team / Department</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    value={formData.groupLabel}
+                    onChange={(e) => setFormData({ ...formData, groupLabel: e.target.value })}
+                    placeholder={formData.memberType === 'STUDENT' ? 'e.g. Batch 2026-A' : 'e.g. Engineering'}
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Email (Optional)</label>
+                  <input
+                    type="email"
+                    className="form-control"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    placeholder="e.g. rahul.sharma@example.com"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Phone (Optional)</label>
+                  <input
+                    type="tel"
+                    className="form-control"
+                    value={formData.phone}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (/^\d*$/.test(val) && val.length <= 10) {
+                        setFormData({ ...formData, phone: val });
+                      }
+                    }}
+                    pattern="^\d{10}$"
+                    title="Phone number must be exactly 10 digits"
+                    placeholder="e.g. 9876543210"
+                    maxLength={10}
+                  />
+                </div>
+
+                <div className="modal-actions">
+                  <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)} disabled={isSubmitting}>Cancel</button>
+                  <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
+                    Preview Details →
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <div className="person-preview-container">
+                <div className="person-preview-card">
+                  <div className="person-preview-hero">
+                    <div className="person-preview-avatar">
+                      {formData.fullName ? formData.fullName.trim().charAt(0).toUpperCase() : '?'}
+                    </div>
+                    <div className="person-preview-hero-info">
+                      <h3 className="person-preview-name">{formData.fullName.trim()}</h3>
+                      <div className="person-preview-badges">
+                        <span className={`status-pill ${formData.memberType === 'STUDENT' ? 'status-pill-student' : 'status-pill-employee'}`}>
+                          {formData.memberType === 'STUDENT' ? 'Student' : 'Employee'}
+                        </span>
+                        <span className="status-pill status-pill-active">
+                          Initial Status: ACTIVE
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="person-preview-grid">
+                    <div className="person-preview-field">
+                      <span className="person-preview-label">
+                        {formData.memberType === 'STUDENT' ? 'Student ID' : 'Employee ID'}
+                      </span>
+                      <span className="person-preview-value monospace">
+                        {formData.externalRef.trim()}
+                      </span>
+                    </div>
+
+                    <div className="person-preview-field">
+                      <span className="person-preview-label">RFID Card Assignment</span>
+                      <span className="person-preview-value">
+                        {(() => {
+                          const assigned = availableCards.find(c => String(c.cardId) === String(formData.cardId));
+                          return assigned ? (
+                            <span style={{ color: 'var(--color-primary-light)', fontWeight: 700 }}>
+                              💳 {assigned.cardUid} (Card #{assigned.cardId})
+                            </span>
+                          ) : (
+                            <span className="text-muted" style={{ fontWeight: 500 }}>
+                              None (Can assign later)
+                            </span>
+                          );
+                        })()}
+                      </span>
+                    </div>
+
+                    <div className="person-preview-field">
+                      <span className="person-preview-label">Team / Department</span>
+                      <span className="person-preview-value">
+                        {formData.groupLabel?.trim() ? formData.groupLabel.trim() : (
+                          <span className="text-muted">N/A</span>
+                        )}
+                      </span>
+                    </div>
+
+                    <div className="person-preview-field">
+                      <span className="person-preview-label">Email</span>
+                      <span className="person-preview-value">
+                        {formData.email?.trim() ? formData.email.trim() : (
+                          <span className="text-muted">N/A</span>
+                        )}
+                      </span>
+                    </div>
+
+                    <div className="person-preview-field">
+                      <span className="person-preview-label">Phone</span>
+                      <span className="person-preview-value">
+                        {formData.phone?.trim() ? formData.phone.trim() : (
+                          <span className="text-muted">N/A</span>
+                        )}
+                      </span>
+                    </div>
+
+                    <div className="person-preview-field">
+                      <span className="person-preview-label">Database Record</span>
+                      <span className="person-preview-value" style={{ color: '#0d9488', fontSize: '0.825rem' }}>
+                        ● Ready to insert
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="person-preview-notice">
+                  <span>ℹ️</span>
+                  <div>
+                    Review the information above carefully. Clicking <strong>Confirm & Save to Database</strong> will create the record in the database
+                    {formData.cardId ? ' and bind the selected RFID card.' : '.'}
+                  </div>
+                </div>
+
+                <div className="modal-actions" style={{ marginTop: '0.25rem' }}>
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={() => setIsAddPreviewMode(false)}
+                    disabled={isSubmitting}
+                  >
+                    ← Back & Edit
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    onClick={handleAddPerson}
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? 'Saving to Database...' : 'Confirm & Save to Database'}
+                  </button>
+                </div>
               </div>
-              <div className="form-group">
-                <label className="form-label">Team / Department</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  value={formData.groupLabel}
-                  onChange={(e) => setFormData({ ...formData, groupLabel: e.target.value })}
-                />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Email (Optional)</label>
-                <input
-                  type="email"
-                  className="form-control"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Phone (Optional)</label>
-                <input
-                  type="tel"
-                  className="form-control"
-                  value={formData.phone}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    if (/^\d*$/.test(val) && val.length <= 10) {
-                      setFormData({ ...formData, phone: val });
-                    }
-                  }}
-                  pattern="^\d{10}$"
-                  title="Phone number must be exactly 10 digits"
-                  maxLength={10}
-                />
-              </div>
-              <div className="modal-actions">
-                <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)} disabled={isSubmitting}>Cancel</button>
-                <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
-                  {isSubmitting ? 'Adding...' : 'Add Person'}
-                </button>
-              </div>
-            </form>
+            )}
           </div>
         </div>
       )}

@@ -43,14 +43,14 @@ export function AccessLogs() {
     const term = searchTerm.toLowerCase();
     const matchesSearch =
       searchTerm === '' ||
-      (ev.person && ev.person.fullName.toLowerCase().includes(term)) ||
-      (ev.person && ev.person.externalRef && ev.person.externalRef.toLowerCase().includes(term)) ||
-      (ev.person && ev.person.personId && ev.person.personId.toString().includes(term)) ||
-      (ev.cardUid && ev.cardUid.toLowerCase().includes(term));
+      ev.person?.fullName?.toLowerCase().includes(term) ||
+      ev.person?.externalRef?.toLowerCase().includes(term) ||
+      ev.person?.personId?.toString().includes(term) ||
+      ev.cardUid?.toLowerCase().includes(term);
 
     const matchesDecision = selectedDecision === 'ALL' || ev.decision === selectedDecision;
     const matchesEventType = selectedEventType === 'ALL' || ev.eventType === selectedEventType;
-    const matchesMemberType = selectedMemberType === 'ALL' || (ev.person && ev.person.memberType === selectedMemberType);
+    const matchesMemberType = selectedMemberType === 'ALL' || ev.person?.memberType === selectedMemberType;
 
     let matchesDate = true;
     if (startDate || endDate) {

@@ -48,7 +48,7 @@ public class DataSourceConfig {
         }
 
         // Fallback: Robust embedded H2 database
-        return buildH2DataSource();
+        return buildH2DataSource(rawUrl);
     }
 
     private HikariConfig buildPostgresConfig(String rawUrl) throws Exception {
@@ -96,23 +96,29 @@ public class DataSourceConfig {
         return config;
     }
 
-    private DataSource buildH2DataSource() {
-        try {
-            File dataDir = new File("./data");
-            if (!dataDir.exists()) {
-                dataDir.mkdirs();
-            }
-        } catch (Exception ignored) {}
+    private DataSource buildH2DataSource(String rawUrl) {
+        String jdbcUrl;
+        if (rawUrl != null && !rawUrl.trim().isEmpty() && rawUrl.contains("h2")) {
+            jdbcUrl = rawUrl;
+        } else {
+            try {
+                File dataDir = new File("./data");
+                if (!dataDir.exists()) {
+                    dataDir.mkdirs();
+                }
+            } catch (Exception ignored) {}
+            jdbcUrl = "jdbc:h2:file:./data/rfiddb;DB_CLOSE_ON_EXIT=FALSE;AUTO_RECONNECT=TRUE;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE";
+        }
 
         HikariConfig h2Config = new HikariConfig();
-        h2Config.setJdbcUrl("jdbc:h2:file:./data/rfiddb;DB_CLOSE_ON_EXIT=FALSE;AUTO_RECONNECT=TRUE;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE");
-        h2Config.setUsername("sa");
-        h2Config.setPassword("");
-        h2Config.setDriverClassName("org.h2.Driver");
+        h2Config.setJdbcUrl(jdbcUrl);
+        h2Config.setUsername(configuredUsername != null && !configuredUsername.trim().isEmpty() ? configuredUsername : "sa");
+        h2Config.setPassword(configuredPassword != null ? configuredPassword : "");
+        h2Config.setDriverClassName(configuredDriver != null && !configuredDriver.trim().isEmpty() ? configuredDriver : "org.h2.Driver");
         h2Config.setMaximumPoolSize(10);
         h2Config.setMinimumIdle(2);
 
-        System.out.println("[DEPLOYMENT] Initialized persistent embedded H2 database (./data/rfiddb)");
+        System.out.println("[DEPLOYMENT] Initialized H2 database: " + jdbcUrl);
         return new HikariDataSource(h2Config);
     }
 }

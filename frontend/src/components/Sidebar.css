@@ -80,32 +80,31 @@
   transform: scale(1);
 }
 
-/* Premium Floating Edge Toggle Button on Sidebar Vertical Border Line */
+/* Classic Toggle Button on Sidebar Vertical Border Line */
 .sidebar-edge-toggle-btn {
   position: absolute;
   right: -13px;
   top: 28px;
-  background: linear-gradient(135deg, #102b4d 0%, #1e556d 100%);
-  border: 1.5px solid rgba(255, 255, 255, 0.45);
+  background: var(--color-primary);
+  border: 1px solid rgba(255, 255, 255, 0.4);
   color: #ffffff;
-  border-radius: 50%;
+  border-radius: var(--border-radius-sm);
   width: 26px;
   height: 26px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
-  transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  transition: all 0.2s ease;
   z-index: 105;
   outline: none;
 }
 
 .sidebar-edge-toggle-btn:hover {
-  background: linear-gradient(135deg, #1e556d 0%, #102b4d 100%);
+  background: var(--color-primary-light);
   border-color: #ffffff;
-  transform: scale(1.15);
-  box-shadow: 0 0 12px rgba(30, 85, 109, 0.8), 0 4px 16px rgba(0, 0, 0, 0.4);
+  transform: scale(1.08);
 }
 
 .sidebar.collapsed .sidebar-header {
@@ -212,7 +211,7 @@
   padding: 0.55rem 0.75rem;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 8px;
+  border-radius: var(--border-radius-sm);
   cursor: pointer;
   text-align: left;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
@@ -230,8 +229,8 @@
 .user-info-btn .avatar {
   width: 36px;
   height: 36px;
-  border-radius: 8px;
-  background: linear-gradient(135deg, #102b4d 0%, #1e556d 100%);
+  border-radius: var(--border-radius-sm);
+  background: var(--color-primary-light);
   color: #ffffff;
   display: flex;
   align-items: center;
@@ -239,7 +238,7 @@
   font-weight: 700;
   font-size: 0.95rem;
   flex-shrink: 0;
-  border: 1.5px solid rgba(255, 255, 255, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.25);
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
   transition: all 0.2s ease;
 }
@@ -294,10 +293,10 @@
   bottom: calc(100% + 8px);
   left: 0.75rem;
   right: 0.75rem;
-  background-color: #0e2a45;
+  background-color: var(--color-primary-dark);
   border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: 8px;
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.65);
+  border-radius: var(--border-radius-sm);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.55);
   z-index: 200;
   overflow: hidden;
   padding: 0.4rem;
@@ -324,7 +323,7 @@
   gap: 0.65rem;
   padding: 0.65rem 0.85rem;
   border: none;
-  border-radius: 6px;
+  border-radius: var(--border-radius-sm);
   background: transparent;
   color: rgba(255, 255, 255, 0.9);
   font-family: inherit;
@@ -350,21 +349,21 @@
 }
 
 .popup-item.popup-logout {
-  color: #ff6b6b;
+  color: #f87171;
   margin-top: 2px;
 }
 
 .popup-item.popup-logout .popup-icon {
-  color: #ff6b6b;
+  color: #f87171;
 }
 
 .popup-item.popup-logout:hover {
-  background-color: rgba(255, 107, 107, 0.18);
-  color: #ff8787;
+  background-color: rgba(212, 85, 41, 0.2);
+  color: #fca5a5;
 }
 
 .popup-item.popup-logout:hover .popup-icon {
-  color: #ff8787;
+  color: #fca5a5;
 }
 
 /* Collapsed footer rules */
@@ -391,7 +390,7 @@
 .sidebar.collapsed .user-info-btn .avatar {
   width: 36px;
   height: 36px;
-  border-radius: 8px;
+  border-radius: var(--border-radius-sm);
 }
 
 .sidebar.collapsed .user-info-btn .details,

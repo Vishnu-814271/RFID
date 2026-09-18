@@ -145,6 +145,10 @@ public class PersonController {
         Person person = personRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Person not found."));
 
+        if (person.getStatus() == PersonStatus.COMPLETED) {
+            throw new RuntimeException("This person is marked as COMPLETED. All actions and modifications are disabled.");
+        }
+
         if (updates.containsKey("fullName")) {
             person.setFullName((String) updates.get("fullName"));
         }

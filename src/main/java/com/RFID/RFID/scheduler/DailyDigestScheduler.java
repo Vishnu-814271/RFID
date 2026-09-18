@@ -3,8 +3,11 @@ package com.RFID.RFID.scheduler;
 import com.RFID.RFID.model.AttendanceSession;
 import com.RFID.RFID.model.Person;
 import com.RFID.RFID.model.PersonStatus;
+import com.RFID.RFID.model.Role;
+import com.RFID.RFID.model.StaffUser;
 import com.RFID.RFID.repository.AttendanceSessionRepository;
 import com.RFID.RFID.repository.PersonRepository;
+import com.RFID.RFID.repository.StaffUserRepository;
 import com.RFID.RFID.service.ConfigService;
 import com.RFID.RFID.service.EmailService;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -20,15 +23,18 @@ public class DailyDigestScheduler {
 
     private final PersonRepository personRepository;
     private final AttendanceSessionRepository sessionRepository;
+    private final StaffUserRepository staffUserRepository;
     private final EmailService emailService;
     private final ConfigService configService;
 
     public DailyDigestScheduler(PersonRepository personRepository,
                                 AttendanceSessionRepository sessionRepository,
+                                StaffUserRepository staffUserRepository,
                                 EmailService emailService,
                                 ConfigService configService) {
         this.personRepository = personRepository;
         this.sessionRepository = sessionRepository;
+        this.staffUserRepository = staffUserRepository;
         this.emailService = emailService;
         this.configService = configService;
     }
@@ -51,6 +57,23 @@ public class DailyDigestScheduler {
 
     public void runDailyDigest() {
         LocalDate today = LocalDate.now();
+
+        // Check if today is a configured working day
+        java.util.Set<String> workingDays = configService.getWorkingDays();
+        String shortDay = switch (today.getDayOfWeek()) {
+            case MONDAY -> "MON";
+            case TUESDAY -> "TUE";
+            case WEDNESDAY -> "WED";
+            case THURSDAY -> "THU";
+            case FRIDAY -> "FRI";
+            case SATURDAY -> "SAT";
+            case SUNDAY -> "SUN";
+        };
+        boolean isWorkingDay = workingDays.stream().anyMatch(w -> w != null && (w.equalsIgnoreCase(shortDay) || w.equalsIgnoreCase(today.getDayOfWeek().name())));
+        if (!isWorkingDay) {
+            System.out.println("Daily Digest skipped: " + today + " (" + shortDay + ") is not a configured working day.");
+            return;
+        }
 
         List<Person> allActive = personRepository.findAll().stream()
                 .filter(p -> p.getStatus() == PersonStatus.ACTIVE)
@@ -80,8 +103,19 @@ public class DailyDigestScheduler {
         if (lateComers.isEmpty()) emailBody.append("None\n");
         lateComers.forEach(p -> emailBody.append("- ").append(p.getFullName()).append("\n"));
 
-        emailService.sendEmail("manager@zencube.com", "Daily Digest: Late & Absentee list", emailBody.toString());
-        emailService.sendEmail("admin@zencube.com", "Daily Digest: Late & Absentee list", emailBody.toString());
+        List<StaffUser> recipients = staffUserRepository.findAll().stream()
+                .filter(u -> u.isActive() && (u.getRole() == Role.ADMIN || u.getRole() == Role.MANAGER))
+                .collect(Collectors.toList());
+
+        if (!recipients.isEmpty()) {
+            for (StaffUser recipient : recipients) {
+                if (recipient.getEmail() != null && !recipient.getEmail().trim().isEmpty()) {
+                    emailService.sendEmail(recipient.getEmail().trim(), "Daily Digest: Late & Absentee list", emailBody.toString());
+                }
+            }
+        } else {
+            emailService.sendEmail("admin@zencube.com", "Daily Digest: Late & Absentee list", emailBody.toString());
+        }
         
         System.out.println("Running Daily Digest at " + LocalTime.now() + ". Found " + absentees.size() + " absentees and " + lateComers.size() + " latecomers.");
     }

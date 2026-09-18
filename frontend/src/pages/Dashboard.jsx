@@ -55,18 +55,20 @@ export function Dashboard() {
 
   useAutoRefresh(fetchDashboardData, { intervalMs: 10000 });
 
-  // 1. Extract Unique Member Types
+  // 1. Extract Unique Member Types from active members
   const uniqueMemberTypes = useMemo(() => {
+    const active = (people || []).filter(p => p.status === 'ACTIVE');
     return Array.from(new Set([
       'EMPLOYEE', 'STUDENT',
-      ...(people || []).map(p => p.memberType).filter(t => t === 'EMPLOYEE' || t === 'STUDENT')
+      ...active.map(p => p.memberType).filter(t => t === 'EMPLOYEE' || t === 'STUDENT')
     ])).sort();
   }, [people]);
 
-  // 2. Filtered People & Lookup Set
+  // 2. Filtered People & Lookup Set (Active Members Only)
   const filteredPeople = useMemo(() => {
-    if (selectedType === 'ALL') return people;
-    return (people || []).filter(p => p.memberType === selectedType);
+    const activePeople = (people || []).filter(p => p.status === 'ACTIVE');
+    if (selectedType === 'ALL') return activePeople;
+    return activePeople.filter(p => p.memberType === selectedType);
   }, [people, selectedType]);
 
   const filteredPersonIds = useMemo(() => {
@@ -116,10 +118,11 @@ export function Dashboard() {
     });
   }, [sessions, selectedType, filteredPersonIds]);
 
-  // 7. Effective Analytics Metrics for the 4 Cards
+  // 7. Effective Analytics Metrics for the Cards
   const effectiveAnalytics = useMemo(() => {
     const totalPeople = filteredPeople.length;
     const presentToday = effectiveLiveData.headcount;
+    const currentlyInside = effectiveLiveData.currentlyInside ?? (effectiveLiveData.presentMembers || []).filter(m => !m.isCheckedOut && m.status === 'OPEN').length;
 
     // Filtered Denied Events
     const deniedTaps = filteredEvents.filter(e => e.decision === 'DENIED').length;
@@ -133,6 +136,7 @@ export function Dashboard() {
     return {
       totalPeople,
       presentToday,
+      currentlyInside,
       lateArrivals,
       absentees,
       deniedTaps
@@ -175,9 +179,9 @@ export function Dashboard() {
             value={selectedType}
             onChange={(e) => setSelectedType(e.target.value)}
           >
-            <option value="ALL">All Types ({people.length})</option>
+            <option value="ALL">All Types ({people.filter(p => p.status === 'ACTIVE').length})</option>
             {uniqueMemberTypes.map(t => {
-              const count = people.filter(p => p.memberType === t).length;
+              const count = people.filter(p => p.status === 'ACTIVE' && p.memberType === t).length;
               return (
                 <option key={t} value={t}>
                   {t.charAt(0) + t.slice(1).toLowerCase()} ({count})
@@ -190,6 +194,7 @@ export function Dashboard() {
 
       {/* Metrics Cards Responsive to Filter */}
       <div className="metrics-grid">
+        {/* Card 1: Total Persons */}
         <div className="metric-card fill-zenv-navy">
           <div className="metric-card-header">
             <span className="metric-title">{selectedType === 'ALL' ? 'Total Persons' : `Total ${selectedType.charAt(0) + selectedType.slice(1).toLowerCase()}s`}</span>
@@ -208,6 +213,7 @@ export function Dashboard() {
           </div>
         </div>
 
+        {/* Card 2: Present Today */}
         <div className="metric-card fill-zenv-teal">
           <div className="metric-card-header">
             <span className="metric-title">Present Today</span>
@@ -226,6 +232,26 @@ export function Dashboard() {
           </div>
         </div>
 
+        {/* Card 3: In Office Now */}
+        <div className="metric-card fill-zenv-blue">
+          <div className="metric-card-header">
+            <span className="metric-title">In Office Now</span>
+          </div>
+          <div className="metric-card-body">
+            <span className="metric-value">{effectiveAnalytics.currentlyInside}</span>
+          </div>
+          <div className="metric-card-footer">
+            <button
+              type="button"
+              className="metric-view-btn"
+              onClick={() => navigate('/live')}
+            >
+              View &rarr;
+            </button>
+          </div>
+        </div>
+
+        {/* Card 4: Late / Absent Today */}
         <div className="metric-card fill-zenv-taupe">
           <div className="metric-card-header">
             <span className="metric-title">Late / Absent Today</span>
@@ -254,6 +280,7 @@ export function Dashboard() {
           </div>
         </div>
 
+        {/* Card 5: Denied Taps Today */}
         <div className="metric-card fill-zenv-darkgreen">
           <div className="metric-card-header">
             <span className="metric-title">Denied Taps Today</span>

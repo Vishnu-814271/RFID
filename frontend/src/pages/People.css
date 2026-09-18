@@ -34,23 +34,24 @@
   font-weight: 500;
 }
 
-/* People Table Static Layout (100% Fit, Zero Horizontal Scroll) */
+/* People Table Responsive Layout */
 .people-table-container {
-  overflow-x: hidden !important;
-  width: 100% !important;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  width: 100%;
   box-sizing: border-box;
   min-height: 420px;
 }
 
 .people-table {
-  width: 100% !important;
-  table-layout: fixed !important;
+  width: 100%;
+  min-width: 820px;
   border-collapse: collapse;
 }
 
 .people-table th,
 .people-table td {
-  padding: 0.75rem 0.55rem !important;
+  padding: 0.75rem 0.65rem;
   vertical-align: middle;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -220,3 +221,147 @@
   background-color: rgba(209, 209, 209, 0.5);
   margin: 0.25rem 0;
 }
+
+/* ==========================================================================
+   Add Person Preview Screen (ZenV Quantum ID Preview)
+   ========================================================================== */
+.person-preview-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+  margin-top: 0.5rem;
+}
+
+.person-preview-stepper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  background-color: rgba(16, 43, 76, 0.04);
+  border: 1px solid var(--color-border);
+  border-radius: 2px;
+  font-size: 0.775rem;
+}
+
+.person-preview-step {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--color-text-muted);
+  font-weight: 500;
+}
+
+.person-preview-step.active {
+  color: var(--color-primary);
+  font-weight: 700;
+}
+
+.person-preview-card {
+  border: 1px solid var(--color-border);
+  border-radius: 2px;
+  background-color: #ffffff;
+  padding: 1.15rem;
+  box-shadow: 0 2px 8px rgba(16, 43, 76, 0.04);
+}
+
+.person-preview-hero {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--color-border);
+  margin-bottom: 1rem;
+}
+
+.person-preview-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 2px;
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.35rem;
+  font-weight: 700;
+  border: 1px solid rgba(16, 43, 76, 0.2);
+  flex-shrink: 0;
+}
+
+.person-preview-hero-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  flex-grow: 1;
+  overflow: hidden;
+}
+
+.person-preview-name {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  margin: 0;
+  line-height: 1.2;
+}
+
+.person-preview-badges {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.person-preview-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.85rem 1.15rem;
+}
+
+@media (max-width: 540px) {
+  .person-preview-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+}
+
+.person-preview-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.person-preview-label {
+  font-size: 0.725rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.person-preview-value {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text-main);
+  word-break: break-word;
+}
+
+.person-preview-value.monospace {
+  font-family: monospace;
+  letter-spacing: 0.04em;
+  color: var(--color-primary);
+}
+
+.person-preview-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  padding: 0.75rem 0.85rem;
+  background-color: rgba(30, 85, 109, 0.06);
+  border-left: 3px solid var(--color-primary-light);
+  border-radius: 2px;
+  font-size: 0.8rem;
+  color: var(--color-text-main);
+  line-height: 1.4;
+}
+

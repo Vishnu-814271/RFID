@@ -21,6 +21,17 @@ export function Cards() {
   const [statusFilter, setStatusFilter] = useState('ACTIVE'); // 'ACTIVE' (Default) | 'INACTIVE' | 'ALL'
   const [assignmentFilter, setAssignmentFilter] = useState('ALL'); // 'ALL' | 'ASSIGNED' | 'UNASSIGNED'
   const [activeDropdownId, setActiveDropdownId] = useState(null);
+  const [sortField, setSortField] = useState('cardId'); // Default: sorted by Card ID
+  const [sortOrder, setSortOrder] = useState('asc'); // 'asc' | 'desc'
+
+  const handleSort = (field) => {
+    if (sortField === field) {
+      setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortOrder('asc');
+    }
+  };
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -118,6 +129,25 @@ export function Cards() {
     return matchesSearch && matchesStatus && matchesAssignment;
   });
 
+  const sortedCards = [...filteredCards].sort((a, b) => {
+    let aVal = a[sortField];
+    let bVal = b[sortField];
+    if (sortField === 'cardId') {
+      const aNum = Number(a.cardId) || 0;
+      const bNum = Number(b.cardId) || 0;
+      return sortOrder === 'asc' ? aNum - bNum : bNum - aNum;
+    }
+    if (sortField === 'cardUid') {
+      const aUid = (a.cardUid || '').toLowerCase();
+      const bUid = (b.cardUid || '').toLowerCase();
+      return sortOrder === 'asc' ? aUid.localeCompare(bUid) : bUid.localeCompare(aUid);
+    }
+    if (typeof aVal === 'string') {
+      return sortOrder === 'asc' ? (aVal || '').localeCompare(bVal || '') : (bVal || '').localeCompare(aVal || '');
+    }
+    return sortOrder === 'asc' ? (aVal > bVal ? 1 : -1) : (aVal < bVal ? 1 : -1);
+  });
+
   return (
     <div className="page-container">
       <div className="page-header">
@@ -162,7 +192,7 @@ export function Cards() {
               </select>
             </div>
 
-            {/* Assignment Filter Dropdown (All, Assigned, Unassigned) */}
+            {/* Assignment Filter Dropdown */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
               <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-text-muted)' }}>Assignment:</span>
               <select
@@ -186,16 +216,28 @@ export function Cards() {
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>Card ID</th>
-                  <th>Card UID</th>
+                  <th 
+                    onClick={() => handleSort('cardId')} 
+                    style={{ cursor: 'pointer', userSelect: 'none' }}
+                    title="Click to sort by Card ID"
+                  >
+                    Card ID {sortField === 'cardId' ? (sortOrder === 'asc' ? '▲' : '▼') : <span style={{ opacity: 0.35, fontSize: '0.75rem' }}>↕</span>}
+                  </th>
+                  <th 
+                    onClick={() => handleSort('cardUid')} 
+                    style={{ cursor: 'pointer', userSelect: 'none' }}
+                    title="Click to sort by Card UID"
+                  >
+                    Card UID {sortField === 'cardUid' ? (sortOrder === 'asc' ? '▲' : '▼') : <span style={{ opacity: 0.35, fontSize: '0.75rem' }}>↕</span>}
+                  </th>
                   <th>Status</th>
                   <th>Assigned To</th>
                   {isManagerOrAdmin && <th style={{ width: '105px', textAlign: 'center' }}>Actions</th>}
                 </tr>
               </thead>
               <tbody>
-                {filteredCards.map((c, idx) => {
-                  const isUpward = idx >= filteredCards.length - 2 && filteredCards.length > 2;
+                {sortedCards.map((c, idx) => {
+                  const isUpward = idx >= sortedCards.length - 2 && sortedCards.length > 2;
                   const isMenuOpen = activeDropdownId === c.cardId;
 
                   return (
@@ -215,28 +257,13 @@ export function Cards() {
                         {c.assignedPersonName ? (
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                             <span style={{ fontSize: '0.9rem', fontWeight: 500 }}>{c.assignedPersonName}</span>
-                            <span style={{ 
-                              fontFamily: 'monospace',
-                              fontWeight: '600',
-                              fontSize: '0.75rem',
-                              background: '#f1f5f9',
-                              color: '#0f172a',
-                              padding: '1px 6px',
-                              borderRadius: '4px',
-                              border: '1px solid #cbd5e1',
-                              display: 'inline-block',
-                              width: 'fit-content'
-                            }}>
+                            <span className="ext-id-badge" style={{ fontSize: '0.75rem', width: 'fit-content' }}>
                               {c.assignedPersonExternalRef || `EXT-${String(c.assignedPersonId).padStart(4, '0')}`}
                             </span>
                           </div>
                         ) : (
-                          <span className="badge" style={{ 
-                            background: 'rgba(151, 144, 133, 0.12)', 
-                            color: '#78716c', 
-                            border: '1px dashed #cbd5e1',
+                          <span className="badge badge-neutral" style={{ 
                             fontSize: '0.72rem',
-                            fontWeight: 600,
                             padding: '2px 7px'
                           }}>
                             Unassigned
