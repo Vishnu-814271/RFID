@@ -331,7 +331,7 @@ export function Dashboard() {
               <thead>
                 <tr>
                   <th>Time</th>
-                  <th>ID</th>
+                  <th style={{ whiteSpace: 'nowrap', minWidth: '105px' }}>ID</th>
                   <th>Person Name</th>
                   <th>Type</th>
                   <th>Event Type</th>
@@ -343,7 +343,7 @@ export function Dashboard() {
                   recentEventsDisplay.map((ev, i) => (
                     <tr key={ev.eventId || i}>
                       <td>{formatTime(ev.occurredAt, { hour: '2-digit', minute: '2-digit' })}</td>
-                      <td>
+                      <td style={{ whiteSpace: 'nowrap' }}>
                         {ev.person ? (
                           <span className="ext-id-badge">
                             {ev.person.externalRef || `EXT-${String(ev.person.personId).padStart(4, '0')}`}

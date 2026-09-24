@@ -1,0 +1,600 @@
+/* ==========================================================================
+   ZENV Quantum - Holiday Calendar Component Styles (HolidayCalendar.css)
+   Colors: ZenCube Dark Navy (#102b4d), Teal (#1e556d), Taupe (#979085)
+   Geometry: Sharp 2px radii per Brand Guidelines
+   ========================================================================== */
+
+.holiday-calendar-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.holiday-header-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.holiday-section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  margin-bottom: 0.25rem;
+}
+
+.year-selector-group {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.year-select {
+  min-width: 100px;
+  font-weight: 700;
+  color: var(--color-primary);
+  border-radius: var(--border-radius-sm);
+  padding: 0.4rem 0.65rem;
+  cursor: pointer;
+}
+
+/* View Mode Switcher (Calendar Grid vs Table List) */
+.view-mode-toggle {
+  display: inline-flex;
+  background: var(--color-bg-body);
+  border: 1px solid var(--color-border);
+  padding: 3px;
+  border-radius: var(--border-radius-sm);
+  gap: 2px;
+}
+
+.view-mode-btn {
+  border: none;
+  background: transparent;
+  padding: 0.35rem 0.85rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  transition: all 0.2s ease;
+  font-family: var(--font-family);
+}
+
+.view-mode-btn:hover {
+  color: var(--color-primary);
+}
+
+.view-mode-btn.active {
+  background: var(--color-primary);
+  color: #ffffff;
+  box-shadow: 0 2px 5px rgba(16, 43, 76, 0.2);
+}
+
+/* Statistics Grid */
+.holiday-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.25rem;
+}
+
+.holiday-stat-card {
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-sm);
+  padding: 1.1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.stat-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.stat-value {
+  font-size: 1.65rem;
+  font-weight: 800;
+  color: var(--color-text-main);
+  line-height: 1.2;
+}
+
+.stat-desc {
+  font-size: 0.775rem;
+  color: var(--color-text-muted);
+}
+
+/* Alert Banner */
+.holiday-alert-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: rgba(30, 85, 109, 0.07);
+  border: 1px solid rgba(30, 85, 109, 0.22);
+  border-radius: var(--border-radius-sm);
+  padding: 0.85rem 1.1rem;
+  font-size: 0.875rem;
+  color: var(--color-primary);
+  line-height: 1.45;
+}
+
+/* Action Toolbar */
+.holiday-action-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.left-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.upload-btn {
+  background: var(--color-bg-surface);
+  color: var(--color-primary);
+  border: 1px solid var(--color-border);
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.upload-btn:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.btn-danger-outline {
+  background: transparent;
+  color: var(--color-danger);
+  border: 1px solid rgba(212, 85, 41, 0.4);
+  padding: 0.4rem 0.85rem;
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.btn-danger-outline:hover {
+  background: var(--color-danger);
+  color: #ffffff;
+}
+
+/* ==========================================================================
+   VISUAL CALENDAR CARD & GRID STYLES
+   ========================================================================== */
+
+.zenv-calendar-card {
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-sm);
+  padding: 1.25rem;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+/* Month Navigation Header */
+.calendar-grid-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 0.5rem;
+}
+
+.calendar-month-heading {
+  text-align: center;
+}
+
+.calendar-month-heading h4 {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  margin: 0;
+}
+
+.calendar-month-summary {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  font-weight: 500;
+}
+
+.calendar-nav-btn {
+  background: var(--color-bg-body);
+  border: 1px solid var(--color-border);
+  color: var(--color-primary);
+  width: 34px;
+  height: 34px;
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.calendar-nav-btn:hover {
+  background: var(--color-primary);
+  color: #ffffff;
+}
+
+/* Weekdays Column Headers */
+.calendar-weekdays-row {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+  background: var(--color-bg-body);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-sm);
+  padding: 0.5rem 0.25rem;
+  text-align: center;
+}
+
+.weekday-col {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.weekday-col.is-sunday {
+  color: var(--color-secondary);
+}
+
+/* Calendar Days Grid */
+.calendar-grid-body {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+}
+
+.calendar-day-cell {
+  min-height: 105px;
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-sm);
+  padding: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  position: relative;
+}
+
+.calendar-day-cell:hover {
+  border-color: var(--color-primary-light);
+}
+
+.calendar-day-cell.is-empty {
+  background: rgba(241, 245, 249, 0.4);
+  border: 1px dashed rgba(226, 232, 240, 0.7);
+  pointer-events: none;
+}
+
+.calendar-day-cell.is-weekly-off {
+  background: rgba(151, 144, 133, 0.05);
+  border-color: rgba(226, 232, 240, 0.8);
+}
+
+/* ==========================================================================
+   DECLARED HOLIDAY ENCLOSED IN ZENCUBE BRAND COLOR
+   ========================================================================== */
+.calendar-day-cell.has-holiday {
+  background: linear-gradient(145deg, rgba(16, 43, 76, 0.04) 0%, rgba(30, 85, 109, 0.1) 100%);
+  border: 2px solid var(--color-primary-light);
+  box-shadow: 0 4px 14px rgba(16, 43, 76, 0.09);
+}
+
+.day-cell-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.day-number {
+  font-size: 0.925rem;
+  font-weight: 700;
+  color: var(--color-text-main);
+  line-height: 1;
+}
+
+.day-number.holiday-num {
+  color: var(--color-primary);
+  font-weight: 800;
+  font-size: 1rem;
+}
+
+.holiday-indicator-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  background-color: var(--color-primary-light);
+}
+
+/* ZenCube Brand Enclosed Holiday Badge */
+.zencube-holiday-badge {
+  background: linear-gradient(135deg, #102b4d 0%, #1e556d 100%);
+  color: #ffffff;
+  border-radius: var(--border-radius-sm);
+  padding: 0.4rem 0.5rem;
+  margin-top: 0.35rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  box-shadow: 0 2px 8px rgba(16, 43, 76, 0.28);
+  border-left: 3px solid #cbd5e1;
+}
+
+.holiday-badge-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.25rem;
+}
+
+.holiday-badge-name {
+  font-size: 0.775rem;
+  font-weight: 700;
+  line-height: 1.25;
+  color: #ffffff;
+  word-break: break-word;
+}
+
+.holiday-badge-del-btn {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.75);
+  cursor: pointer;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  transition: color 0.15s ease;
+}
+
+.holiday-badge-del-btn:hover {
+  color: #ff8a80;
+}
+
+.holiday-badge-type {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  color: rgba(255, 255, 255, 0.85);
+  font-weight: 600;
+}
+
+/* Weekly Off Tag */
+.weekly-off-tag {
+  margin-top: auto;
+}
+
+.weekly-off-tag span {
+  font-size: 0.7rem;
+  color: var(--color-secondary);
+  font-weight: 600;
+  background: rgba(151, 144, 133, 0.12);
+  padding: 2px 5px;
+  border-radius: 2px;
+  display: inline-block;
+}
+
+/* Regular Working Day Quick-Add on Hover */
+.working-day-placeholder {
+  margin-top: auto;
+  min-height: 22px;
+  display: flex;
+  align-items: flex-end;
+}
+
+.quick-add-btn {
+  display: none;
+  background: var(--color-bg-body);
+  border: 1px dashed var(--color-primary-light);
+  color: var(--color-primary-light);
+  padding: 2px 6px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  align-items: center;
+  gap: 2px;
+  transition: all 0.15s ease;
+}
+
+.calendar-day-cell:hover .quick-add-btn {
+  display: inline-flex;
+}
+
+.quick-add-btn:hover {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #ffffff;
+}
+
+/* Calendar Legend Bar */
+.calendar-legend-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  align-items: center;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--color-border);
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.legend-box {
+  width: 14px;
+  height: 14px;
+  border-radius: 2px;
+}
+
+.legend-box.legend-holiday {
+  background: linear-gradient(135deg, #102b4d 0%, #1e556d 100%);
+  border: 1px solid var(--color-primary-light);
+}
+
+.legend-box.legend-weekly-off {
+  background: rgba(151, 144, 133, 0.2);
+  border: 1px solid var(--color-border);
+}
+
+.legend-box.legend-working-day {
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
+}
+
+/* ==========================================================================
+   TABLE LIST VIEW STYLES
+   ========================================================================== */
+
+.holiday-table-card {
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-surface);
+  border-radius: var(--border-radius-sm);
+}
+
+.icon-action-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: var(--border-radius-sm);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.icon-action-btn.delete-btn {
+  color: var(--color-text-muted);
+}
+
+.icon-action-btn.delete-btn:hover {
+  color: var(--color-danger);
+  background-color: rgba(212, 85, 41, 0.1);
+}
+
+/* Modal Styling */
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(16, 43, 76, 0.5);
+  backdrop-filter: blur(3px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  animation: modalFadeIn 0.2s ease;
+}
+
+.modal-content {
+  background: var(--color-bg-surface);
+  border-radius: var(--border-radius-sm);
+  box-shadow: var(--shadow-lg);
+  width: 100%;
+  max-width: 480px;
+  padding: 1.5rem;
+  position: relative;
+  border: 1px solid var(--color-border);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.25rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.modal-header h4 {
+  margin: 0;
+  font-size: 1.15rem;
+  color: var(--color-primary);
+  font-weight: 700;
+}
+
+.close-btn {
+  background: transparent;
+  border: none;
+  font-size: 1.4rem;
+  line-height: 1;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  padding: 0 4px;
+}
+
+.close-btn:hover {
+  color: var(--color-primary);
+}
+
+@keyframes modalFadeIn {
+  from { opacity: 0; transform: scale(0.98); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@media (max-width: 768px) {
+  .holiday-header-bar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .holiday-action-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .left-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .upload-btn {
+    text-align: center;
+    justify-content: center;
+  }
+
+  .calendar-day-cell {
+    min-height: 70px;
+    padding: 0.35rem 0.2rem;
+  }
+
+  .holiday-badge-name {
+    font-size: 0.65rem;
+  }
+
+  .holiday-badge-type {
+    display: none;
+  }
+}

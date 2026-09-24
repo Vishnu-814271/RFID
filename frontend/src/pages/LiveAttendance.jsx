@@ -162,6 +162,43 @@ export function LiveAttendance() {
         </div>
       </div>
 
+      {liveData.isHoliday && (
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.75rem',
+          background: 'rgba(147, 51, 234, 0.08)',
+          border: '1px solid rgba(147, 51, 234, 0.3)',
+          color: '#7e22ce',
+          padding: '0.65rem 1rem',
+          borderRadius: 'var(--border-radius-sm, 2px)',
+          marginBottom: '1rem',
+          fontSize: '0.875rem',
+          fontWeight: 600
+        }}>
+          <span>🎉</span>
+          <span>Today is a Company Holiday: <strong>{liveData.holidayName}</strong> ({liveData.holidayType === 'COMPANY_OFF' ? 'Company Off' : 'Public Holiday'}). Attendance expectations are waived.</span>
+        </div>
+      )}
+      {!liveData.isWorkingDay && !liveData.isHoliday && (
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.75rem',
+          background: 'rgba(100, 116, 139, 0.08)',
+          border: '1px solid rgba(100, 116, 139, 0.3)',
+          color: '#475569',
+          padding: '0.65rem 1rem',
+          borderRadius: 'var(--border-radius-sm, 2px)',
+          marginBottom: '1rem',
+          fontSize: '0.875rem',
+          fontWeight: 600
+        }}>
+          <span>ℹ️</span>
+          <span>Today is a Non-Working Day (Weekend). Attendance tracking is optional.</span>
+        </div>
+      )}
+
       <div className="card">
         <div className="table-toolbar" style={{ flexWrap: 'wrap', gap: '1rem', justifyContent: 'space-between', marginBottom: '1rem' }}>
           <div className="search-bar table-search" style={{ flex: '1 1 250px' }}>

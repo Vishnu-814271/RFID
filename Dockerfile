@@ -9,8 +9,8 @@ RUN npm run build
 # Stage 2: Build the Spring Boot application
 FROM maven:3.9.6-eclipse-temurin-21 AS backend-build
 WORKDIR /app
-COPY pom.xml .
-COPY src ./src
+COPY backend/pom.xml .
+COPY backend/src ./src
 # Copy the built frontend into Spring Boot's static resources directory
 COPY --from=frontend-build /frontend/dist ./src/main/resources/static
 RUN mvn clean package -DskipTests

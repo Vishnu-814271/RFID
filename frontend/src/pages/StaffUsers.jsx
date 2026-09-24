@@ -124,7 +124,7 @@ export function StaffUsers() {
               <thead>
                 <tr>
                   <th>User ID</th>
-                  <th>ID</th>
+                  <th style={{ whiteSpace: 'nowrap', minWidth: '105px' }}>ID</th>
                   <th>Email</th>
                   <th>Role</th>
                   <th>Status</th>
@@ -135,7 +135,7 @@ export function StaffUsers() {
                 {users.map(u => (
                   <tr key={u.userId}>
                     <td className="font-medium">#{u.userId}</td>
-                    <td>
+                    <td style={{ whiteSpace: 'nowrap' }}>
                       {u.personId ? (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                           <span className="ext-id-badge">

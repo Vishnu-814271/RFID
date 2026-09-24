@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { useRefresh, useAutoRefresh } from '../context/RefreshContext';
 import { ZenvCheckIcon, ZenvAlertIcon } from '../components/ZenvIcons';
+import { HolidayCalendar } from '../components/HolidayCalendar';
 
 const ALL_DAYS = [
   { key: 'MON', label: 'Monday' },
@@ -22,6 +23,7 @@ export function Settings() {
   const isAdmin = user?.role === 'ADMIN';
 
   // Config state
+  const [activeTab, setActiveTab] = useState('general');
   const [config, setConfig] = useState(null);
   const [initialConfig, setInitialConfig] = useState(null);
   const [configLoading, setConfigLoading] = useState(true);
@@ -58,6 +60,21 @@ export function Settings() {
   const parseWorkingDays = (daysStr) => {
     if (!daysStr) return [];
     return daysStr.split(',').map(d => d.trim().toUpperCase()).filter(Boolean);
+  };
+
+  const formatMinutesToHHmm = (totalMinutes) => {
+    if (totalMinutes === undefined || totalMinutes === null) return '08:00';
+    const hrs = Math.floor(totalMinutes / 60);
+    const mins = totalMinutes % 60;
+    return `${String(hrs).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
+  };
+
+  const parseHHmmToMinutes = (hhmmStr) => {
+    if (!hhmmStr) return 480;
+    const parts = hhmmStr.split(':');
+    const hrs = parseInt(parts[0], 10) || 0;
+    const mins = parseInt(parts[1], 10) || 0;
+    return (hrs * 60) + mins;
   };
 
   const handleToggleDay = (dayKey) => {
@@ -138,14 +155,64 @@ export function Settings() {
       <div className="page-header">
         <div>
           <h1>System Settings</h1>
-          <p className="text-muted">Manage system parameters. Only changed configurations are saved upon submission.</p>
+          <p className="text-muted">Manage system parameters and company holiday calendars.</p>
         </div>
       </div>
 
-      <div className="card" style={{ width: '100%' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-          <h3 style={{ margin: 0 }}>Attendance Parameters</h3>
-        </div>
+      {/* Settings Navigation Tabs */}
+      <div style={{
+        display: 'flex',
+        gap: '0.6rem',
+        marginBottom: '1.75rem',
+        borderBottom: '1px solid var(--color-border)',
+        paddingBottom: '0.5rem'
+      }}>
+        <button
+          type="button"
+          onClick={() => setActiveTab('general')}
+          style={{
+            background: activeTab === 'general' ? 'var(--color-primary)' : 'var(--color-bg-surface)',
+            color: activeTab === 'general' ? '#ffffff' : 'var(--color-text-muted)',
+            border: activeTab === 'general' ? 'none' : '1px solid var(--color-border)',
+            padding: '0.55rem 1.25rem',
+            borderRadius: 'var(--border-radius-sm)',
+            cursor: 'pointer',
+            fontWeight: 600,
+            fontSize: '0.875rem',
+            transition: 'all 0.2s ease',
+            boxShadow: activeTab === 'general' ? '0 2px 6px rgba(16, 43, 76, 0.2)' : 'none'
+          }}
+        >
+          General Parameters
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('holidays')}
+          style={{
+            background: activeTab === 'holidays' ? 'var(--color-primary)' : 'var(--color-bg-surface)',
+            color: activeTab === 'holidays' ? '#ffffff' : 'var(--color-text-muted)',
+            border: activeTab === 'holidays' ? 'none' : '1px solid var(--color-border)',
+            padding: '0.55rem 1.25rem',
+            borderRadius: 'var(--border-radius-sm)',
+            cursor: 'pointer',
+            fontWeight: 600,
+            fontSize: '0.875rem',
+            transition: 'all 0.2s ease',
+            boxShadow: activeTab === 'holidays' ? '0 2px 6px rgba(16, 43, 76, 0.2)' : 'none'
+          }}
+        >
+          Company Holiday Calendar
+        </button>
+      </div>
+
+      {activeTab === 'holidays' ? (
+        <HolidayCalendar workingDaysStr={config?.workingDays} />
+      ) : (
+        <div className="card" style={{ width: '100%' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+            <h3 style={{ margin: 0 }}>Attendance Parameters</h3>
+          </div>
 
         {saveStatus && (
           <div className={`status-banner status-${saveStatus.type}`} style={{
@@ -321,19 +388,21 @@ export function Settings() {
                   />
                 </div>
 
-                {/* 6. Minimum Working Hours */}
+                {/* 6. Minimum Working Hours (HH:mm) */}
                 <div className="form-group" style={{ margin: 0 }}>
-                  <label className="form-label">Minimum Working Hours</label>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
+                    <label className="form-label" style={{ margin: 0 }}>Minimum Working Hours (HH:mm)</label>
+                    <span style={{ fontSize: '0.78rem', color: 'var(--color-primary-light)', fontWeight: 600 }}>
+                      {Math.floor((config.minWorkingMinutes ?? 480) / 60)} hrs {(config.minWorkingMinutes ?? 480) % 60} mins
+                    </span>
+                  </div>
                   <input
-                    type="number"
-                    step="0.01"
-                    min="0.01"
-                    max="24"
+                    type="time"
                     className="form-control"
-                    value={Number(config.minWorkingMinutes !== undefined ? (config.minWorkingMinutes / 60) : 8).toFixed(2)}
+                    value={formatMinutesToHHmm(config.minWorkingMinutes)}
                     onChange={e => {
-                      const hrs = parseFloat(e.target.value) || 0;
-                      setConfig({ ...config, minWorkingMinutes: Math.round(hrs * 60) });
+                      const totalMins = parseHHmmToMinutes(e.target.value);
+                      setConfig({ ...config, minWorkingMinutes: totalMins });
                     }}
                     required
                   />
@@ -423,6 +492,7 @@ export function Settings() {
         )}
 
       </div>
+      )}
     </div>
   );
 }

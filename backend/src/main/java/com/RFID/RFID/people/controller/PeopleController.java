@@ -1,0 +1,280 @@
+package com.RFID.RFID.people.controller;
+
+import com.RFID.RFID.dto.DTOs.PersonRequest;
+import com.RFID.RFID.dto.Envelope;
+import com.RFID.RFID.model.*;
+import com.RFID.RFID.mqtt.MqttPublisherService;
+import com.RFID.RFID.people.repository.PeopleRepository;
+import com.RFID.RFID.repository.AttendanceSessionRepository;
+import com.RFID.RFID.repository.CardMappingRepository;
+import com.RFID.RFID.repository.RfidCardRepository;
+import com.RFID.RFID.service.AuditService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+@RestController
+@RequestMapping("/api/people")
+@PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'OPERATOR')")
+public class PeopleController {
+
+    private final PeopleRepository personRepository;
+    private final CardMappingRepository mappingRepository;
+    private final AttendanceSessionRepository sessionRepository;
+    private final RfidCardRepository cardRepository;
+    private final AuditService auditService;
+    private final MqttPublisherService mqttPublisherService;
+
+    public PeopleController(PeopleRepository personRepository,
+                            CardMappingRepository mappingRepository,
+                            AttendanceSessionRepository sessionRepository,
+                            RfidCardRepository cardRepository,
+                            AuditService auditService,
+                            @Autowired(required = false) MqttPublisherService mqttPublisherService) {
+        this.personRepository = personRepository;
+        this.mappingRepository = mappingRepository;
+        this.sessionRepository = sessionRepository;
+        this.cardRepository = cardRepository;
+        this.auditService = auditService;
+        this.mqttPublisherService = mqttPublisherService;
+    }
+
+    @GetMapping
+    public Envelope listPeople() {
+        List<Person> people = personRepository.findAll();
+        List<CardMapping> allMappings = mappingRepository.findAll();
+        Map<Long, CardMapping> personToActiveMapping = new HashMap<>();
+        for (CardMapping m : allMappings) {
+            if (m.getStatus() == MappingStatus.ACTIVE) {
+                personToActiveMapping.put(m.getPerson().getPersonId(), m);
+            }
+        }
+
+        List<Map<String, Object>> response = new ArrayList<>();
+
+        for (Person person : people) {
+            Map<String, Object> map = new HashMap<>();
+            map.put("personId", person.getPersonId());
+            map.put("fullName", person.getFullName());
+            map.put("name", person.getFullName());
+            String memberTypeStr = (person.getMemberType() != null) ? person.getMemberType().name() : "EMPLOYEE";
+            map.put("memberType", memberTypeStr);
+            String extRef = (person.getExternalRef() != null && !person.getExternalRef().trim().isEmpty())
+                    ? person.getExternalRef()
+                    : "EXT-" + String.format("%04d", person.getPersonId());
+            map.put("externalRef", extRef);
+            map.put("email", person.getEmail());
+            map.put("phone", person.getPhone());
+            map.put("groupLabel", person.getGroupLabel());
+            map.put("status", person.getStatus());
+            map.put("joiningDate", person.getJoiningDate() != null ? person.getJoiningDate().toString() : (person.getCreatedAt() != null ? person.getCreatedAt().toLocalDate().toString() : null));
+            map.put("createdAt", person.getCreatedAt());
+
+            CardMapping activeMapping = personToActiveMapping.get(person.getPersonId());
+            if (activeMapping != null) {
+                map.put("assignedCardId", activeMapping.getCard().getCardId());
+                map.put("assignedCardUid", activeMapping.getCard().getCardUid());
+                map.put("activeMappingId", activeMapping.getMappingId());
+            } else {
+                map.put("assignedCardId", null);
+                map.put("assignedCardUid", null);
+                map.put("activeMappingId", null);
+            }
+
+            response.add(map);
+        }
+
+        return Envelope.ok(response);
+    }
+
+    @PostMapping
+    public Envelope registerPerson(@RequestBody PersonRequest request) {
+        Object principal = (SecurityContextHolder.getContext().getAuthentication() != null) ?
+                SecurityContextHolder.getContext().getAuthentication().getPrincipal() : null;
+        StaffUser currentUser = (principal instanceof StaffUser) ? (StaffUser) principal : null;
+
+        String idLabel = (request.getMemberType() == MemberType.STUDENT) ? "Student ID" : "Ext. ID / Employee ID";
+        String ref = request.getExternalRef() != null ? request.getExternalRef().trim() : null;
+        if (ref != null && ref.isEmpty()) {
+            ref = null;
+        }
+
+        if (ref != null) {
+            if (!ref.matches("^[a-zA-Z0-9_\\-]{3,20}$")) {
+                throw new RuntimeException(idLabel + " must be 3-20 characters (letters, numbers, hyphens, underscores).");
+            }
+            Optional<Person> existingOpt = personRepository.findByExternalRefIgnoreCase(ref);
+            if (existingOpt.isPresent()) {
+                Person existingPerson = existingOpt.get();
+                throw new RuntimeException(idLabel + " '" + ref + "' is already assigned to " + existingPerson.getFullName() + " (" + existingPerson.getMemberType() + "). Please enter a unique " + idLabel + ".");
+            }
+        } else if (request.getMemberType() == MemberType.STUDENT) {
+            throw new RuntimeException("Student ID is required.");
+        }
+
+        LocalDate joinDate = null;
+        if (request.getJoiningDate() != null && !request.getJoiningDate().trim().isEmpty()) {
+            try {
+                joinDate = LocalDate.parse(request.getJoiningDate().trim());
+            } catch (Exception ignored) {}
+        }
+        if (joinDate == null) {
+            joinDate = LocalDate.now();
+        }
+
+        Person person = new Person(
+                request.getFullName(),
+                request.getMemberType(),
+                ref,
+                request.getGroupLabel(),
+                request.getEmail(),
+                request.getPhone(),
+                joinDate
+        );
+
+        Person saved = personRepository.save(person);
+
+        if (currentUser != null && currentUser.getRole() != Role.OPERATOR) {
+            auditService.log("PERSON_REGISTERED", "PERSON", saved.getPersonId().toString());
+        }
+
+        return Envelope.ok(saved);
+    }
+
+    @RequestMapping(value = "/{id}", method = {RequestMethod.PATCH, RequestMethod.PUT})
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'OPERATOR')")
+    @Transactional
+    public Envelope editPerson(@PathVariable Long id, @RequestBody Map<String, Object> updates) {
+        Person person = personRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Person not found."));
+
+        if (person.getStatus() == PersonStatus.COMPLETED) {
+            throw new RuntimeException("This person is marked as COMPLETED. All actions and modifications are disabled.");
+        }
+
+        if (updates.containsKey("fullName")) {
+            person.setFullName((String) updates.get("fullName"));
+        }
+        if (updates.containsKey("memberType")) {
+            person.setMemberType(MemberType.valueOf((String) updates.get("memberType")));
+        }
+        if (updates.containsKey("externalRef")) {
+            String ref = (String) updates.get("externalRef");
+            if (ref != null) ref = ref.trim();
+            if (ref != null && ref.isEmpty()) ref = null;
+            String idLabel = (person.getMemberType() == MemberType.STUDENT) ? "Student ID" : "Ext. ID / Employee ID";
+            
+            if (ref != null) {
+                if (!ref.matches("^[a-zA-Z0-9_\\-]{3,20}$")) {
+                    throw new RuntimeException(idLabel + " must be 3-20 characters (letters, numbers, hyphens, underscores).");
+                }
+                Optional<Person> existingOpt = personRepository.findByExternalRefIgnoreCase(ref);
+                if (existingOpt.isPresent() && !existingOpt.get().getPersonId().equals(person.getPersonId())) {
+                    Person existingPerson = existingOpt.get();
+                    throw new RuntimeException(idLabel + " '" + ref + "' is already assigned to " + existingPerson.getFullName() + " (" + existingPerson.getMemberType() + "). Please enter a unique " + idLabel + ".");
+                }
+                person.setExternalRef(ref);
+            } else if (person.getMemberType() == MemberType.STUDENT) {
+                throw new RuntimeException("Student ID is required.");
+            } else {
+                person.setExternalRef(null);
+            }
+        }
+        if (updates.containsKey("groupLabel")) {
+            person.setGroupLabel((String) updates.get("groupLabel"));
+        }
+        if (updates.containsKey("email")) {
+            person.setEmail((String) updates.get("email"));
+        }
+        if (updates.containsKey("phone")) {
+            person.setPhone((String) updates.get("phone"));
+        }
+        if (updates.containsKey("joiningDate") && updates.get("joiningDate") != null) {
+            try {
+                person.setJoiningDate(LocalDate.parse(updates.get("joiningDate").toString().trim()));
+            } catch (Exception ignored) {}
+        }
+        if (updates.containsKey("status")) {
+            String statusStr = (String) updates.get("status");
+            PersonStatus newStatus = PersonStatus.valueOf(statusStr);
+            if ((newStatus == PersonStatus.INACTIVE || newStatus == PersonStatus.COMPLETED) && person.getStatus() == PersonStatus.ACTIVE) {
+                Optional<CardMapping> activeMapping = mappingRepository.findByPersonAndStatus(person, MappingStatus.ACTIVE);
+                if (activeMapping.isPresent()) {
+                    CardMapping mapping = activeMapping.get();
+                    mapping.setStatus(MappingStatus.RELEASED);
+                    mapping.setReleasedAt(LocalDateTime.now());
+                    mappingRepository.save(mapping);
+                    auditService.log("CARD_RELEASED", "MAPPING", mapping.getMappingId().toString());
+
+                    RfidCard card = mapping.getCard();
+                    if (card.getStatus() == CardStatus.ASSIGNED) {
+                        card.setStatus(CardStatus.AVAILABLE);
+                        cardRepository.save(card);
+                    }
+
+                    if (mqttPublisherService != null) {
+                        mqttPublisherService.broadcastCardLifecycleEvent("CARD_UNASSIGNED", card, person);
+                    }
+                }
+            }
+            person.setStatus(newStatus);
+        }
+
+        Person saved = personRepository.save(person);
+
+        if (updates.containsKey("status")) {
+            if (saved.getStatus() == PersonStatus.COMPLETED) {
+                auditService.log("PERSON_COMPLETED", "PERSON", saved.getPersonId().toString());
+            } else if (saved.getStatus() == PersonStatus.INACTIVE) {
+                auditService.log("PERSON_DEACTIVATED", "PERSON", saved.getPersonId().toString());
+            } else {
+                auditService.log("PERSON_ACTIVATED", "PERSON", saved.getPersonId().toString());
+            }
+        } 
+        
+        if (!updates.containsKey("status") || updates.size() > 1) {
+            auditService.log("PERSON_EDIT", "PERSON", saved.getPersonId().toString());
+        }
+
+        return Envelope.ok(saved);
+    }
+
+    @GetMapping("/{id}/attendance")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    public Envelope getAttendanceHistory(@PathVariable Long id) {
+        Person person = personRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Person not found."));
+
+        List<AttendanceSession> sessions = sessionRepository.findByPersonOrderByWorkDateDesc(person);
+
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (AttendanceSession s : sessions) {
+            Map<String, Object> row = new HashMap<>();
+            row.put("sessionId", s.getSessionId());
+            row.put("workDate", s.getWorkDate());
+            row.put("checkInAt", s.getCheckInAt());
+            row.put("checkOutAt", s.getCheckOutAt());
+            row.put("durationMinutes", s.getDurationMinutes());
+            row.put("status", s.getStatus());
+            row.put("isLate", s.isLate());
+            result.add(row);
+        }
+        return Envelope.ok(result);
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    public Envelope deletePerson(@PathVariable Long id) {
+        throw new RuntimeException("Deactivation only; no hard delete.");
+    }
+}

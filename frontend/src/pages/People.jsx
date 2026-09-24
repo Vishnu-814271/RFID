@@ -54,7 +54,8 @@ export function People() {
     groupLabel: '',
     email: '',
     phone: '',
-    cardId: ''
+    cardId: '',
+    joiningDate: new Date().toISOString().split('T')[0]
   });
 
   const [isAddPreviewMode, setIsAddPreviewMode] = useState(false);
@@ -65,7 +66,8 @@ export function People() {
     externalRef: '',
     groupLabel: '',
     email: '',
-    phone: ''
+    phone: '',
+    joiningDate: ''
   });
 
   // Auto-generate the next sequential ID based on memberType
@@ -119,7 +121,8 @@ export function People() {
       groupLabel: '',
       email: '',
       phone: '',
-      cardId: ''
+      cardId: '',
+      joiningDate: new Date().toISOString().split('T')[0]
     });
     setIsAddPreviewMode(false);
     setError('');
@@ -182,7 +185,8 @@ export function People() {
         externalRef: formData.externalRef ? formData.externalRef.trim() : null,
         groupLabel: formData.groupLabel ? formData.groupLabel.trim() : null,
         email: formData.email ? formData.email.trim() : null,
-        phone: formData.phone ? formData.phone.trim() : null
+        phone: formData.phone ? formData.phone.trim() : null,
+        joiningDate: formData.joiningDate || new Date().toISOString().split('T')[0]
       };
 
       const newPerson = await api.post('/people', personPayload);
@@ -235,7 +239,8 @@ export function People() {
       externalRef: person.externalRef || '',
       groupLabel: person.groupLabel || '',
       email: person.email || '',
-      phone: person.phone || ''
+      phone: person.phone || '',
+      joiningDate: person.joiningDate || (person.createdAt ? person.createdAt.split('T')[0] : '')
     });
     setError('');
     setShowEditModal(true);
@@ -875,6 +880,25 @@ export function People() {
                 </div>
 
                 <div className="form-group">
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
+                    <label className="form-label" style={{ margin: 0 }}>Candidate Joining Date *</label>
+                    <span style={{ fontSize: '0.72rem', color: 'var(--color-primary-light)', fontWeight: 600 }}>
+                      Attendance baseline date
+                    </span>
+                  </div>
+                  <input
+                    type="date"
+                    className="form-control"
+                    value={formData.joiningDate || new Date().toISOString().split('T')[0]}
+                    onChange={(e) => setFormData({ ...formData, joiningDate: e.target.value })}
+                    required
+                  />
+                  <p className="text-muted" style={{ fontSize: '0.75rem', marginTop: '0.25rem', marginBottom: 0 }}>
+                    Official date candidate joined. Attendance reports and expected working days begin from this date.
+                  </p>
+                </div>
+
+                <div className="form-group">
                   <label className="form-label">Team / Department</label>
                   <input
                     type="text"
@@ -989,6 +1013,13 @@ export function People() {
                     </div>
 
                     <div className="person-preview-field">
+                      <span className="person-preview-label">Joining Date</span>
+                      <span className="person-preview-value" style={{ fontWeight: 600, color: 'var(--color-primary)' }}>
+                        {formData.joiningDate || 'Today'}
+                      </span>
+                    </div>
+
+                    <div className="person-preview-field">
                       <span className="person-preview-label">Phone</span>
                       <span className="person-preview-value">
                         {formData.phone?.trim() ? formData.phone.trim() : (
@@ -997,24 +1028,10 @@ export function People() {
                       </span>
                     </div>
 
-                    <div className="person-preview-field">
-                      <span className="person-preview-label">Database Record</span>
-                      <span className="person-preview-value" style={{ color: '#0d9488', fontSize: '0.825rem' }}>
-                        ● Ready to insert
-                      </span>
-                    </div>
                   </div>
                 </div>
 
-                <div className="person-preview-notice">
-                  <span>ℹ️</span>
-                  <div>
-                    Review the information above carefully. Clicking <strong>Confirm & Save to Database</strong> will create the record in the database
-                    {formData.cardId ? ' and bind the selected RFID card.' : '.'}
-                  </div>
-                </div>
-
-                <div className="modal-actions" style={{ marginTop: '0.25rem' }}>
+                <div className="modal-actions" style={{ marginTop: '0.75rem' }}>
                   <button
                     type="button"
                     className="btn btn-secondary"
@@ -1120,6 +1137,16 @@ export function People() {
                   required={editFormData.memberType === 'STUDENT'}
                 />
               </div>
+              <div className="form-group">
+                <label className="form-label">Candidate Joining Date</label>
+                <input
+                  type="date"
+                  className="form-control"
+                  value={editFormData.joiningDate || ''}
+                  onChange={(e) => setEditFormData({ ...editFormData, joiningDate: e.target.value })}
+                />
+              </div>
+
               <div className="form-group">
                 <label className="form-label">Team / Department</label>
                 <input

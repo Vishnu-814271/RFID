@@ -27,7 +27,8 @@ RFID/
 │   └── db/migration/              Flyway SQL migrations
 ├── src/test/java/                 Backend tests
 ├── frontend/src/                  React pages, components, context, and API client
-├── esp32_rfid_mqtt.ino            ESP32 + RC522 firmware
+├── firmware/esp32_rfid_mqtt/      ESP32 + RC522 Arduino firmware
+├── scripts/                       Database setup and seed scripts
 ├── mosquitto/config/              Local MQTT broker configuration
 ├── docker-compose.yml             PostgreSQL, Mosquitto, and backend stack
 ├── Dockerfile                     Multi-stage frontend/backend image build

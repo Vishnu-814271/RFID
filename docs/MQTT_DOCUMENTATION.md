@@ -199,7 +199,7 @@ Broadcasted to all hardware readers and monitoring microservices whenever an RFI
 
 ## 5. Hardware Integration Guide (ESP32 + RC522)
 
-The firmware implementation is provided in [`esp32_rfid_mqtt.ino`](../esp32_rfid_mqtt.ino).
+The firmware implementation is provided in [`firmware/esp32_rfid_mqtt/esp32_rfid_mqtt.ino`](../firmware/esp32_rfid_mqtt/esp32_rfid_mqtt.ino).
 
 ### 5.1 Hardware Pinout & Wiring
 

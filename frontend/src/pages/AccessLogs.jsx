@@ -181,7 +181,7 @@ export function AccessLogs() {
               <thead>
                 <tr>
                   <th>Date & Time</th>
-                  <th>ID</th>
+                  <th style={{ whiteSpace: 'nowrap', minWidth: '105px' }}>ID</th>
                   <th>Name</th>
                   <th>Card UID</th>
                   <th>Event Type</th>
@@ -193,7 +193,7 @@ export function AccessLogs() {
                 {filteredEvents.map((ev, i) => (
                   <tr key={ev.eventId || i}>
                     <td className="font-medium">{formatDateTime(ev.occurredAt)}</td>
-                    <td>
+                    <td style={{ whiteSpace: 'nowrap' }}>
                       {ev.person ? (
                         <span className="ext-id-badge">
                           {ev.person.externalRef || `EXT-${String(ev.person.personId).padStart(4, '0')}`}
