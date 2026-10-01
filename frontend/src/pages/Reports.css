@@ -204,16 +204,16 @@
 }
 
 .badge-absent-enclosed {
-  background: rgba(239, 68, 68, 0.12);
-  border: 2px solid #ef4444;
-  color: #b91c1c;
+  background: rgba(212, 85, 41, 0.12);
+  border: 2px solid #D45529;
+  color: #D45529;
   font-weight: 800;
   font-size: 0.78rem;
   padding: 4px 6px;
   border-radius: var(--border-radius-sm);
   text-align: center;
   letter-spacing: 0.4px;
-  box-shadow: 0 1px 5px rgba(239, 68, 68, 0.2);
+  box-shadow: 0 1px 5px rgba(212, 85, 41, 0.2);
   margin-top: auto;
   text-transform: uppercase;
 }
@@ -271,8 +271,8 @@
 }
 
 .person-cal-cell.cell-absent {
-  background: rgba(239, 68, 68, 0.03);
-  border-color: rgba(239, 68, 68, 0.35);
+  background: rgba(212, 85, 41, 0.04);
+  border-color: rgba(212, 85, 41, 0.35);
 }
 
 .person-cal-cell.cell-holiday {
@@ -420,7 +420,7 @@
 }
 
 .sheet-table tr.row-absent {
-  background: rgba(239, 68, 68, 0.02);
+  background: rgba(212, 85, 41, 0.03);
 }
 
 .sheet-table .text-center {

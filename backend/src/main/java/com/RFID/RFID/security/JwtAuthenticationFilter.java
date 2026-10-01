@@ -39,7 +39,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String path = request.getRequestURI();
 
         // 1. Bypass public paths
-        if ("/api/login".equals(path) || "/api/auth/forgot-password".equals(path) || "/api/taps".equals(path) || "/api/health".equals(path)
+        if ("/api/login".equals(path) || "/api/auth/login".equals(path) || "/api/auth/forgot-password".equals(path) || "/api/taps".equals(path) || "/api/health".equals(path)
                 || path.startsWith("/swagger-ui") || path.startsWith("/v3/api-docs") || "/swagger-ui.html".equals(path)) {
             filterChain.doFilter(request, response);
             return;
@@ -61,8 +61,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 }
 
                 // Forced Password Change logic:
-                // If password change is required, block all requests except the change-password and logout endpoints.
-                if (user.isPasswordChangeRequired() && !"/api/auth/change-password".equals(path) && !"/api/logout".equals(path)) {
+                // If password change is required, block all requests except the change-password, auth/me, and logout endpoints.
+                boolean isAllowedDuringPasswordChange = 
+                        "/api/auth/change-password".equals(path) ||
+                        "/api/auth/me".equals(path) ||
+                        "/api/me".equals(path) ||
+                        "/api/logout".equals(path) ||
+                        "/api/auth/logout".equals(path);
+
+                if (user.isPasswordChangeRequired() && !isAllowedDuringPasswordChange) {
                     sendErrorResponse(response, HttpServletResponse.SC_FORBIDDEN, "PASSWORD_CHANGE_REQUIRED", 
                             "Password change is forced on first login. You must update your password.");
                     return;

@@ -252,7 +252,7 @@ export function Dashboard() {
         </div>
 
         {/* Card 4: Late / Absent Today */}
-        <div className="metric-card fill-zenv-taupe">
+        <div className="metric-card fill-zenv-absent">
           <div className="metric-card-header">
             <span className="metric-title">Late / Absent Today</span>
           </div>
@@ -281,7 +281,7 @@ export function Dashboard() {
         </div>
 
         {/* Card 5: Denied Taps Today */}
-        <div className="metric-card fill-zenv-darkgreen">
+        <div className="metric-card fill-denied fill-zenv-darkgreen">
           <div className="metric-card-header">
             <span className="metric-title">Denied Taps Today</span>
           </div>

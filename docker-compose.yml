@@ -16,8 +16,12 @@ services:
     image: eclipse-mosquitto:2
     container_name: rfid_mqtt_broker
     ports:
-      - "1883:1883"
-      - "9001:9001"
+      # Bind to loopback only — the backend reaches this via the internal Docker
+      # network (tcp://mosquitto:1883), so there is no reason to expose it publicly.
+      # Remove these lines entirely in production; they are only needed for local
+      # debugging tools (e.g., MQTT Explorer on the host machine).
+      - "127.0.0.1:1883:1883"
+      - "127.0.0.1:9001:9001"
     volumes:
       - ./mosquitto/config:/mosquitto/config
       - mosquitto_data:/mosquitto/data
@@ -37,6 +41,13 @@ services:
       - SPRING_JPA_DATABASE_PLATFORM=org.hibernate.dialect.PostgreSQLDialect
       - JWT_SECRET=ZEN_CUBE_JWT_SUPER_SECRET_KEY_FOR_LOCAL_DEV_MUST_BE_LONG_AND_SECURE_KEYS
       - MQTT_BROKER_URL=tcp://mosquitto:1883
+      - MQTT_USERNAME=rfid_user
+      - MQTT_PASSWORD=Vishnu@35
+      # Seed passwords — change these before first deploy; each account will
+      # be forced to change its password on first login (passwordChangeRequired=true).
+      - ADMIN_SEED_PASSWORD=ChangeMe_Admin!
+      - MANAGER_SEED_PASSWORD=ChangeMe_Manager!
+      - OPERATOR_SEED_PASSWORD=ChangeMe_Operator!
     ports:
       - "8085:8081"
     depends_on:

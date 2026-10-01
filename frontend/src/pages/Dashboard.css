@@ -13,9 +13,10 @@
 
 .metrics-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-  gap: 1.25rem;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: clamp(0.5rem, 1.1vw, 1.15rem);
   margin-bottom: 2rem;
+  width: 100%;
 }
 
 .metrics-grid.access-logs-grid {
@@ -26,7 +27,7 @@
   background: var(--color-bg-surface);
   border: none;
   border-radius: var(--border-radius-sm);
-  padding: 1.25rem 1.25rem 0.85rem 1.25rem;
+  padding: clamp(0.85rem, 1.2vw, 1.25rem) clamp(0.55rem, 0.9vw, 1.15rem) clamp(0.65rem, 1vw, 0.85rem) clamp(0.55rem, 0.9vw, 1.15rem);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -36,7 +37,16 @@
   cursor: default;
   position: relative;
   overflow: hidden;
-  min-height: 145px;
+  min-height: 140px;
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.metric-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(16, 43, 76, 0.12);
 }
 
 /* ZENV Official Brand Card Palettes (Page 29 Guidelines) */
@@ -54,13 +64,6 @@
   border: none;
 }
 
-.metric-card.fill-zenv-taupe,
-.metric-card.fill-warning {
-  background-color: var(--color-secondary);
-  /* Taupe #979085 (Pantone 403 U) */
-  border: none;
-}
-
 .metric-card.fill-zenv-blue,
 .metric-card.fill-info {
   background-color: var(--color-accent);
@@ -68,32 +71,41 @@
   border: none;
 }
 
+/* Late / Absent & Denied Taps Share Unified Terracotta Orange (#D45529) */
+.metric-card.fill-zenv-taupe,
+.metric-card.fill-zenv-absent,
+.metric-card.fill-warning,
 .metric-card.fill-zenv-darkgreen,
 .metric-card.fill-danger,
 .metric-card.fill-denied,
 .metric-card.fill-purple {
   background-color: #D45529;
-  /* Terracotta Orange matching image */
+  /* Terracotta Orange - Access Denied & Absent color */
   border: none;
 }
 
 .metric-card[class*="fill-"] .metric-title {
-  color: rgba(255, 255, 255, 0.9);
-  font-size: 0.825rem;
-  letter-spacing: 0.5px;
+  color: rgba(255, 255, 255, 0.92);
+  font-size: clamp(0.68rem, 0.76vw, 0.825rem);
+  letter-spacing: 0.3px;
   text-transform: uppercase;
-  font-weight: 600;
+  font-weight: 700;
   text-align: left;
   margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
 }
 
 .metric-card[class*="fill-"] .metric-value {
   color: #ffffff;
-  font-size: 2.35rem;
+  font-size: clamp(1.5rem, 2vw, 2.35rem);
   font-weight: 800;
-  line-height: 1;
+  line-height: 1.1;
   text-align: center;
-  margin: 0;
+  margin: 0.25rem 0;
+  white-space: nowrap;
 }
 
 .metric-card-header {
@@ -111,6 +123,7 @@
   width: 100%;
   flex: 1;
   text-align: center;
+  margin: 0.2rem 0;
   padding: 0.4rem 0;
 }
 
@@ -195,7 +208,18 @@
 }
 
 /* Responsive Dashboard Queries */
-@media (max-width: 768px) {
+@media (max-width: 960px) {
+  .metrics-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.85rem;
+  }
+
+  .metrics-grid.access-logs-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 680px) {
   .dashboard-header {
     flex-direction: column;
     align-items: flex-start !important;
@@ -203,34 +227,59 @@
   }
 
   .metrics-grid {
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 0.85rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
     margin-bottom: 1.25rem;
   }
 
+  /* 5th card spans full 2-columns so it balances nicely */
+  .metrics-grid > .metric-card:last-child {
+    grid-column: span 2;
+  }
+
+  .metrics-grid.access-logs-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .metrics-grid.access-logs-grid > .metric-card:last-child {
+    grid-column: span 2;
+  }
+
   .metric-card {
-    padding: 1rem 1rem 0.75rem 1rem;
-    min-height: 125px;
-  }
-
-  .metric-value,
-  .metric-card[class*="fill-"] .metric-value {
-    font-size: 1.85rem;
-  }
-
-  .metric-title,
-  .metric-card[class*="fill-"] .metric-title {
-    font-size: 0.78rem;
-  }
-}
-
-@media (max-width: 480px) {
-  .metrics-grid {
-    grid-template-columns: 1fr;
+    padding: 0.85rem 0.75rem 0.65rem 0.75rem;
+    min-height: 120px;
   }
 
   .metric-value,
   .metric-card[class*="fill-"] .metric-value {
     font-size: 1.75rem;
+  }
+
+  .metric-title,
+  .metric-card[class*="fill-"] .metric-title {
+    font-size: 0.75rem;
+  }
+}
+
+@media (max-width: 420px) {
+  .metrics-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .metrics-grid > .metric-card:last-child {
+    grid-column: span 1;
+  }
+
+  .metrics-grid.access-logs-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .metrics-grid.access-logs-grid > .metric-card:last-child {
+    grid-column: span 1;
+  }
+
+  .metric-value,
+  .metric-card[class*="fill-"] .metric-value {
+    font-size: 1.6rem;
   }
 }

@@ -31,7 +31,7 @@ export function ChangePasswordModal({ onClose }) {
         onClose();
       }, 1500);
     } catch (err) {
-      setError(err?.message || 'Failed to change password');
+      setError(typeof err === 'string' ? err : (err?.message || err?.error || 'Failed to change password'));
     } finally {
       setLoading(false);
     }

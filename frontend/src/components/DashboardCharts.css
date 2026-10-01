@@ -228,7 +228,7 @@
 }
 
 .monthly-rate-absent {
-  background-color: var(--color-secondary);
+  background-color: var(--color-danger);
 }
 
 .bar-fill {
@@ -246,9 +246,9 @@
   background-color: var(--color-primary-light);
 }
 
-/* Absentees Bar: ZENV Taupe (#979085) - Matches Late / Absent Today Card */
+/* Absentees Bar: Terracotta (#D45529) - Matches Late / Absent & Access Denied color */
 .bar-absent {
-  background-color: var(--color-secondary);
+  background-color: var(--color-danger);
 }
 
 .bar-fill-zero {
@@ -278,7 +278,7 @@
 }
 
 .bar-mini-val.val-absent {
-  color: var(--color-secondary);
+  color: var(--color-danger);
 }
 
 .bar-mini-val.zero-val {
@@ -381,7 +381,7 @@
 }
 
 .tooltip-row.present-row strong { color: var(--color-primary-light); }
-.tooltip-row.absent-row strong { color: var(--color-secondary); }
+.tooltip-row.absent-row strong { color: var(--color-danger); }
 .tooltip-row.total-row strong { color: #ffffff; }
 
 .tooltip-divider {
@@ -418,7 +418,7 @@
 }
 
 .legend-color.legend-absent { 
-  background-color: var(--color-secondary); 
+  background-color: var(--color-danger); 
 }
 
 /* Responsive Chart Styles */

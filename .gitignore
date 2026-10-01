@@ -88,6 +88,8 @@ frontend/build/
 .env.*
 !.env.example
 token.json
+# Local dev profile — contains throwaway seed passwords, never commit
+application-local.properties
 *.key
 *.pem
 *.pfx

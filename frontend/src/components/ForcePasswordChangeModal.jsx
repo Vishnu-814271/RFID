@@ -34,7 +34,7 @@ export function ForcePasswordChangeModal() {
       // Update the auth context so the modal disappears
       login(localStorage.getItem('token'), { ...user, passwordChangeRequired: false });
     } catch (err) {
-      setError(err?.message || 'Failed to change password');
+      setError(typeof err === 'string' ? err : (err?.message || err?.error || 'Failed to change password'));
     } finally {
       setLoading(false);
     }

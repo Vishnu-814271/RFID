@@ -57,15 +57,18 @@ public class MqttTapSubscriber implements MessageHandler {
         try {
             JsonNode root = objectMapper.readTree(payload);
 
-            // 1. Validate Device Key if present
-            String deviceKey = root.has("deviceKey") ? root.path("deviceKey").asText(null) 
+            // 1. Validate Device Key — auth is affirmative: key must be present AND correct.
+            // A missing key is treated the same as a wrong key to prevent bypass via omission.
+            String deviceKey = root.has("deviceKey") ? root.path("deviceKey").asText(null)
                     : root.has("device_key") ? root.path("device_key").asText(null)
                     : (root.has("event") && root.path("event").has("device_key") ? root.path("event").path("device_key").asText(null) : null);
 
-            if (deviceKey != null && !expectedDeviceKey.equals(deviceKey)) {
-                log.warn("MQTT Tap Rejected: Invalid device key in payload: {}", payload);
-                String readerId = root.has("readerId") ? root.path("readerId").asText() : "UNKNOWN";
-                mqttPublisherService.sendFeedback(readerId, new TapResponse("DENIED", null, "INVALID_DEVICE_KEY", null, LocalDateTime.now()));
+            if (deviceKey == null || !expectedDeviceKey.equals(deviceKey)) {
+                String reason = (deviceKey == null) ? "MISSING_DEVICE_KEY" : "INVALID_DEVICE_KEY";
+                log.warn("MQTT Tap Rejected: {} in payload: {}", reason, payload);
+                String readerId = root.has("readerId") ? root.path("readerId").asText()
+                        : root.has("reader_id") ? root.path("reader_id").asText() : "UNKNOWN";
+                mqttPublisherService.sendFeedback(readerId, new TapResponse("DENIED", null, reason, null, LocalDateTime.now()));
                 return;
             }
 

@@ -2,11 +2,12 @@ package com.RFID.RFID.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import java.security.Principal;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "staff_users")
-public class StaffUser {
+public class StaffUser implements Principal {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -114,5 +115,15 @@ public class StaffUser {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    @Override
+    public String getName() {
+        return this.email;
+    }
+
+    @Override
+    public String toString() {
+        return this.email != null ? this.email : "";
     }
 }

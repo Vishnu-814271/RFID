@@ -29,25 +29,30 @@ public class DataSourceConfig {
     @Bean
     @Primary
     public DataSource dataSource() {
-        // 1. Check for Render's default DATABASE_URL or custom environment variables
+        // 1. Prefer Render's DATABASE_URL env var, then fall back to spring.datasource.url
         String rawUrl = System.getenv("DATABASE_URL");
         if (rawUrl == null || rawUrl.trim().isEmpty()) {
             rawUrl = configuredUrl;
         }
 
-        // Try initializing PostgreSQL if configured
         if (rawUrl != null && !rawUrl.trim().isEmpty() && !rawUrl.contains("h2")) {
+            // A Postgres URL is explicitly configured: connect or die.
+            // Do NOT fall back to H2 — a pod that silently uses ephemeral H2
+            // will appear healthy while losing every write on the next restart.
             try {
                 HikariConfig pgConfig = buildPostgresConfig(rawUrl);
-                System.out.println("[DEPLOYMENT] Attempting connection to PostgreSQL database at: " + pgConfig.getJdbcUrl());
+                System.out.println("[DEPLOYMENT] Connecting to PostgreSQL: " + pgConfig.getJdbcUrl());
                 return new HikariDataSource(pgConfig);
             } catch (Exception e) {
-                System.err.println("[DEPLOYMENT ERROR] Failed to connect to PostgreSQL: " + e.getMessage());
-                System.err.println("[DEPLOYMENT] Falling back to embedded H2 database to ensure zero downtime...");
+                // Surface the real cause and halt — do not mask it with an H2 fallback.
+                throw new IllegalStateException(
+                        "[DEPLOYMENT] Failed to connect to PostgreSQL at '" + rawUrl + "'. " +
+                        "Fix the database connection before starting the application. " +
+                        "Cause: " + e.getMessage(), e);
             }
         }
 
-        // Fallback: Robust embedded H2 database
+        // No Postgres URL configured at all: local / test environment — use H2.
         return buildH2DataSource(rawUrl);
     }
 

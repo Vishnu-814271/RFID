@@ -47,17 +47,34 @@ public class AuthController {
         return Envelope.ok(response);
     }
 
+    private StaffUser getAuthenticatedUser() {
+        if (SecurityContextHolder.getContext().getAuthentication() == null) {
+            throw new com.RFID.RFID.exception.ResourceNotFoundException("Unauthenticated request");
+        }
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (principal instanceof StaffUser) {
+            return (StaffUser) principal;
+        }
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        return staffUserRepository.findByEmailIgnoreCase(email)
+                .orElseThrow(() -> new com.RFID.RFID.exception.ResourceNotFoundException("User not found: " + email));
+    }
+
     @PostMapping("/auth/change-password")
     public Envelope changePassword(@RequestBody ChangePasswordRequest request, HttpServletRequest httpRequest) {
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        StaffUser user = staffUserRepository.findByEmailIgnoreCase(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
+        StaffUser user = getAuthenticatedUser();
         authService.changePassword(user.getUserId(), request);
         return Envelope.ok("Password updated successfully.");
     }
 
-    @PostMapping("/auth/logout")
+    @GetMapping({"/auth/me", "/me"})
+    public Envelope getCurrentUser() {
+        StaffUser user = getAuthenticatedUser();
+        LoginResponse response = new LoginResponse(null, user.getUserId(), user.getEmail(), user.getRole(), user.isPasswordChangeRequired());
+        return Envelope.ok(response);
+    }
+
+    @PostMapping({"/logout", "/auth/logout"})
     public Envelope logout(@RequestHeader(value = "Authorization", required = false) String authHeader) {
         authService.logout(authHeader);
         return Envelope.ok("Logged out successfully.");

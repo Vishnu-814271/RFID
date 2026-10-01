@@ -422,7 +422,7 @@ export function Reports() {
               <td class="meta-th">Report Period:</td><td class="meta-td">${startDate} to ${endDate}</td>
               <td class="meta-th">Expected Working Days:</td><td class="meta-td"><b>${stats.workingDays}</b></td>
               <td class="meta-th">Days Present:</td><td class="meta-td" style="color:#047857;font-weight:bold;">${stats.totalPresent}</td>
-              <td class="meta-th">Days Absent:</td><td class="meta-td" style="color:#b91c1c;font-weight:bold;">${stats.totalAbsent}</td>
+              <td class="meta-th">Days Absent:</td><td class="meta-td" style="color:#D45529;font-weight:bold;">${stats.totalAbsent}</td>
             </tr>
             <tr>
               <td class="meta-th">Holidays in Period:</td><td class="meta-td" style="color:#7e22ce;font-weight:bold;">${stats.totalHolidays}</td>
@@ -1032,8 +1032,8 @@ export function Reports() {
                       <span style={{ color: '#047857' }}>Present ({selectedPerson.daysPresent || 0} days)</span>
                     </div>
                     <div className="person-cal-legend-badge">
-                      <span className="person-cal-legend-box" style={{ background: 'rgba(239, 68, 68, 0.18)', border: '2px solid #ef4444' }} />
-                      <span style={{ color: '#991b1b' }}>Absent ({selectedPerson.absentDays || 0} days)</span>
+                      <span className="person-cal-legend-box" style={{ background: 'rgba(212, 85, 41, 0.18)', border: '2px solid #D45529' }} />
+                      <span style={{ color: '#D45529' }}>Absent ({selectedPerson.absentDays || 0} days)</span>
                     </div>
                     <div className="person-cal-legend-badge">
                       <span className="person-cal-legend-box" style={{ background: 'rgba(147, 51, 234, 0.18)', border: '2px solid #9333ea' }} />
@@ -1068,7 +1068,7 @@ export function Reports() {
                   <span className="sheet-summary-pill" style={{ background: 'rgba(16, 185, 129, 0.12)', color: '#047857' }}>
                     Present: <strong>{personSheetData.stats.totalPresent} Days</strong>
                   </span>
-                  <span className="sheet-summary-pill" style={{ background: 'rgba(239, 68, 68, 0.12)', color: '#b91c1c' }}>
+                  <span className="sheet-summary-pill" style={{ background: 'rgba(212, 85, 41, 0.12)', color: '#D45529' }}>
                     Absent: <strong>{personSheetData.stats.totalAbsent} Days</strong>
                   </span>
                   {personSheetData.stats.totalHolidays > 0 && (
